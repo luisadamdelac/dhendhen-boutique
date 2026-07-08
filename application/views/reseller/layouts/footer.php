@@ -1,0 +1,75 @@
+        </main>
+    </div>
+
+    <!-- User Dropdown Menu (Reseller) -->
+    <div id="userDropdown" style="display: none; position: absolute; top: 60px; right: 20px; background: white; border-radius: 12px; box-shadow: var(--shadow-lg); padding: 10px; min-width: 200px; z-index: 9999;">
+        <a href="<?php echo BASE_URL; ?>reseller/profile" style="display: block; padding: 10px 15px; color: var(--dark-gray); text-decoration: none; border-radius: 8px; transition: var(--transition-base);">
+            <i class="fas fa-user"></i> Profile
+        </a>
+        <hr style="margin: 8px 0; border: none; border-top: 1px solid var(--secondary-lavender);">
+        <a href="<?php echo BASE_URL; ?>auth/logout/reseller" onclick="return confirm('Are you sure you want to logout?');" style="display: block; padding: 10px 15px; color: var(--danger); text-decoration: none; border-radius: 8px; transition: var(--transition-base);">
+            <i class="fas fa-sign-out-alt"></i> Logout
+        </a>
+    </div>
+
+    <!-- Define BASE_URL for JavaScript -->
+    <script>
+        const BASE_URL = '<?php echo BASE_URL; ?>';
+    </script>
+
+    <script src="<?php echo BASE_URL; ?>public/js/admin-scripts.js"></script>
+    <script>
+        // Sidebar Toggle (desktop vs mobile) — same behavior as admin
+        const menuToggle = document.getElementById('menuToggle');
+        if (menuToggle) {
+            menuToggle.addEventListener('click', function() {
+                if (window.innerWidth <= 768) {
+                    document.body.classList.toggle('sidebar-open');
+                } else {
+                    document.body.classList.toggle('sidebar-collapsed');
+                }
+            });
+        }
+
+        // Responsive sidebar default state
+        function applySidebarResponsiveState() {
+            if (window.innerWidth <= 1024) {
+                document.body.classList.add('sidebar-collapsed');
+            } else {
+                document.body.classList.remove('sidebar-collapsed');
+                document.body.classList.remove('sidebar-open');
+            }
+        }
+        applySidebarResponsiveState();
+        window.addEventListener('resize', applySidebarResponsiveState);
+
+        // User Menu Toggle (Profile / Logout)
+        const userMenuToggle = document.getElementById('userMenuToggle');
+        const userDropdown = document.getElementById('userDropdown');
+        if (userMenuToggle && userDropdown) {
+            userMenuToggle.addEventListener('click', function(event) {
+                event.stopPropagation();
+                userDropdown.style.display = userDropdown.style.display === 'none' ? 'block' : 'none';
+            });
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function(event) {
+                if (!userMenuToggle.contains(event.target) && !userDropdown.contains(event.target)) {
+                    userDropdown.style.display = 'none';
+                }
+            });
+        }
+
+        // Auto-hide alerts after 5 seconds
+        document.querySelectorAll('.alert').forEach((alert) => {
+            setTimeout(() => {
+                alert.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                alert.style.opacity = '0';
+                alert.style.transform = 'translateY(-10px)';
+                setTimeout(() => alert.remove(), 500);
+            }, 5000);
+        });
+    </script>
+    <script src="<?php echo BASE_URL; ?>public/js/reseller-notifications.js"></script>
+</body>
+</html>

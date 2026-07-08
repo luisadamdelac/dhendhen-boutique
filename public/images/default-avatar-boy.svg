@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <!-- Background circle -->
+  <circle cx="100" cy="100" r="100" fill="#4361ee"/>
+
+  <!-- Body -->
+  <ellipse cx="100" cy="140" rx="35" ry="40" fill="white"/>
+
+  <!-- Left arm -->
+  <ellipse cx="65" cy="120" rx="12" ry="35" fill="white" transform="rotate(-25 65 120)"/>
+
+  <!-- Right arm -->
+  <ellipse cx="135" cy="120" rx="12" ry="35" fill="white" transform="rotate(25 135 120)"/>
+
+  <!-- Head -->
+  <circle cx="100" cy="70" r="30" fill="white"/>
+
+  <!-- Short hair -->
+  <path d="M 70 60 Q 70 38 100 38 Q 130 38 130 60 Q 130 48 100 46 Q 70 48 70 60 Z" fill="#2541b2"/>
+
+  <!-- Eyes -->
+  <circle cx="92" cy="65" r="3" fill="#4361ee"/>
+  <circle cx="108" cy="65" r="3" fill="#4361ee"/>
+
+  <!-- Smile -->
+  <path d="M 92 75 Q 100 80 108 75" stroke="#4361ee" stroke-width="2" fill="none" stroke-linecap="round"/>
+</svg>

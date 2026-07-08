@@ -1,0 +1,454 @@
+<style>
+    .account-container {
+        margin-top: 30px;
+    }
+    
+    .account-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .account-card {
+        background: white;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .card-title {
+        font-size: 20px;
+        font-weight: 600;
+        color: var(--dark);
+        margin-bottom: 25px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 500;
+        color: var(--dark);
+    }
+    
+    .form-group input[type="text"],
+    .form-group input[type="email"],
+    .form-group input[type="tel"],
+    .form-group input[type="password"],
+    .form-group textarea {
+        width: 100%;
+        padding: 12px 15px;
+        border: 2px solid #ddd;
+        border-radius: 8px;
+        font-size: 14px;
+        font-family: inherit;
+    }
+    
+    .form-group input:focus,
+    .form-group textarea:focus {
+        outline: none;
+        border-color: var(--primary);
+    }
+    
+    .form-group textarea {
+        resize: vertical;
+        min-height: 100px;
+    }
+    
+    /* Submit buttons below now use the shared .btn/.btn-primary/.w-100 components. */
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    .stat-card {
+        background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+        color: white;
+        padding: 20px;
+        border-radius: 10px;
+        text-align: center;
+    }
+    
+    .stat-card:nth-child(2) {
+        background: linear-gradient(135deg, #ff9800, #f57c00);
+    }
+    
+    .stat-card:nth-child(3) {
+        background: linear-gradient(135deg, #4caf50, #388e3c);
+    }
+    
+    .stat-value {
+        font-size: 36px;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+    
+    .stat-label {
+        font-size: 14px;
+        opacity: 0.9;
+    }
+    
+    .password-section {
+        background: white;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+    }
+    
+    .divider {
+        height: 2px;
+        background: var(--light-gray);
+        margin: 30px 0;
+    }
+    
+    .alert {
+        padding: 15px 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .alert-success {
+        background: #d1e7dd;
+        color: #0f5132;
+        border: 1px solid #badbcc;
+    }
+    
+    .alert-error {
+        background: #f8d7da;
+        color: #842029;
+        border: 1px solid #f5c2c7;
+    }
+    
+    @media (max-width: 968px) {
+        .account-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<h1><i class="fas fa-user-circle"></i> My Account</h1>
+
+<div class="account-container">
+    <?php if (isset($_SESSION['success'])): ?>
+        <div class="alert alert-success">
+            <i class="fas fa-check-circle"></i>
+            <?php echo $_SESSION['success']; unset($_SESSION['success']); ?>
+        </div>
+    <?php endif; ?>
+    
+    <?php if (isset($_SESSION['error'])): ?>
+        <div class="alert alert-error">
+            <i class="fas fa-exclamation-circle"></i>
+            <?php echo $_SESSION['error']; unset($_SESSION['error']); ?>
+        </div>
+    <?php endif; ?>
+    
+    <div class="account-grid">
+        <!-- Profile Information -->
+        <div class="account-card">
+            <h2 class="card-title">
+                <i class="fas fa-user-edit"></i> Profile Information
+            </h2>
+
+            <?php
+                $avatarImage = $user['profile_image'] ?? '';
+                $avatarSrc = !empty($avatarImage)
+                    ? BASE_URL . $avatarImage
+                    : BASE_URL . default_avatar_url();
+            ?>
+            <div style="display:flex; align-items:center; gap:20px; margin-bottom:25px;">
+                <div style="width:90px;height:90px;border-radius:50%;overflow:hidden;border:3px solid var(--primary-light, #eee);flex-shrink:0;">
+                    <img id="currentPhoto" src="<?php echo $avatarSrc; ?>" alt="Profile Photo" style="width:100%;height:100%;object-fit:cover;">
+                </div>
+                <form method="POST" action="<?php echo BASE_URL; ?>account/update_photo" enctype="multipart/form-data" id="photoForm">
+                    <input type="file" id="photoInput" name="photo" accept="image/*" style="display:none;" onchange="previewAndUpload(this)">
+                    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                        <button type="button" class="btn btn-outline" onclick="document.getElementById('photoInput').click();">
+                            <i class="fas fa-camera"></i> Change Photo
+                        </button>
+                        <?php if (!empty($avatarImage)): ?>
+                        <a href="<?php echo BASE_URL; ?>account/delete_photo" class="btn btn-outline"
+                           onclick="return confirm('Remove your profile photo?');">
+                            <i class="fas fa-trash"></i> Remove
+                        </a>
+                        <?php endif; ?>
+                    </div>
+                </form>
+            </div>
+
+            <form method="POST" action="<?php echo BASE_URL; ?>account/update_profile">
+                <div class="form-group">
+                    <label for="full_name">Full Name *</label>
+                    <input type="text" id="full_name" name="full_name" 
+                           value="<?php echo htmlspecialchars($user['full_name'] ?? ''); ?>" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="email">Email Address *</label>
+                    <input type="email" id="email" name="email" 
+                           value="<?php echo htmlspecialchars($user['email'] ?? ''); ?>" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="phone">Phone Number</label>
+                    <input type="tel" id="phone" name="phone" 
+                           value="<?php echo htmlspecialchars($user['phone'] ?? ''); ?>" 
+                           placeholder="+63 XXX XXX XXXX">
+                </div>
+                
+                <button type="submit" class="btn btn-primary w-100 mt-2">
+                    <i class="fas fa-save"></i> Update Profile
+                </button>
+            </form>
+        </div>
+        
+        <!-- Account Statistics -->
+        <div>
+            <div class="account-card">
+                <h2 class="card-title">
+                    <i class="fas fa-chart-bar"></i> Statistics
+                </h2>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value"><?php echo $stats['total_orders'] ?? 0; ?></div>
+                        <div class="stat-label">Total Orders</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-value"><?php echo $stats['pending_orders'] ?? 0; ?></div>
+                        <div class="stat-label">Pending Orders</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-value"><?php echo $stats['completed_orders'] ?? 0; ?></div>
+                        <div class="stat-label">Completed Orders</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Quick Links -->
+            <div class="account-card" style="margin-top: 20px;">
+                <h2 class="card-title">
+                    <i class="fas fa-link"></i> Quick Links
+                </h2>
+                
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <a href="<?php echo BASE_URL; ?>orders" class="btn btn-outline">
+                        <i class="fas fa-receipt"></i> View Orders
+                    </a>
+                    <a href="<?php echo BASE_URL; ?>shop" class="btn btn-outline">
+                        <i class="fas fa-shopping-bag"></i> Continue Shopping
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Become a Reseller -->
+    <div class="password-section">
+        <h2 class="card-title">
+            <i class="fas fa-store"></i> Become a Reseller
+        </h2>
+
+        <?php if (!empty($active_reseller)): ?>
+            <!-- Already an active reseller — no more applying, just a shortcut -->
+            <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+                <span style="display:inline-flex; align-items:center; gap:6px; background:#dcfce7; color:#16a34a; padding:6px 14px; border-radius:20px; font-weight:600; font-size:0.85rem;">
+                    <i class="fas fa-check-circle"></i> Active Reseller
+                </span>
+                <a href="<?php echo BASE_URL; ?>reseller/dashboard" class="btn btn-primary btn-sm">
+                    <i class="fas fa-arrow-right"></i> Go to Reseller Dashboard
+                </a>
+            </div>
+
+        <?php else:
+            $is_eligible = ($total_spend ?? 0) >= ($minimum_spend ?? 0);
+            $remaining = max(0, ($minimum_spend ?? 0) - ($total_spend ?? 0));
+            $pct = ($minimum_spend ?? 0) > 0 ? min(100, (($total_spend ?? 0) / $minimum_spend) * 100) : 0;
+        ?>
+
+            <?php if (!empty($reseller_application) && $reseller_application['status'] !== 'rejected'): ?>
+                <p>
+                    Application status:
+                    <span class="badge badge-<?php echo $reseller_application['status'] === 'approved' ? 'success' : 'warning'; ?>">
+                        <?php echo ucfirst(htmlspecialchars($reseller_application['status'])); ?>
+                    </span>
+                </p>
+            <?php else: ?>
+                <?php if (!empty($reseller_application) && $reseller_application['status'] === 'rejected'): ?>
+                    <p style="font-size:0.875rem; color:#dc2626;">
+                        Your previous application was rejected.
+                        <?php if (!empty($reseller_application['admin_remarks'])): ?>
+                            <br><small><?php echo htmlspecialchars($reseller_application['admin_remarks']); ?></small>
+                        <?php endif; ?>
+                    </p>
+                <?php endif; ?>
+
+                <!-- Eligibility progress -->
+                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)); gap:14px; margin-bottom:12px;">
+                    <div>
+                        <small class="text-muted d-block">Current Total Spend</small>
+                        <strong style="font-size:1.1rem;">₱<?php echo number_format($total_spend ?? 0, 2); ?></strong>
+                    </div>
+                    <div>
+                        <small class="text-muted d-block">Remaining Amount</small>
+                        <strong style="font-size:1.1rem;"><?php echo $is_eligible ? '₱0.00' : '₱' . number_format($remaining, 2); ?></strong>
+                    </div>
+                    <div>
+                        <small class="text-muted d-block">Eligibility</small>
+                        <?php if ($is_eligible): ?>
+                            <span style="display:inline-flex; align-items:center; gap:5px; background:#dcfce7; color:#16a34a; padding:3px 12px; border-radius:20px; font-weight:600; font-size:0.8rem;">
+                                <i class="fas fa-check-circle"></i> Eligible
+                            </span>
+                        <?php else: ?>
+                            <span style="display:inline-flex; align-items:center; gap:5px; background:#fef3c7; color:#b45309; padding:3px 12px; border-radius:20px; font-weight:600; font-size:0.8rem;">
+                                Not Eligible
+                            </span>
+                        <?php endif; ?>
+                    </div>
+                </div>
+
+                <div style="width:100%; height:10px; background:#eef0ff; border-radius:6px; overflow:hidden; margin-bottom:6px;">
+                    <div style="width:<?php echo $pct; ?>%; height:100%; background:<?php echo $is_eligible ? '#16a34a' : '#f59e0b'; ?>; transition:width .3s ease;"></div>
+                </div>
+                <p style="font-size:0.8rem; color:var(--gray-600); margin-bottom:1.25rem;">
+                    ₱<?php echo number_format($total_spend ?? 0, 2); ?> of ₱<?php echo number_format($minimum_spend ?? 0, 2); ?> (based on delivered orders only)
+                </p>
+
+                <form method="POST" action="<?php echo BASE_URL; ?>account/apply_reseller">
+                    <div class="form-group">
+                        <label for="business_name">Business Name *</label>
+                        <input type="text" id="business_name" name="business_name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="business_street">Street</label>
+                        <input type="text" id="business_street" name="business_street">
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+                        <div class="form-group">
+                            <label for="business_barangay">Barangay</label>
+                            <input type="text" id="business_barangay" name="business_barangay">
+                        </div>
+                        <div class="form-group">
+                            <label for="business_city">City *</label>
+                            <input type="text" id="business_city" name="business_city" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="business_zip_code">ZIP Code</label>
+                            <input type="text" id="business_zip_code" name="business_zip_code">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 mt-2" <?php echo $is_eligible ? '' : 'disabled title="Keep shopping to reach the minimum qualifying spend"'; ?>>
+                        <i class="fas fa-paper-plane"></i> <?php echo $is_eligible ? 'Submit Application' : 'Not Eligible Yet'; ?>
+                    </button>
+                </form>
+            <?php endif; ?>
+        <?php endif; ?>
+    </div>
+
+    <!-- Change Password -->
+    <div class="password-section">
+        <h2 class="card-title">
+            <i class="fas fa-lock"></i> Change Password
+        </h2>
+        
+        <form method="POST" action="<?php echo BASE_URL; ?>account/change_password">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+                <div class="form-group">
+                    <label for="current_password">Current Password *</label>
+                    <input type="password" id="current_password" name="current_password" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="new_password">New Password *</label>
+                    <input type="password" id="new_password" name="new_password" required minlength="6">
+                </div>
+                
+                <div class="form-group">
+                    <label for="confirm_password">Confirm Password *</label>
+                    <input type="password" id="confirm_password" name="confirm_password" required minlength="6">
+                </div>
+            </div>
+            
+            <button type="submit" class="btn btn-primary w-100 mt-2">
+                <i class="fas fa-key"></i> Change Password
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Form validation for password change
+    document.querySelector('form[action*="change_password"]').addEventListener('submit', function(e) {
+        const newPassword = document.getElementById('new_password').value;
+        const confirmPassword = document.getElementById('confirm_password').value;
+        
+        if (newPassword !== confirmPassword) {
+            e.preventDefault();
+            alert('New password and confirm password do not match!');
+            return false;
+        }
+        
+        if (newPassword.length < 6) {
+            e.preventDefault();
+            alert('Password must be at least 6 characters long!');
+            return false;
+        }
+    });
+    
+    // Phone number formatting
+    document.getElementById('phone').addEventListener('input', function(e) {
+        let value = e.target.value.replace(/\D/g, '');
+        if (value.length > 11) {
+            value = value.slice(0, 11);
+        }
+        e.target.value = value;
+    });
+
+    // Profile photo preview + auto-upload
+    function previewAndUpload(input) {
+        if (input.files && input.files[0]) {
+            const file = input.files[0];
+
+            const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+            if (!allowedTypes.includes(file.type)) {
+                alert('Please select a valid image file (JPG, PNG, or GIF)');
+                input.value = '';
+                return;
+            }
+
+            if (file.size > 2 * 1024 * 1024) {
+                alert('File size must be less than 2MB');
+                input.value = '';
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('currentPhoto').src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+
+            if (confirm('Upload this photo as your profile picture?')) {
+                document.getElementById('photoForm').submit();
+            } else {
+                input.value = '';
+                location.reload();
+            }
+        }
+    }
+</script>
