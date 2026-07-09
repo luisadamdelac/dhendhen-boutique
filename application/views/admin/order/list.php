@@ -351,14 +351,6 @@ table.dataTable thead th.sorting:hover { color: var(--primary-pink); cursor: poi
                                 <div class="fw-semibold" id="paymentInfoMethod">—</div>
                             </div>
                             <div class="col-6">
-                                <label class="text-muted mb-1" style="font-size:12px;" id="paymentInfoReferenceLabel">Reference Number</label>
-                                <div class="fw-semibold" id="paymentInfoReference">—</div>
-                            </div>
-                            <div class="col-6" id="paymentInfoSenderWrap">
-                                <label class="text-muted mb-1" style="font-size:12px;">GCash Number Used</label>
-                                <div class="fw-semibold" id="paymentInfoSenderNumber">—</div>
-                            </div>
-                            <div class="col-6">
                                 <label class="text-muted mb-1" style="font-size:12px;">Amount</label>
                                 <div class="fw-semibold" id="paymentInfoAmount">—</div>
                             </div>
@@ -435,16 +427,6 @@ function openPaymentModal(btn) {
     paymentModalOrderId = info.orderId;
 
     document.getElementById('paymentInfoMethod').textContent = info.method || '—';
-    document.getElementById('paymentInfoReference').textContent = info.reference || '—';
-
-    // "GCash Number Used" only applies to the old manual-GCash flow — hide
-    // it for PayMongo orders (which have no sender-number concept) instead
-    // of always showing a blank "—". Relabel the reference field too, since
-    // for PayMongo it holds the checkout session id, not a GCash ref number.
-    const isGcash = info.method === 'GCash';
-    document.getElementById('paymentInfoReferenceLabel').textContent = isGcash ? 'Reference Number' : 'PayMongo Checkout Session';
-    document.getElementById('paymentInfoSenderWrap').style.display = isGcash ? '' : 'none';
-    document.getElementById('paymentInfoSenderNumber').textContent = info.senderNumber || '—';
     document.getElementById('paymentInfoAmount').textContent = info.amount
         ? ('₱' + Number(info.amount).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }))
         : '—';
