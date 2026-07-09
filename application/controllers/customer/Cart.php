@@ -69,7 +69,7 @@ class Cart extends CI_Controller {
         ];
         $this->session->set_userdata('cart', $cart);
 
-        $this->_respond(TRUE, 'Product added to cart');
+        $this->_respond(TRUE, 'Product added to cart', ['cart_count' => array_sum(array_column($cart, 'qty'))]);
     }
 
     public function update() {

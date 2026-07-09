@@ -68,14 +68,24 @@ $current_page = 'withdrawal';
                         </button>
                     </div>
                 </div>
-            <?php elseif ($wStatus === 'approved'): ?>
+            <?php elseif ($wStatus === 'approved'):
+                $scheduledDate = $withdrawal['scheduled_date'] ?? NULL;
+                $isScheduleReached = !$scheduledDate || date('Y-m-d') >= $scheduledDate;
+            ?>
                 <div class="card">
+                    <?php if (!$isScheduleReached): ?>
+                        <p style="color: var(--gray); margin-bottom: 14px;">
+                            <i class="fas fa-clock"></i> Scheduled for processing on
+                            <strong><?= date('F j, Y', strtotime($scheduledDate)); ?></strong> — cannot be marked completed before then.
+                        </p>
+                    <?php endif; ?>
                     <div class="row" style="align-items: center;">
                         <div class="col col-6">
                             <input type="text" id="payment_reference" class="form-control" placeholder="GCash reference number">
                         </div>
                         <div class="col col-6">
-                            <button type="button" class="btn btn-primary" onclick="postWithdrawalAction('mark_processed', {payment_reference: document.getElementById('payment_reference').value})">
+                            <button type="button" class="btn btn-primary" <?= $isScheduleReached ? '' : 'disabled title="Not yet at the scheduled processing date"'; ?>
+                                    onclick="postWithdrawalAction('mark_processed', {payment_reference: document.getElementById('payment_reference').value})">
                                 <i class="fas fa-check-double"></i> Mark as Completed
                             </button>
                         </div>

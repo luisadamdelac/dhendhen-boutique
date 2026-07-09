@@ -190,9 +190,9 @@
                 <?php $productImage = $product['product_image'] ?? $product['image'] ?? ''; ?>
                 <?php if (!empty($productImage)): ?>
                     <img src="<?php echo BASE_URL . $productImage; ?>"
-                         alt="<?php echo htmlspecialchars($product['product_name']); ?>" 
+                         alt="<?php echo htmlspecialchars($product['product_name']); ?>"
                          class="product-image"
-                         onerror="this.src='<?php echo BASE_URL; ?>public/images/no-image.jpg'">
+                         onerror="this.onerror=null; this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22%3E%3Crect width=%22100%22 height=%22100%22 fill=%22%23f0f0f0%22/%3E%3C/svg%3E';">
                 <?php else: ?>
                     <div class="product-image" style="display: flex; align-items: center; justify-content: center; background: #f0f0f0;">
                         <i class="fas fa-image" style="font-size: 60px; color: #ccc;"></i>
@@ -382,9 +382,23 @@ function renderAtcVariationGroups() {
 }
 
 function atcSelectVariation(variationId, stock, priceAdjustment) {
+    document.getElementById('atcVariationError').style.display = 'none';
+
+    // Clicking an already-selected option deselects it instead of re-selecting.
+    if (atcState.selectedVariationId === variationId) {
+        atcState.selectedVariationId = null;
+        atcState.stock = 0;
+
+        document.querySelectorAll('.atc-variation-opt').forEach(el => {
+            el.classList.remove('selected');
+        });
+
+        document.getElementById('atcPrice').textContent = '₱' + atcState.basePrice.toFixed(2);
+        return;
+    }
+
     atcState.selectedVariationId = variationId;
     atcState.stock = stock;
-    document.getElementById('atcVariationError').style.display = 'none';
 
     document.querySelectorAll('.atc-variation-opt').forEach(el => {
         el.classList.toggle('selected', el.dataset.variationId == variationId);

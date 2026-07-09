@@ -6,6 +6,7 @@ class Withdrawals extends Authenticated_Controller {
         $this->load->model(['reseller_model', 'activity_log_model', 'settings_model']);
         $this->load->library('form_validation');
         require_once APPPATH . 'services/EmailQueueService.php';
+        require_once APPPATH . 'services/CommissionService.php';
     }
 
     public function index() {
@@ -64,14 +65,17 @@ class Withdrawals extends Authenticated_Controller {
         )->row_array();
         $available = (float) ($reseller['commission_balance'] ?? 0);
 
-        // Other requests from this reseller that are still awaiting OTP (or
-        // already verified/approved but not yet completed) haven't been
-        // deducted from commission_balance yet, so they must be subtracted
-        // here — otherwise the same balance could be requested twice over.
+        // Only requests still awaiting OTP verification need to be reserved
+        // here — the moment OTP is verified, CommissionService::holdWithdrawal()
+        // deducts the amount from commission_balance directly (see
+        // verify_withdrawal_otp() below), so any 'approved' request (which
+        // requires otp_verified = 1) is already reflected in $available.
+        // Counting it again here would reserve the same amount twice.
         $already_committed = (float) ($this->db->select_sum('amount')
             ->from(WITHDRAWAL_TABLE)
             ->where('reseller_id', $this->user_id)
-            ->where_in('status', ['pending', 'approved'])
+            ->where('status', 'pending')
+            ->where('otp_verified', 0)
             ->get()->row()->amount ?? 0);
 
         if ($amount > ($available - $already_committed)) {
@@ -189,7 +193,7 @@ class Withdrawals extends Authenticated_Controller {
             return;
         }
 
-        $this->reseller_model->update_commission_balance($this->user_id, -$withdrawal['amount']);
+        CommissionService::holdWithdrawal($this->user_id, (float) $withdrawal['amount'], (int) $withdrawal_id);
         $this->db->where('withdrawal_id', $withdrawal_id)->update(WITHDRAWAL_TABLE, ['otp_verified' => 1]);
         $this->db->trans_complete();
 

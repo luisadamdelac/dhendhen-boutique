@@ -133,7 +133,8 @@ function copyShopUrl() {
                     <div class="product-card">
                         <div class="product-image">
                             <?php if (!empty($product['product_image'])): ?>
-                                <img src="<?php echo BASE_URL . $product['product_image']; ?>" alt="<?php echo htmlspecialchars($product['product_name']); ?>">
+                                <img src="<?php echo BASE_URL . $product['product_image']; ?>" alt="<?php echo htmlspecialchars($product['product_name']); ?>"
+                                     onerror="this.replaceWith(Object.assign(document.createElement('div'), {className:'product-image-placeholder', innerHTML:'<i class=\'fas fa-image\'></i>'}));">
                             <?php else: ?>
                                 <div class="product-image-placeholder"><i class="fas fa-image"></i></div>
                             <?php endif; ?>

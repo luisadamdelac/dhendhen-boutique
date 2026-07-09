@@ -45,8 +45,10 @@ class Product extends Authenticated_Controller {
             ->get()->result_array();
 
         // Attach a per-branch stock breakdown to each row for display (product can now live in multiple branches)
+        // — one batched query for the whole list instead of one per product.
+        $branch_stock_by_product = StockService::getBranchStockForProducts(array_column($data['products'], 'product_id'));
         foreach ($data['products'] as &$p) {
-            $p['branch_stock'] = StockService::getBranchStock($p['product_id']);
+            $p['branch_stock'] = $branch_stock_by_product[(int) $p['product_id']] ?? [];
         }
         unset($p);
 
@@ -522,10 +524,47 @@ class Product extends Authenticated_Controller {
         $data['threshold'] = $threshold;
         $data['page'] = $page;
         $data['pages'] = ceil($data['total'] / $limit);
+        $data['branches'] = $this->db->select('*')->from(BRANCHES_TABLE)->order_by('branch_name')->get()->result_array();
+        $data['branch_stock'] = StockService::getBranchStockForProducts(array_column($data['products'], 'product_id'));
 
         $this->load->view('admin/layout/header', $data);
         $this->load->view('admin/product/low_stock', $data);
         $this->load->view('admin/layout/footer', $data);
+    }
+
+    /**
+     * Quick restock from the Low Stock page — adds straight to a branch's
+     * base (no-variation) stock. Products whose stock lives entirely in a
+     * named variation (e.g. "Size: Small") aren't restockable here, since
+     * there's no single variation to target from this list view — those
+     * need the full Edit Product page instead.
+     */
+    public function quick_restock($product_id = '') {
+        if (empty($product_id) || $this->input->method() !== 'post') {
+            show_404();
+        }
+
+        $branch_id = (int) $this->input->post('branch_id');
+        $quantity = (int) $this->input->post('quantity');
+
+        if ($quantity <= 0) {
+            echo json_encode(['success' => FALSE, 'message' => 'Enter a quantity greater than 0.']);
+            return;
+        }
+        $branch = $this->db->where('branch_id', $branch_id)->get(BRANCHES_TABLE)->row_array();
+        if (!$branch) {
+            echo json_encode(['success' => FALSE, 'message' => 'Select a valid branch.']);
+            return;
+        }
+
+        $ok = StockService::adjustStock($product_id, $branch_id, $quantity, $this->user_id, 'Quick restock from Low Stock page', NULL);
+        if (!$ok) {
+            echo json_encode(['success' => FALSE, 'message' => 'Failed to restock. Please try again.']);
+            return;
+        }
+
+        $this->Activity_log_model->log_activity(get_user_id(), 'admin', 'quick_restock', "Restocked product $product_id: +$quantity at {$branch['branch_name']}", get_client_ip());
+        echo json_encode(['success' => TRUE, 'message' => 'Stock added successfully']);
     }
 
     /**

@@ -78,7 +78,6 @@ class Dashboard extends Authenticated_Controller {
         return [
             'pending_amount' => $sum_by_status('pending'),
             'approved_amount' => $sum_by_status('released'),
-            'paid_amount' => $sum_by_status('withdrawn'),
         ];
     }
 

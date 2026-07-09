@@ -33,10 +33,14 @@ class Inventory extends Authenticated_Controller {
         $products = $this->product_model->base_query()
             ->order_by('p.product_id', 'DESC')->get()->result_array();
 
-        // "stock" here means this staff member's own branch, not the central total.
+        // "stock" here means this staff member's own branch, not the central
+        // total — one batched query for the whole list instead of one per product.
+        $stock_by_product = $this->staff_branch_id
+            ? StockService::getAvailableStockForProducts(array_column($products, 'product_id'), $this->staff_branch_id)
+            : [];
         foreach ($products as &$p) {
             $p['branch_name'] = $this->staff_branch_name;
-            $p['stock'] = $this->staff_branch_id ? StockService::getAvailableStock($p['product_id'], $this->staff_branch_id) : 0;
+            $p['stock'] = $stock_by_product[(int) $p['product_id']] ?? 0;
         }
         unset($p);
         $data['products'] = $products;
@@ -57,9 +61,12 @@ class Inventory extends Authenticated_Controller {
         $data['page_title'] = 'Low Stock Items';
 
         $products = $this->product_model->base_query()->order_by('p.product_name', 'ASC')->get()->result_array();
+        $stock_by_product = $this->staff_branch_id
+            ? StockService::getAvailableStockForProducts(array_column($products, 'product_id'), $this->staff_branch_id)
+            : [];
         $low = [];
         foreach ($products as $p) {
-            $branch_stock = $this->staff_branch_id ? StockService::getAvailableStock($p['product_id'], $this->staff_branch_id) : 0;
+            $branch_stock = $stock_by_product[(int) $p['product_id']] ?? 0;
             if ($branch_stock <= 10) {
                 $p['stock'] = $branch_stock;
                 $low[] = $p;

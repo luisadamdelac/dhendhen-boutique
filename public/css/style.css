@@ -100,6 +100,14 @@
     box-sizing: border-box;
 }
 
+/* Safety net against any single element overflowing the viewport width
+   (a stray fixed-width box, an unshrunk flex item, etc.) turning into a
+   page-wide horizontal scrollbar on phones — same guard admin-style.css
+   already has on its layout. */
+html {
+    overflow-x: hidden;
+}
+
 body {
     font-family: var(--font-primary);
     font-size: var(--font-size-base);
@@ -107,6 +115,7 @@ body {
     background: linear-gradient(135deg, #fce4ec 0%, #f3e5f5 50%, #e1bee7 100%);
     line-height: 1.6;
     min-height: 100vh;
+    overflow-x: hidden;
 }
 
 a {
@@ -1242,8 +1251,15 @@ table td {
 }
 
 @media (max-width: 768px) {
+    /* Previously hidden outright on mobile with no alternative — instead,
+       drop it to its own full-width row below the logo/actions (the
+       header-content flex-wrap below already makes room for this), so
+       search stays available on every device. */
     .search-bar {
-        display: none;
+        flex-basis: 100%;
+        max-width: 100%;
+        order: 3;
+        margin-top: 10px;
     }
 
     .header-content {
@@ -1283,15 +1299,39 @@ table td {
 }
 
 @media (max-width: 480px) {
+    /* Two columns rather than one — a single tall column of cards makes
+       browsing feel like an endless scroll; two keeps images legible while
+       still showing more of the catalog per screen. */
     .products-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
     }
-    
+
+    .product-image {
+        height: 130px;
+    }
+
     .header-content {
         padding: 10px 15px;
     }
-    
+
     .logo {
         font-size: var(--font-size-xl);
+    }
+}
+
+/* ── Horizontally-scrollable table wrapper (mirrors admin-style.css's
+   .table-responsive, reproduced here since customer pages don't load that
+   stylesheet) — used so wide tables (orders, cart) scroll instead of
+   breaking the page layout on narrow screens. ── */
+.table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 991.98px) {
+    .table-responsive table {
+        min-width: 600px;
     }
 }

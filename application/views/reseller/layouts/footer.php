@@ -17,13 +17,21 @@
         const BASE_URL = '<?php echo BASE_URL; ?>';
     </script>
 
+    <!-- Bootstrap 5 JS Bundle (self-hosted — modals, dropdowns, alerts) -->
+    <script src="<?php echo BASE_URL; ?>public/vendor/bootstrap/bootstrap.bundle.min.js"></script>
+
     <script src="<?php echo BASE_URL; ?>public/js/admin-scripts.js"></script>
     <script>
-        // Sidebar Toggle (desktop vs mobile) — same behavior as admin
+        // Sidebar Toggle — below 1200px (Tablet/Mobile) the sidebar is an
+        // off-canvas drawer; at 1200px+ (Desktop/Laptop) it's a manual
+        // expanded/icon-only collapse toggle for the fixed sidebar. This
+        // threshold must match admin-style.css's off-canvas breakpoint
+        // (max-width: 1199.98px) exactly, or the hamburger silently toggles
+        // a class with no visible effect in the mismatched range.
         const menuToggle = document.getElementById('menuToggle');
         if (menuToggle) {
             menuToggle.addEventListener('click', function() {
-                if (window.innerWidth <= 768) {
+                if (window.innerWidth < 1200) {
                     document.body.classList.toggle('sidebar-open');
                 } else {
                     document.body.classList.toggle('sidebar-collapsed');
@@ -33,15 +41,31 @@
 
         // Responsive sidebar default state
         function applySidebarResponsiveState() {
-            if (window.innerWidth <= 1024) {
-                document.body.classList.add('sidebar-collapsed');
-            } else {
+            if (window.innerWidth < 1200) {
                 document.body.classList.remove('sidebar-collapsed');
+            } else {
                 document.body.classList.remove('sidebar-open');
             }
         }
         applySidebarResponsiveState();
         window.addEventListener('resize', applySidebarResponsiveState);
+
+        // Tap-outside-to-close for the mobile off-canvas sidebar
+        const sidebarBackdrop = document.getElementById('sidebarBackdrop');
+        if (sidebarBackdrop) {
+            sidebarBackdrop.addEventListener('click', function() {
+                document.body.classList.remove('sidebar-open');
+            });
+        }
+
+        // Close the off-canvas drawer when a nav link is tapped
+        document.querySelectorAll('.sidebar .nav-link').forEach(function(link) {
+            link.addEventListener('click', function() {
+                if (window.innerWidth < 1200) {
+                    document.body.classList.remove('sidebar-open');
+                }
+            });
+        });
 
         // User Menu Toggle (Profile / Logout)
         const userMenuToggle = document.getElementById('userMenuToggle');

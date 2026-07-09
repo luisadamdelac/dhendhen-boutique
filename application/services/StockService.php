@@ -63,6 +63,60 @@ class StockService {
     }
 
     /**
+     * Batched version of getBranchStock() for a whole product list — one
+     * query instead of one-per-product. Returns [product_id => [branch_id
+     * => qty, ...], ...]; a product with no batches simply has no key (same
+     * "missing = empty array" contract callers already handle via `?? []`).
+     */
+    public static function getBranchStockForProducts(array $productIds) {
+        $CI =& get_instance();
+        $CI->load->database();
+
+        if (empty($productIds)) {
+            return [];
+        }
+
+        $rows = $CI->db->select('product_id, branch_id, COALESCE(SUM(remaining_quantity), 0) as qty')
+            ->where('status', 'active')
+            ->where_in('product_id', $productIds)
+            ->group_by(['product_id', 'branch_id'])
+            ->get(INVENTORY_BATCH_TABLE)->result_array();
+
+        $out = [];
+        foreach ($rows as $row) {
+            $out[(int) $row['product_id']][(int) $row['branch_id']] = (int) $row['qty'];
+        }
+        return $out;
+    }
+
+    /**
+     * Batched version of getAvailableStock() for a whole product list,
+     * scoped to one branch — one query instead of one-per-product. Returns
+     * [product_id => qty, ...]; a product with no batches simply has no key.
+     */
+    public static function getAvailableStockForProducts(array $productIds, $branchId) {
+        $CI =& get_instance();
+        $CI->load->database();
+
+        if (empty($productIds) || !$branchId) {
+            return [];
+        }
+
+        $rows = $CI->db->select('product_id, COALESCE(SUM(remaining_quantity), 0) as qty')
+            ->where('status', 'active')
+            ->where('branch_id', $branchId)
+            ->where_in('product_id', $productIds)
+            ->group_by('product_id')
+            ->get(INVENTORY_BATCH_TABLE)->result_array();
+
+        $out = [];
+        foreach ($rows as $row) {
+            $out[(int) $row['product_id']] = (int) $row['qty'];
+        }
+        return $out;
+    }
+
+    /**
      * Receive a new batch of stock into a branch (product creation or restock).
      * $variationId: NULL (default) = stock belongs to the base product.
      */
@@ -192,12 +246,17 @@ class StockService {
             }
 
             self::_syncProductTotal($productId);
+            if ($variationId !== 'ANY' && $variationId !== NULL) {
+                self::_syncVariationTotal($variationId);
+            }
 
             $CI->db->trans_complete();
 
             if ($CI->db->trans_status() === FALSE) {
                 throw new Exception('Transaction failed');
             }
+
+            self::_maybeNotifyLowStock($productId, $quantity);
 
             log_message('info', 'Stock deducted: product ' . $productId . ', qty ' . $quantity . ', type ' . $movementType);
             return TRUE;
@@ -211,10 +270,15 @@ class StockService {
 
     /**
      * Restore stock (order cancellation or refund). Adds back into the most
-     * recently touched batch for that product/branch, or opens a fresh
-     * adjustment batch if none exists yet.
+     * recently touched batch for that product/branch(/variation), or opens
+     * a fresh adjustment batch if none exists yet.
+     *
+     * $variationId defaults to 'ANY' (no filter, matching deductStock()'s
+     * default) — pass an explicit variation id (or NULL for base-product-only)
+     * when restoring a variant line, so the restore lands back in a batch
+     * for that same variation rather than a different one's.
      */
-    public static function restoreStock($productId, $quantity, $referenceType = NULL, $referenceId = NULL, $notes = NULL, $branchId = NULL) {
+    public static function restoreStock($productId, $quantity, $referenceType = NULL, $referenceId = NULL, $notes = NULL, $branchId = NULL, $variationId = 'ANY') {
         $CI =& get_instance();
         $CI->load->database();
 
@@ -229,14 +293,20 @@ class StockService {
             if ($branchId) {
                 $query->where('branch_id', $branchId);
             }
+            if ($variationId !== 'ANY') {
+                $variationId === NULL ? $query->where('variation_id IS NULL', NULL, FALSE) : $query->where('variation_id', $variationId);
+            }
             $batch = $query->order_by('updated_at', 'DESC')->get(INVENTORY_BATCH_TABLE)->row_array();
 
             $now = date('Y-m-d H:i:s');
 
             if (!$batch) {
                 $fallbackBranch = $branchId ?: self::_defaultBranchId();
-                self::addBatch($productId, $fallbackBranch, $quantity, 0, NULL);
+                self::addBatch($productId, $fallbackBranch, $quantity, 0, NULL, $variationId === 'ANY' ? NULL : $variationId);
                 self::_syncProductTotal($productId);
+                if ($variationId !== 'ANY' && $variationId !== NULL) {
+                    self::_syncVariationTotal($variationId);
+                }
                 $CI->db->trans_complete();
                 return $CI->db->trans_status() !== FALSE;
             }
@@ -259,6 +329,9 @@ class StockService {
             ]);
 
             self::_syncProductTotal($productId);
+            if ($variationId !== 'ANY' && $variationId !== NULL) {
+                self::_syncVariationTotal($variationId);
+            }
 
             $CI->db->trans_complete();
             return $CI->db->trans_status() !== FALSE;
@@ -326,6 +399,60 @@ class StockService {
 
         $total = self::getAvailableStock($productId);
         $CI->db->where('product_id', $productId)->update(PRODUCT_TABLE, ['stock' => $total]);
+    }
+
+    /**
+     * Alert admins the moment a deduction pushes a product's total stock
+     * at/below its own min_stock_alert — previously this only ever fired
+     * once, at product-creation time (admin/Product.php), so a product that
+     * later got sold down to (or below) its threshold never notified anyone.
+     *
+     * Triggers only on the crossing (old total was above the threshold, new
+     * total isn't), not on every subsequent sale while already low — so
+     * this can't spam one notification per unit sold.
+     */
+    private static function _maybeNotifyLowStock($productId, $justDeducted) {
+        $CI =& get_instance();
+        $CI->load->database();
+
+        $product = $CI->db->select('product_name, stock, min_stock_alert')
+            ->where('product_id', $productId)->get(PRODUCT_TABLE)->row_array();
+        if (!$product || $product['min_stock_alert'] === NULL) {
+            return;
+        }
+
+        $newStock = (int) $product['stock'];
+        $minAlert = (int) $product['min_stock_alert'];
+        $oldStock = $newStock + (int) $justDeducted;
+
+        if ($newStock <= $minAlert && $oldStock > $minAlert) {
+            require_once APPPATH . 'services/NotificationService.php';
+            NotificationService::notifyAllAdmins(
+                'Low Stock Alert',
+                '"' . $product['product_name'] . '" has only ' . $newStock . ' unit(s) left across all branches (alert threshold: ' . $minAlert . ').',
+                'system',
+                $productId
+            );
+        }
+    }
+
+    /**
+     * Recompute and cache product_variation_tbl.stock (a display-only
+     * convenience column — inventory_batches is the real ledger) as the sum
+     * across all branches for that one variation. Called after any
+     * deduct/restore that was scoped to a specific variation, so admin's
+     * product edit page (which seeds its stock inputs from this column)
+     * doesn't show a stale number.
+     */
+    private static function _syncVariationTotal($variationId) {
+        $CI =& get_instance();
+        $CI->load->database();
+
+        $total = (int) ($CI->db->select('COALESCE(SUM(remaining_quantity), 0) as total')
+            ->where('variation_id', $variationId)
+            ->where('status', 'active')
+            ->get(INVENTORY_BATCH_TABLE)->row_array()['total'] ?? 0);
+        $CI->db->where('variation_id', $variationId)->update(PRODUCT_VARIATION_TABLE, ['stock' => $total]);
     }
 
     private static function _defaultBranchId() {

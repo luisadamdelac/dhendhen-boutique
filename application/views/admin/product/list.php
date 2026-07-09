@@ -179,7 +179,8 @@ table.dataTable thead th.sorting:hover { color: var(--primary-pink); cursor: poi
                         <td class="ps-3">
                             <div class="d-flex align-items-center gap-2">
                                 <?php if (!empty($p['primary_image'])): ?>
-                                    <img src="<?= base_url($p['primary_image']); ?>" class="row-thumb" alt="">
+                                    <img src="<?= base_url($p['primary_image']); ?>" class="row-thumb" alt=""
+                                         onerror="this.replaceWith(Object.assign(document.createElement('div'), {className:'row-thumb-placeholder', innerHTML:'<i class=\'fas fa-box\'></i>'}));">
                                 <?php else: ?>
                                     <div class="row-thumb-placeholder"><i class="fas fa-box"></i></div>
                                 <?php endif; ?>
@@ -380,19 +381,19 @@ table.dataTable thead th.sorting:hover { color: var(--primary-pink); cursor: poi
                             </select>
                         </div>
                         <div class="col-6 mb-3">
-                            <label class="form-label fw-semibold small">Barangay</label>
-                            <select class="form-select" name="barangay" id="branch_barangay" disabled>
+                            <label class="form-label fw-semibold small">Barangay <span class="text-danger">*</span></label>
+                            <select class="form-select" name="barangay" id="branch_barangay" required disabled>
                                 <option value="">Select City first</option>
                             </select>
                         </div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-semibold small">Street / House No.</label>
-                        <input type="text" class="form-control" name="street" id="branch_street">
+                        <label class="form-label fw-semibold small">Street / House No. <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="street" id="branch_street" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-semibold small">Phone Number</label>
-                        <input type="text" class="form-control" name="phone_number" id="branch_phone" placeholder="09XXXXXXXXX">
+                        <label class="form-label fw-semibold small">Phone Number <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="phone_number" id="branch_phone" required placeholder="09XXXXXXXXX">
                     </div>
                     <div class="mb-1">
                         <label class="form-label fw-semibold small">Status</label>

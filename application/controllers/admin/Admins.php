@@ -271,9 +271,15 @@ class Admins extends Authenticated_Controller {
             $this->db->update(ADMIN_TABLE, $admin_data, ['admin_id' => $admin_id]);
             $this->session->set_flashdata('success', 'Admin updated successfully');
         } else {
+            // A fixed default password would let anyone who's ever seen this
+            // codebase log into any newly-created admin account — generate a
+            // random one-time temporary password instead and surface it only
+            // once, in the flash message, since it can't be recovered later
+            // (only its hash is stored).
+            $temp_password = bin2hex(random_bytes(6));
             $user_data = [
                 'email' => $this->input->post('email', TRUE),
-                'password' => password_hash('password123', PASSWORD_BCRYPT),
+                'password' => password_hash($temp_password, PASSWORD_BCRYPT),
                 'status' => 'active',
                 'is_verified' => 1,
                 'created_at' => date('Y-m-d H:i:s'),
@@ -296,7 +302,7 @@ class Admins extends Authenticated_Controller {
                 $this->input->ip_address()
             );
 
-            $this->session->set_flashdata('success', 'Admin created successfully with default password: password123');
+            $this->session->set_flashdata('success', 'Admin created successfully. Temporary password: ' . $temp_password . ' — share this securely and ask them to change it after logging in.');
         }
 
         redirect('admin/admins');

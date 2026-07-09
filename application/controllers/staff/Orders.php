@@ -37,7 +37,10 @@ class Orders extends Authenticated_Controller {
         }
 
         if (!in_array($order['order_status'], ['paid', 'processing', 'to_ship'], TRUE)) {
-            echo json_encode(['success' => false, 'message' => 'This order is not yet ready for staff action']);
+            $message = $order['order_status'] === 'pending'
+                ? "This order's payment hasn't been verified by admin yet — you'll be able to update it once payment is confirmed."
+                : 'This order is not yet ready for staff action';
+            echo json_encode(['success' => false, 'message' => $message]);
             return;
         }
 

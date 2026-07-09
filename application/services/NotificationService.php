@@ -125,6 +125,27 @@ class NotificationService {
     }
 
     /**
+     * Create notification for a rejected payment — tells the customer why,
+     * so they know what to fix before resubmitting proof for the same order.
+     */
+    public static function paymentRejected($orderId, $customerId, $reason) {
+        NotificationService::create('customer', $customerId,
+            'Payment Rejected',
+            'Your payment proof for Order ID ' . $orderId . ' was rejected: ' . $reason . '. Please resubmit your reference number and receipt.',
+            'payment', $orderId);
+    }
+
+    /**
+     * Create notification for a resubmitted payment proof after rejection.
+     */
+    public static function paymentResubmitted($orderId, $orderNumber) {
+        NotificationService::notifyAllAdmins(
+            'Payment Resubmitted',
+            'Customer resubmitted payment proof for Order #' . $orderNumber . '. Please review.',
+            'payment', $orderId);
+    }
+
+    /**
      * Create notification for order status change
      */
     public static function orderStatusChanged($orderId, $customerId, $oldStatus, $newStatus) {

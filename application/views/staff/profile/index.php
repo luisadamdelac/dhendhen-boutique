@@ -1,18 +1,43 @@
 <!-- Staff Profile -->
-<div class="fade-in">
+<style>
+.profile-card {
+    border-radius: 14px;
+    border: 1px solid #eef0f8;
+    box-shadow: 0 1px 10px rgba(15, 23, 42, .06);
+}
+.profile-card .card-header {
+    background: #fff;
+    border-bottom: 1px solid #f1f3fb;
+    padding: 1.25rem 1.5rem;
+}
+.profile-card .card-body {
+    background: #fff;
+    padding: 1.5rem;
+}
+.profile-avatar {
+    width: 200px;
+    height: 200px;
+    margin: 0 auto 20px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 5px solid #f9e5ff;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+}
+</style>
+<div class="container-fluid py-4 fade-in">
     <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-4">
         <div>
-            <h4 class="fw-bold mb-0" style="color:#1a1a2e;">My Account</h4>
+            <h4 class="fw-bold mb-1" style="color:#1a1a2e;"><i class="fas fa-user-circle"></i> My Account</h4>
             <small class="text-muted">Welcome back, <strong><?php echo htmlspecialchars($user_full_name ?? 'Staff'); ?></strong> — manage your profile and password.</small>
         </div>
     </div>
 
-    <div class="row">
+    <div class="row g-4">
         <!-- Profile Photo -->
-        <div class="col col-4">
-            <div class="card">
+        <div class="col col-12 col-xl-4">
+            <div class="card profile-card">
                 <div class="card-header">
-                    <h3 class="card-title"><i class="fas fa-camera"></i> Profile Photo</h3>
+                    <h5 class="card-title mb-0"><i class="fas fa-camera"></i> Profile Photo</h5>
                 </div>
                 <div class="card-body text-center">
                     <?php
@@ -21,7 +46,7 @@
                             ? BASE_URL . $avatarImage
                             : BASE_URL . default_avatar_url();
                     ?>
-                    <div style="width:140px;height:140px;margin:0 auto 16px;border-radius:50%;overflow:hidden;border:4px solid var(--primary-pink-light);">
+                    <div class="profile-avatar">
                         <img id="currentPhoto" src="<?php echo $avatarSrc; ?>" alt="Profile Photo" style="width:100%;height:100%;object-fit:cover;">
                     </div>
                     <form method="POST" action="<?php echo site_url('staff/profile/update_photo'); ?>" enctype="multipart/form-data" id="photoForm">
@@ -38,41 +63,52 @@
                             <?php endif; ?>
                         </div>
                     </form>
+
+                    <div style="margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 8px; text-align: left;">
+                        <h6 style="margin: 0 0 10px 0; color: var(--primary-pink);">
+                            <i class="fas fa-info-circle"></i> Photo Requirements
+                        </h6>
+                        <ul style="margin: 0; padding-left: 20px; font-size: 13px; color: #666;">
+                            <li>Maximum file size: 2MB</li>
+                            <li>Supported formats: JPG, PNG, GIF</li>
+                            <li>Square images work best</li>
+                        </ul>
+                    </div>
                 </div>
             </div>
         </div>
 
         <!-- Basic Info -->
-        <div class="col col-8">
-            <div class="card">
+        <div class="col col-12 col-xl-8">
+            <div class="card profile-card">
                 <div class="card-header">
-                    <h3 class="card-title"><i class="fas fa-id-badge"></i> Personal Information</h3>
+                    <h5 class="card-title mb-0"><i class="fas fa-id-badge"></i> Personal Information</h5>
                 </div>
                 <div class="card-body">
                     <form method="POST" action="<?php echo site_url('staff/profile/update'); ?>">
                         <div class="row">
-                            <div class="col col-6">
+                            <div class="col col-12 col-md-6">
                                 <div class="form-group">
                                     <label for="first_name"><i class="fas fa-user"></i> First Name</label>
                                     <input type="text" id="first_name" name="first_name" class="form-control" required
                                            value="<?php echo htmlspecialchars($profile['first_name'] ?? ''); ?>">
                                 </div>
                             </div>
-                            <div class="col col-6">
+                            <div class="col col-12 col-md-6">
                                 <div class="form-group">
                                     <label for="last_name"><i class="fas fa-user"></i> Last Name</label>
                                     <input type="text" id="last_name" name="last_name" class="form-control" required
                                            value="<?php echo htmlspecialchars($profile['last_name'] ?? ''); ?>">
                                 </div>
                             </div>
-                            <div class="col col-6">
+                            <div class="col col-12 col-md-6">
                                 <div class="form-group">
                                     <label><i class="fas fa-envelope"></i> Email</label>
                                     <input type="email" class="form-control" readonly
                                            value="<?php echo htmlspecialchars($profile['email'] ?? ''); ?>">
                                 </div>
                             </div>
-                            <div class="col col-6">
+                            <div class="col col-12 col-md-6">
                                 <div class="form-group">
                                     <label for="contact_number"><i class="fas fa-phone"></i> Phone</label>
                                     <input type="text" id="contact_number" name="contact_number" class="form-control" required
@@ -92,29 +128,29 @@
         </div>
     </div>
 
-    <div class="row">
+    <div class="row g-4 mt-1">
         <div class="col col-12">
-            <div class="card">
+            <div class="card profile-card">
                 <div class="card-header">
-                    <h3 class="card-title"><i class="fas fa-lock"></i> Change Password</h3>
+                    <h5 class="card-title mb-0"><i class="fas fa-lock"></i> Change Password</h5>
                 </div>
                 <div class="card-body">
                     <div id="passwordAlert"></div>
                     <form id="changePasswordForm">
                         <div class="row">
-                            <div class="col col-4">
+                            <div class="col col-12 col-md-4">
                                 <div class="form-group">
                                     <label for="current_password"><i class="fas fa-key"></i> Current Password</label>
                                     <input type="password" id="current_password" name="current_password" class="form-control" required>
                                 </div>
                             </div>
-                            <div class="col col-4">
+                            <div class="col col-12 col-md-4">
                                 <div class="form-group">
                                     <label for="new_password"><i class="fas fa-lock"></i> New Password</label>
                                     <input type="password" id="new_password" name="new_password" class="form-control" required minlength="6">
                                 </div>
                             </div>
-                            <div class="col col-4">
+                            <div class="col col-12 col-md-4">
                                 <div class="form-group">
                                     <label for="confirm_password"><i class="fas fa-lock"></i> Confirm New Password</label>
                                     <input type="password" id="confirm_password" name="confirm_password" class="form-control" required minlength="6">

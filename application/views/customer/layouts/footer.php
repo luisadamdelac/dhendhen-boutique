@@ -34,14 +34,26 @@
                 <p><i class="fas fa-map-marker-alt"></i> Manila, Philippines</p>
             </div>
             
+            <?php
+                $CI =& get_instance();
+                $CI->load->model('Settings_model');
+                $socialLinks = [
+                    'facebook-f' => $CI->Settings_model->get('social_facebook'),
+                    'instagram' => $CI->Settings_model->get('social_instagram'),
+                    'tiktok' => $CI->Settings_model->get('social_tiktok'),
+                ];
+                $socialLinks = array_filter($socialLinks);
+            ?>
+            <?php if (!empty($socialLinks)): ?>
             <div class="footer-section">
                 <h4>Follow Us</h4>
                 <div class="social-links">
-                    <a href="#"><i class="fab fa-facebook-f"></i></a>
-                    <a href="#"><i class="fab fa-instagram"></i></a>
-                    <a href="#"><i class="fab fa-tiktok"></i></a>
+                    <?php foreach ($socialLinks as $icon => $url): ?>
+                        <a href="<?php echo htmlspecialchars($url); ?>" target="_blank" rel="noopener"><i class="fab fa-<?php echo $icon; ?>"></i></a>
+                    <?php endforeach; ?>
                 </div>
             </div>
+            <?php endif; ?>
         </div>
         
         <div class="footer-bottom">
@@ -135,6 +147,17 @@
         }
         .modal-content.modal-sm { max-width: 400px; }
         .modal-content.modal-lg { max-width: 800px; }
+
+        /* Tighten the overlay/header/body/footer gutters on small screens
+           so the modal reads as "nearly full-width with margins" instead of
+           losing most of its usable width to fixed 2rem padding. */
+        @media (max-width: 767.98px) {
+            .modal { padding: 1rem; }
+            .modal-header, .modal-body, .modal-footer { padding: 1rem 1.25rem; }
+        }
+        @media (max-width: 480px) {
+            .modal { padding: 0.5rem; }
+        }
     </style>
 
     <script>

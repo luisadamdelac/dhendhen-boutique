@@ -142,9 +142,8 @@ table.dataTable thead th.sorting:hover { color: var(--primary-pink); cursor: poi
             <div class="col-md-3 col-sm-6">
                 <label class="form-label small text-muted mb-1">Payment Method</label>
                 <select id="filterPaymentMethod" class="form-select form-select-sm">
-                    <option value="" selected>All Payment Methods</option>
-                    <option value="GCash">GCash</option>
-                    <option value="PayMongo">PayMongo</option>
+                    <option value="">All Payment Methods</option>
+                    <option value="GCash" selected>GCash</option>
                 </select>
             </div>
             <div class="col-md-2 col-sm-6">
@@ -309,6 +308,8 @@ table.dataTable thead th.sorting:hover { color: var(--primary-pink); cursor: poi
                                                 'orderId'      => $orderId,
                                                 'status'       => $ptStatus,
                                                 'method'       => $hasPayment ? $order['payment_method'] : null,
+                                                'reference'    => $order['payment_reference'] ?? null,
+                                                'senderNumber' => $order['gcash_sender_number'] ?? null,
                                                 'receiptImage' => !empty($order['receipt_image']) ? BASE_URL . $order['receipt_image'] : null,
                                                 'amount'       => $order['payment_amount'] ?? ($order['total_amount'] ?? 0),
                                                 'paidAt'       => $order['paid_at'] ?? null,
@@ -348,6 +349,14 @@ table.dataTable thead th.sorting:hover { color: var(--primary-pink); cursor: poi
                                 <div class="fw-semibold" id="paymentInfoMethod">—</div>
                             </div>
                             <div class="col-6">
+                                <label class="text-muted mb-1" style="font-size:12px;">Reference Number</label>
+                                <div class="fw-semibold" id="paymentInfoReference">—</div>
+                            </div>
+                            <div class="col-6">
+                                <label class="text-muted mb-1" style="font-size:12px;">GCash Number Used</label>
+                                <div class="fw-semibold" id="paymentInfoSenderNumber">—</div>
+                            </div>
+                            <div class="col-6">
                                 <label class="text-muted mb-1" style="font-size:12px;">Amount</label>
                                 <div class="fw-semibold" id="paymentInfoAmount">—</div>
                             </div>
@@ -372,10 +381,20 @@ table.dataTable thead th.sorting:hover { color: var(--primary-pink); cursor: poi
                         <div class="form-group">
                             <label for="paymentStatusSelect">Payment Status</label>
                             <select class="form-control" id="paymentStatusSelect" name="payment_status" required>
-                                <option value="pending">Pending</option>
+                                <option value="pending" id="paymentStatusOptPending">Pending</option>
                                 <option value="completed">Completed</option>
-                                <option value="refunded">Refunded</option>
+                                <option value="failed" id="paymentStatusOptFailed">Failed</option>
+                                <option value="refunded" id="paymentStatusOptRefunded">Refunded</option>
                             </select>
+                            <small class="text-muted" id="paymentStatusLockedHint" style="display:none;">
+                                Already Completed — use the Refund flow to reverse this payment instead.
+                            </small>
+                        </div>
+                        <div class="form-group" id="rejectionReasonWrap" style="display:none;">
+                            <label for="rejectionReasonInput">Reason for Rejection <span class="text-danger">*</span></label>
+                            <textarea class="form-control" id="rejectionReasonInput" name="rejection_reason" rows="2"
+                                      placeholder="e.g. Reference number doesn't match our GCash records"></textarea>
+                            <small class="text-muted">Shown to the customer so they can resubmit a corrected reference number/receipt.</small>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -424,6 +443,8 @@ function openPaymentModal(btn) {
     paymentModalOrderId = info.orderId;
 
     document.getElementById('paymentInfoMethod').textContent = info.method || '—';
+    document.getElementById('paymentInfoReference').textContent = info.reference || '—';
+    document.getElementById('paymentInfoSenderNumber').textContent = info.senderNumber || '—';
     document.getElementById('paymentInfoAmount').textContent = info.amount
         ? ('₱' + Number(info.amount).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }))
         : '—';
@@ -444,18 +465,55 @@ function openPaymentModal(btn) {
     }
 
     document.getElementById('paymentStatusSelect').value = info.status || 'pending';
+
+    const isCompleted = info.status === 'completed';
+    ['paymentStatusOptPending', 'paymentStatusOptFailed', 'paymentStatusOptRefunded'].forEach(id => {
+        document.getElementById(id).disabled = isCompleted;
+    });
+    document.getElementById('paymentStatusLockedHint').style.display = isCompleted ? 'block' : 'none';
+    document.getElementById('paymentSubmitBtn').disabled = isCompleted;
+
+    document.getElementById('rejectionReasonInput').value = '';
+    document.getElementById('rejectionReasonWrap').style.display = document.getElementById('paymentStatusSelect').value === 'failed' ? 'block' : 'none';
+
     bootstrap.Modal.getOrCreateInstance(paymentModalEl).show();
 }
 
+document.getElementById('paymentStatusSelect').addEventListener('change', function() {
+    document.getElementById('rejectionReasonWrap').style.display = this.value === 'failed' ? 'block' : 'none';
+});
+
 document.getElementById('paymentForm').addEventListener('submit', function(e) {
     e.preventDefault();
+
+    const newStatus = document.getElementById('paymentStatusSelect').value;
+    const currentStatus = (document.getElementById('paymentInfoCurrentStatus').textContent || '').trim().toLowerCase();
+
+    if (currentStatus === 'completed' && newStatus !== 'completed') {
+        alert('This payment is already marked Completed and can\'t be changed back. Use the Refund flow to reverse it instead.');
+        return;
+    }
+
+    if (newStatus === 'completed') {
+        const ok = confirm('Mark this payment as Completed?\n\nOnce approved, this cannot be undone — it unlocks the order for staff to process.');
+        if (!ok) return;
+    }
+
+    const rejectionReason = document.getElementById('rejectionReasonInput').value.trim();
+    if (newStatus === 'failed' && !rejectionReason) {
+        alert('Please provide a reason for rejecting this payment.');
+        document.getElementById('rejectionReasonInput').focus();
+        return;
+    }
+
     const btn = document.getElementById('paymentSubmitBtn');
     const originalHtml = btn.innerHTML;
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving…';
 
     const params = new URLSearchParams({
-        payment_status: document.getElementById('paymentStatusSelect').value,
+        payment_status: newStatus,
+        rejection_reason: rejectionReason,
     });
 
     fetch('<?php echo BASE_URL; ?>admin/order/update_payment/' + paymentModalOrderId, {
@@ -567,6 +625,11 @@ $(function () {
     $('#filterStatus, #filterPaymentMethod, #filterDateFrom, #filterDateTo').on('change', function () {
         table.draw();
     });
+
+    // Payment Method defaults to GCash, so the table must redraw once on
+    // load to actually apply it (the filter fn above is registered after
+    // DataTables' own initial draw already ran).
+    table.draw();
 
     $('#clearFiltersBtn').on('click', function () {
         $('#filterStatus, #filterPaymentMethod').val('');

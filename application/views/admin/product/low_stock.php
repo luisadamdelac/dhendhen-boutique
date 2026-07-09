@@ -44,7 +44,8 @@ $current_page = 'product';
                     <tr>
                         <th class="ps-3">Product</th>
                         <th class="text-center">Stock</th>
-                        <th class="text-end pe-3">Price</th>
+                        <th class="text-end">Price</th>
+                        <th class="text-center pe-3">Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -66,12 +67,18 @@ $current_page = 'product';
                             <td class="text-center">
                                 <span class="stock-badge <?= $stock_badge; ?>"><?= number_format((int) $st); ?></span>
                             </td>
-                            <td class="text-end pe-3 fw-semibold" style="font-size:13px;">₱<?= number_format($product['price'] ?? 0, 2); ?></td>
+                            <td class="text-end fw-semibold" style="font-size:13px;">₱<?= number_format($product['price'] ?? 0, 2); ?></td>
+                            <td class="text-center pe-3">
+                                <button type="button" class="btn btn-sm btn-outline-success"
+                                        onclick="openRestockModal(<?= (int) $product['product_id']; ?>, '<?= addslashes(htmlspecialchars($product['product_name'])); ?>')">
+                                    <i class="fas fa-boxes-stacked"></i> Restock
+                                </button>
+                            </td>
                         </tr>
                         <?php endforeach; ?>
                     <?php else: ?>
                         <tr>
-                            <td colspan="3" class="text-center py-5">
+                            <td colspan="4" class="text-center py-5">
                                 <i class="fas fa-box-open fa-2x text-muted mb-2 d-block"></i>
                                 <span class="text-muted">No low stock products found</span>
                             </td>
@@ -83,3 +90,114 @@ $current_page = 'product';
     </div>
 
 </div><!-- /container-fluid -->
+
+<!-- Quick Restock Modal -->
+<div class="modal fade" id="restockModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius:12px;border:none;box-shadow:0 8px 32px rgba(0,0,0,.15);">
+            <form id="restockForm">
+                <div class="modal-header border-0 pb-0">
+                    <div>
+                        <h5 class="modal-title fw-bold">Quick Restock</h5>
+                        <small class="text-muted" id="restockProductName"></small>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body pt-3">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">Branch <span class="text-danger">*</span></label>
+                        <select class="form-select" name="branch_id" id="restock_branch_id" required>
+                            <option value="">Select branch</option>
+                            <?php foreach ($branches as $b): ?>
+                                <option value="<?= (int) $b['branch_id']; ?>" data-branch-name="<?= htmlspecialchars($b['branch_name']); ?>"><?= htmlspecialchars($b['branch_name']); ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                        <div class="small text-muted mt-1" id="restockCurrentStockHint"></div>
+                    </div>
+                    <div class="mb-1">
+                        <label class="form-label fw-semibold small">Quantity to Add <span class="text-danger">*</span></label>
+                        <input type="number" class="form-control" name="quantity" id="restock_quantity" min="1" step="1" required placeholder="e.g. 50">
+                    </div>
+                    <div class="small text-muted mt-2">
+                        <i class="fas fa-info-circle"></i> This adds to the product's base stock. For products with named variations (e.g. Size, Color), restock the specific variation instead from the product's Edit page.
+                    </div>
+                    <div class="alert alert-danger py-2 px-3 mt-3 mb-0 d-none" id="restockError" style="font-size:12px;"></div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success" id="restockSaveBtn">
+                        <i class="fas fa-save me-1"></i> Add Stock
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+var _restockProductId = null;
+var _restockBranchStock = <?= json_encode($branch_stock ?? []); ?>;
+
+function updateRestockStockHint() {
+    var sel = document.getElementById('restock_branch_id');
+    var hint = document.getElementById('restockCurrentStockHint');
+    var branchId = sel.value;
+    if (!branchId || !_restockProductId) {
+        hint.textContent = '';
+        return;
+    }
+    var byBranch = _restockBranchStock[_restockProductId] || {};
+    var qty = byBranch[branchId] ?? 0;
+    var branchName = sel.options[sel.selectedIndex].getAttribute('data-branch-name');
+    hint.textContent = 'Current stock at ' + branchName + ': ' + qty;
+}
+
+function openRestockModal(productId, productName) {
+    _restockProductId = productId;
+    document.getElementById('restockProductName').textContent = productName;
+    document.getElementById('restock_branch_id').value = '';
+    document.getElementById('restock_quantity').value = '';
+    document.getElementById('restockError').classList.add('d-none');
+    updateRestockStockHint();
+    new bootstrap.Modal(document.getElementById('restockModal')).show();
+}
+
+document.getElementById('restock_branch_id').addEventListener('change', updateRestockStockHint);
+
+document.getElementById('restockForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    if (!_restockProductId) return;
+
+    var btn = document.getElementById('restockSaveBtn');
+    var errBox = document.getElementById('restockError');
+    errBox.classList.add('d-none');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Saving…';
+
+    var formData = new FormData();
+    formData.append('branch_id', document.getElementById('restock_branch_id').value);
+    formData.append('quantity', document.getElementById('restock_quantity').value);
+
+    fetch('<?= site_url('admin/product/quick_restock/'); ?>' + _restockProductId, {
+        method: 'POST',
+        body: formData
+    })
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+        if (data.success) {
+            window.location.reload();
+        } else {
+            errBox.textContent = data.message || 'Failed to restock.';
+            errBox.classList.remove('d-none');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-save me-1"></i> Add Stock';
+        }
+    })
+    .catch(function() {
+        errBox.textContent = 'Something went wrong. Please try again.';
+        errBox.classList.remove('d-none');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-save me-1"></i> Add Stock';
+    });
+});
+</script>

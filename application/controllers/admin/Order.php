@@ -61,7 +61,7 @@ class Order extends Authenticated_Controller {
         }
         $order_ids = array_column($orders, 'order_id');
         $latest = $this->db
-            ->select('pt.order_id, pt.payment_method, pt.status as payment_tx_status, pt.payment_reference, pt.gcash_sender_number, pt.receipt_image, pt.amount as payment_amount, pt.paid_at, pt.paymongo_checkout_session_id, pt.paymongo_payment_id')
+            ->select('pt.order_id, pt.payment_method, pt.status as payment_tx_status, pt.payment_reference, pt.gcash_sender_number, pt.receipt_image, pt.amount as payment_amount, pt.paid_at')
             ->from(PAYMENTS_TABLE . ' pt')
             ->join('(SELECT order_id, MAX(payment_id) as latest_id FROM ' . PAYMENTS_TABLE . ' GROUP BY order_id) latest_pt',
                 'latest_pt.order_id = pt.order_id AND latest_pt.latest_id = pt.payment_id', 'inner', FALSE)
@@ -147,20 +147,31 @@ class Order extends Authenticated_Controller {
             return;
         }
 
-        // 'failed' isn't offered as a manual choice here — PayMongo reports
-        // failed payments itself via the webhook (see
-        // OrderFulfillmentService::markOrderPaymentFailed()); an admin's
-        // manual recourse for a payment that isn't coming through is to
-        // cancel the order instead, not hand-pick "Failed" here.
-        $valid_statuses = ['pending', 'completed', 'refunded'];
+        $valid_statuses = ['pending', 'completed', 'failed', 'refunded'];
         $status = $this->input->post('payment_status', TRUE);
         if (!in_array($status, $valid_statuses, TRUE)) {
             echo json_encode(['success' => FALSE, 'message' => 'Invalid payment status']);
             return;
         }
 
-        $existing = $this->db->select('payment_id')->from(PAYMENTS_TABLE)
+        $rejection_reason = trim((string) $this->input->post('rejection_reason', TRUE));
+        if ($status === 'failed' && $rejection_reason === '') {
+            echo json_encode(['success' => FALSE, 'message' => 'Please provide a reason for rejecting this payment.']);
+            return;
+        }
+
+        $existing = $this->db->select('payment_id, status')->from(PAYMENTS_TABLE)
             ->where('order_id', $order_id)->order_by('payment_id', 'DESC')->limit(1)->get()->row_array();
+
+        // Once a payment is Completed, it's final — approving it already
+        // deducted stock and created a commission, so silently reverting it
+        // here would desync those from the payment record. Use Refunds
+        // (which properly reverses stock/commission) to undo a completed
+        // payment instead.
+        if ($existing && $existing['status'] === 'completed' && $status !== 'completed') {
+            echo json_encode(['success' => FALSE, 'message' => 'This payment is already marked Completed and can\'t be changed back. Use the Refund flow to reverse it instead.']);
+            return;
+        }
 
         // Status only — the payment_reference column (the customer's GCash
         // reference number, captured at checkout) is intentionally left
@@ -168,6 +179,7 @@ class Order extends Authenticated_Controller {
         $payment_data = [
             'status'             => $status,
             'paid_at'            => $status === 'completed' ? date('Y-m-d H:i:s') : NULL,
+            'rejection_reason'   => $status === 'failed' ? $rejection_reason : NULL,
             'updated_at'         => date('Y-m-d H:i:s'),
         ];
 
@@ -196,6 +208,9 @@ class Order extends Authenticated_Controller {
                 $this->db->update(ORDER_TABLE, ['order_status' => 'paid', 'updated_at' => date('Y-m-d H:i:s')], ['order_id' => $order_id]);
                 apply_order_status_side_effects($order, 'pending', 'paid');
             }
+        } elseif ($status === 'failed') {
+            require_once APPPATH . 'services/NotificationService.php';
+            NotificationService::paymentRejected($order_id, $order['customer_id'], $rejection_reason);
         }
 
         echo json_encode(['success' => TRUE, 'message' => 'Payment status updated successfully']);

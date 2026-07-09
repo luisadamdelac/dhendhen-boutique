@@ -6,6 +6,7 @@ class Withdrawal extends Authenticated_Controller {
         parent::__construct();
         $this->require_role('admin');
         $this->load->model(['Withdrawal_model', 'Activity_log_model']);
+        require_once APPPATH . 'services/CommissionService.php';
     }
 
     /**
@@ -108,19 +109,24 @@ class Withdrawal extends Authenticated_Controller {
 
         $this->db->trans_start();
 
+        $admin_remarks = $this->input->post('admin_remarks') ?? '';
+
         // Funds are only held (deducted) once the reseller verifies their
         // OTP — an unverified request never touched commission_balance, so
         // refunding it here would incorrectly credit money never taken.
         if ((int) $withdrawal['otp_verified'] === 1) {
-            $this->db->set('commission_balance', 'commission_balance + ' . (float) $withdrawal['amount'], FALSE)
-                ->where('reseller_id', $withdrawal['reseller_id'])
-                ->update(RESELLER_TABLE);
+            CommissionService::releaseWithdrawalHold(
+                $withdrawal['reseller_id'],
+                (float) $withdrawal['amount'],
+                (int) $withdrawal_id,
+                $admin_remarks !== '' ? $admin_remarks : 'Withdrawal rejected'
+            );
         }
 
         $this->db->update(WITHDRAWAL_TABLE, [
             'status' => 'rejected',
             'admin_id' => $this->user_id,
-            'rejection_reason' => $this->input->post('admin_remarks') ?? ''
+            'rejection_reason' => $admin_remarks
         ], ['withdrawal_id' => $withdrawal_id]);
 
         $this->db->trans_complete();
@@ -144,6 +150,18 @@ class Withdrawal extends Authenticated_Controller {
         $withdrawal = $this->db->select('*')->from(WITHDRAWAL_TABLE)->where('withdrawal_id', $withdrawal_id)->get()->row_array();
         if (!$withdrawal) {
             echo json_encode(['success' => FALSE, 'message' => 'Withdrawal request not found']);
+            return;
+        }
+
+        // Admin sets specific commission-processing dates (Settings >
+        // General); a request can be submitted and approved any day, but
+        // the actual payout can't be marked processed before its scheduled
+        // date arrives.
+        if (!empty($withdrawal['scheduled_date']) && date('Y-m-d') < $withdrawal['scheduled_date']) {
+            echo json_encode([
+                'success' => FALSE,
+                'message' => 'This withdrawal is scheduled for ' . date('F j, Y', strtotime($withdrawal['scheduled_date'])) . ' and cannot be processed before then.',
+            ]);
             return;
         }
 

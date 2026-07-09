@@ -11,6 +11,9 @@
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
+    <!-- Bootstrap 5 (self-hosted; base layer — admin-style.css overrides theme portions) -->
+    <link rel="stylesheet" href="<?php echo BASE_URL; ?>public/vendor/bootstrap/bootstrap.min.css">
+
     <!-- Admin CSS (shared look) -->
     <link rel="stylesheet" href="<?php echo BASE_URL; ?>public/css/admin-style.css">
 
@@ -54,6 +57,9 @@
                 </div>
             </div>
         </header>
+
+        <!-- Sidebar backdrop (mobile off-canvas overlay, tap to close) -->
+        <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
 
         <!-- Sidebar -->
         <aside class="sidebar" id="sidebar">

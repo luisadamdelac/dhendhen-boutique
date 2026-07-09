@@ -178,21 +178,21 @@ $is_admin_only = !$is_staff_view && !$is_reseller_view;
                     </h3>
                 </div>
                 <div class="card-body">
-                    <div class="chart-container" style="height: 250px;">
+                    <div class="chart-container" style="height: 250px; position: relative;">
                         <canvas id="commissionChart"></canvas>
+                        <div id="commissionChartCenter" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; pointer-events: none;">
+                            <div style="font-size: 20px; font-weight: 700; color: var(--dark-gray, #333);" id="commissionChartTotal">₱0.00</div>
+                            <div style="font-size: 11px; color: var(--gray, #888); text-transform: uppercase; letter-spacing: .04em;">Total</div>
+                        </div>
                     </div>
                     <div style="margin-top: 20px;">
                         <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--secondary-lavender);">
                             <span><i class="fas fa-circle" style="color: #ff69b4;"></i> Pending</span>
                             <strong>₱<?php echo number_format($commission_stats['pending_amount'] ?? 0, 2); ?></strong>
                         </div>
-                        <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--secondary-lavender);">
+                        <div style="display: flex; justify-content: space-between; padding: 10px 0;">
                             <span><i class="fas fa-circle" style="color: #ee82ee;"></i> Approved</span>
                             <strong>₱<?php echo number_format($commission_stats['approved_amount'] ?? 0, 2); ?></strong>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; padding: 10px 0;">
-                            <span><i class="fas fa-circle" style="color: #9370db;"></i> Paid</span>
-                            <strong>₱<?php echo number_format($commission_stats['paid_amount'] ?? 0, 2); ?></strong>
                         </div>
                     </div>
                 </div>
@@ -358,33 +358,44 @@ $is_admin_only = !$is_staff_view && !$is_reseller_view;
     const commissionCtx = document.getElementById('commissionChart').getContext('2d');
     const commissionStats = <?php echo json_encode($commission_stats ?? []); ?>;
 
+    const commissionPending = parseFloat(commissionStats.pending_amount || 0);
+    const commissionApproved = parseFloat(commissionStats.approved_amount || 0);
+    const commissionTotal = commissionPending + commissionApproved;
+
+    document.getElementById('commissionChartTotal').textContent =
+        '₱' + commissionTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    // With no commissions at all yet, a single real-color slice would just
+    // render as a full ring for whichever category happens to be nonzero —
+    // show a flat neutral ring instead so an empty state doesn't look like
+    // a stuck/broken chart.
+    const commissionHasData = commissionTotal > 0;
+
     new Chart(commissionCtx, {
         type: 'doughnut',
         data: {
-            labels: ['Pending', 'Approved', 'Paid'],
+            labels: ['Pending', 'Approved'],
             datasets: [{
-                data: [
-                    parseFloat(commissionStats.pending_amount || 0),
-                    parseFloat(commissionStats.approved_amount || 0),
-                    parseFloat(commissionStats.paid_amount || 0)
-                ],
-                backgroundColor: [
+                data: commissionHasData ? [commissionPending, commissionApproved] : [1],
+                backgroundColor: commissionHasData ? [
                     '#ff69b4',
-                    '#ee82ee',
-                    '#9370db'
-                ],
-                borderWidth: 0,
-                hoverOffset: 10
+                    '#ee82ee'
+                ] : ['#eee'],
+                borderWidth: 2,
+                borderColor: '#fff',
+                hoverOffset: commissionHasData ? 10 : 0
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            cutout: '68%',
             plugins: {
                 legend: {
                     display: false
                 },
                 tooltip: {
+                    enabled: commissionHasData,
                     backgroundColor: 'rgba(255, 105, 180, 0.9)',
                     titleColor: '#fff',
                     bodyColor: '#fff',

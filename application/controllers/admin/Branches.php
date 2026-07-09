@@ -24,6 +24,9 @@ class Branches extends Authenticated_Controller {
 
         $this->form_validation->set_rules('branch_name', 'Branch Name', 'required|trim');
         $this->form_validation->set_rules('city', 'City', 'required|trim');
+        $this->form_validation->set_rules('barangay', 'Barangay', 'required|trim');
+        $this->form_validation->set_rules('street', 'Street / House No.', 'required|trim');
+        $this->form_validation->set_rules('phone_number', 'Phone Number', 'required|trim');
 
         if ($this->form_validation->run() === FALSE) {
             $this->session->set_flashdata('error', validation_errors(' ', ' '));
@@ -32,7 +35,7 @@ class Branches extends Authenticated_Controller {
 
         $city = $this->input->post('city', TRUE);
         $barangay = $this->input->post('barangay', TRUE);
-        if (!empty($barangay) && !is_valid_oriental_mindoro_address($city, $barangay)) {
+        if (!is_valid_oriental_mindoro_address($city, $barangay)) {
             $this->session->set_flashdata('error', 'Please select a valid City/Municipality and Barangay within Oriental Mindoro.');
             redirect('admin/branches');
         }

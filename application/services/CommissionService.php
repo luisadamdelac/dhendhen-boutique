@@ -177,6 +177,97 @@ class CommissionService {
     }
 
     /**
+     * Hold (deduct) an amount against a reseller's wallet for a withdrawal
+     * request, once its OTP has been verified — logged as wallet_ledger_tbl's
+     * 'hold' type so the ledger is a complete record of every balance
+     * change, not just commission credits. See releaseWithdrawalHold() for
+     * the inverse (a rejected request refunding the hold).
+     *
+     * Caller is responsible for the balance-sufficiency check and row lock
+     * (see reseller/Withdrawals.php::verify_withdrawal_otp()) — this method
+     * only performs the deduction + ledger write.
+     */
+    public static function holdWithdrawal($resellerId, $amount, $withdrawalId) {
+        $CI =& get_instance();
+        $CI->load->database();
+
+        try {
+            $CI->db->trans_start();
+
+            $reseller = $CI->db->where('reseller_id', $resellerId)->get(RESELLER_TABLE)->row_array();
+            $newBalance = max(0, (float) ($reseller['commission_balance'] ?? 0) - (float) $amount);
+
+            $CI->db->where('reseller_id', $resellerId)->update(RESELLER_TABLE, ['commission_balance' => $newBalance]);
+
+            $CI->db->insert('wallet_ledger_tbl', array(
+                'reseller_id' => $resellerId,
+                'transaction_type' => 'hold',
+                'amount' => $amount,
+                'balance_after' => $newBalance,
+                'reference_type' => 'withdrawal',
+                'reference_id' => $withdrawalId,
+                'created_at' => date('Y-m-d H:i:s'),
+            ));
+
+            $CI->db->trans_complete();
+
+            if ($CI->db->trans_status() === FALSE) {
+                throw new Exception('Transaction failed');
+            }
+
+            log_message('info', 'Withdrawal hold: Reseller ' . $resellerId . ', Withdrawal ' . $withdrawalId . ', Amount ₱' . number_format($amount, 2));
+            return TRUE;
+
+        } catch (Exception $e) {
+            log_message('error', 'Withdrawal hold error: ' . $e->getMessage());
+            return FALSE;
+        }
+    }
+
+    /**
+     * Release a previously-held withdrawal amount back into the reseller's
+     * wallet — called when admin rejects a withdrawal that had already
+     * passed OTP verification (so the amount was actually held).
+     */
+    public static function releaseWithdrawalHold($resellerId, $amount, $withdrawalId, $notes = NULL) {
+        $CI =& get_instance();
+        $CI->load->database();
+
+        try {
+            $CI->db->trans_start();
+
+            $reseller = $CI->db->where('reseller_id', $resellerId)->get(RESELLER_TABLE)->row_array();
+            $newBalance = (float) ($reseller['commission_balance'] ?? 0) + (float) $amount;
+
+            $CI->db->where('reseller_id', $resellerId)->update(RESELLER_TABLE, ['commission_balance' => $newBalance]);
+
+            $CI->db->insert('wallet_ledger_tbl', array(
+                'reseller_id' => $resellerId,
+                'transaction_type' => 'hold_release',
+                'amount' => $amount,
+                'balance_after' => $newBalance,
+                'reference_type' => 'withdrawal',
+                'reference_id' => $withdrawalId,
+                'notes' => $notes,
+                'created_at' => date('Y-m-d H:i:s'),
+            ));
+
+            $CI->db->trans_complete();
+
+            if ($CI->db->trans_status() === FALSE) {
+                throw new Exception('Transaction failed');
+            }
+
+            log_message('info', 'Withdrawal hold released: Reseller ' . $resellerId . ', Withdrawal ' . $withdrawalId . ', Amount ₱' . number_format($amount, 2));
+            return TRUE;
+
+        } catch (Exception $e) {
+            log_message('error', 'Withdrawal hold release error: ' . $e->getMessage());
+            return FALSE;
+        }
+    }
+
+    /**
      * Credit reseller wallet balance and log to the ledger
      */
     private static function creditWallet($resellerId, $amount, $referenceType = 'commission', $referenceId = NULL) {

@@ -1224,6 +1224,13 @@ textarea.form-control {
     .user-info {
         display: none;
     }
+
+    /* Tablet: modals get a little more breathing room back from the
+       overlay's default 32px gutter, since 600px content no longer needs
+       that much margin to avoid touching the viewport edge. */
+    .modal {
+        padding: var(--spacing-lg);
+    }
 }
 
 @media (max-width: 767.98px) {
@@ -1246,6 +1253,18 @@ textarea.form-control {
 
     .card {
         padding: var(--spacing-md);
+    }
+
+    /* Large-phone/small-tablet: tighten modal chrome further so the
+       header/body/footer padding doesn't eat into content width. */
+    .modal {
+        padding: var(--spacing-md);
+    }
+
+    .modal-header,
+    .modal-body,
+    .modal-footer {
+        padding: var(--spacing-md) var(--spacing-lg);
     }
 }
 

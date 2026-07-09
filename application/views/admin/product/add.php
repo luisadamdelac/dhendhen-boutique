@@ -223,9 +223,9 @@
 }
 .smart-select-add-btn:hover { background: var(--primary-pink); color: #fff; }
 .smart-select-dropdown {
-    position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 40;
-    background: #fff; border: 1px solid var(--border); border-radius: var(--radius-md);
-    box-shadow: var(--shadow-md); max-height: 220px; overflow-y: auto; padding: 6px;
+    position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 400;
+    background: #fff; opacity: 1; border: 1px solid var(--border); border-radius: var(--radius-md);
+    box-shadow: 0 8px 24px rgba(15, 23, 42, .18); max-height: 220px; overflow-y: auto; overflow-x: hidden; padding: 6px;
 }
 .smart-select-option {
     padding: 8px 10px; border-radius: 8px; cursor: pointer; font-size: .88rem; color: var(--text);
@@ -628,7 +628,7 @@
                     <button type="button" class="btn btn-outline-secondary btn-sm" id="addVariationTypeBtn">
                         <i class="fas fa-plus"></i> Add Variation Type
                     </button>
-                    <div class="smart-select-dropdown" id="variationTypeDropdown" hidden style="position:absolute;top:calc(100% + 4px);left:0;min-width:200px;"></div>
+                    <div class="smart-select-dropdown" id="variationTypeDropdown" hidden style="position:absolute;top:calc(100% + 4px);left:0;min-width:240px;"></div>
                 </div>
 
                 <div class="field-feedback invalid" id="variationStepError" style="display:none;margin-top:10px;">
@@ -911,7 +911,7 @@ function updateInventoryNotice(total) {
     } else if (total === 0) {
         inventoryNotice.className = 'inventory-notice warn';
         inventoryNotice.innerHTML = '<i class="fas fa-circle-info" style="margin-top:2px;"></i>' +
-            '<div>No stock entered yet. Stock is required — add a Variation Type and enter a quantity for at least one branch to continue.</div>';
+            '<div>No stock entered yet. Stock is required — add a Variation Type below and enter a quantity for at least one branch (Value can stay blank if this isn’t a real variation).</div>';
     } else {
         inventoryNotice.className = 'inventory-notice ok';
         inventoryNotice.innerHTML = '<i class="fas fa-check-circle" style="margin-top:2px;"></i>' +
@@ -1092,8 +1092,8 @@ function validateStep3(showErrors) {
         ok = false;
         if (showErrors && variationError) {
             variationError.innerHTML = '<i class="fas fa-exclamation-circle"></i> ' + (rows.length === 0
-                ? 'Add a Variation Type and enter stock for at least one branch before continuing.'
-                : 'Enter stock for at least one branch before continuing — stock is required.');
+                ? 'Stock is required. Click "Add Variation Type" below and enter a quantity for at least one branch — leave Value blank if this product has no real variations.'
+                : 'Stock is required — enter a quantity for at least one branch on the variation row above (Value can stay blank if this isn’t a real variation).');
             variationError.style.display = 'block';
         }
     } else if (showErrors && variationError) {
@@ -1512,7 +1512,7 @@ addVariationTypeBtn.addEventListener('click', () => {
     const customRow = document.createElement('div');
     customRow.style.cssText = 'display:flex;gap:6px;padding:8px;border-bottom:1px solid var(--border);';
     customRow.innerHTML =
-        '<input type="text" class="form-control form-control-sm" placeholder="Type a custom name…" maxlength="50">' +
+        '<input type="text" class="form-control form-control-sm" placeholder="Custom name…" maxlength="50" style="flex:1 1 auto;min-width:0;width:auto;">' +
         '<button type="button" class="btn btn-primary btn-sm" style="flex-shrink:0;">Add</button>';
     const customInput = customRow.querySelector('input');
     const customBtn = customRow.querySelector('button');

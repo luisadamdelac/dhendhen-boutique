@@ -116,9 +116,9 @@ $current_image_path = !empty($primary_image['image_path']) ? $primary_image['ima
 }
 .smart-select-add-btn:hover { background: var(--primary-pink); color: #fff; }
 .smart-select-dropdown {
-    position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 40;
-    background: #fff; border: 1px solid var(--border); border-radius: var(--radius-md);
-    box-shadow: var(--shadow-md); max-height: 220px; overflow-y: auto; padding: 6px;
+    position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 400;
+    background: #fff; opacity: 1; border: 1px solid var(--border); border-radius: var(--radius-md);
+    box-shadow: 0 8px 24px rgba(15, 23, 42, .18); max-height: 220px; overflow-y: auto; overflow-x: hidden; padding: 6px;
 }
 .smart-select-option {
     padding: 8px 10px; border-radius: 8px; cursor: pointer; font-size: .88rem; color: var(--text);
@@ -469,6 +469,10 @@ $current_image_path = !empty($primary_image['image_path']) ? $primary_image['ima
                             <hr>
                         </div>
                         <p class="text-muted" style="margin-top:-6px;font-size:.85rem;">Optional. Each variation value has its own stock per branch and an optional price adjustment on top of the selling price above.</p>
+                        <div style="background:#f0f4ff;border:1px solid #c7d2fe;border-radius:10px;padding:8px 14px;margin-bottom:16px;font-size:.82rem;color:var(--text);display:flex;gap:8px;align-items:center;">
+                            <i class="fas fa-circle-info" style="color:var(--primary-pink);"></i>
+                            <div>Numbers below are the <strong>current stock</strong> remaining per branch.</div>
+                        </div>
 
                         <div id="variationTypesContainer"></div>
 
@@ -476,7 +480,7 @@ $current_image_path = !empty($primary_image['image_path']) ? $primary_image['ima
                             <button type="button" class="btn btn-outline-secondary btn-sm" id="addVariationTypeBtn">
                                 <i class="fas fa-plus"></i> Add Variation Type
                             </button>
-                            <div class="smart-select-dropdown" id="variationTypeDropdown" hidden style="position:absolute;top:calc(100% + 4px);left:0;min-width:200px;"></div>
+                            <div class="smart-select-dropdown" id="variationTypeDropdown" hidden style="position:absolute;top:calc(100% + 4px);left:0;min-width:240px;"></div>
                         </div>
 
                         <div style="margin-top:20px;">
@@ -1030,7 +1034,7 @@ addVariationTypeBtn.addEventListener('click', () => {
     const customRow = document.createElement('div');
     customRow.style.cssText = 'display:flex;gap:6px;padding:8px;border-bottom:1px solid var(--border);';
     customRow.innerHTML =
-        '<input type="text" class="form-control form-control-sm" placeholder="Type a custom name…" maxlength="50">' +
+        '<input type="text" class="form-control form-control-sm" placeholder="Custom name…" maxlength="50" style="flex:1 1 auto;min-width:0;width:auto;">' +
         '<button type="button" class="btn btn-primary btn-sm" style="flex-shrink:0;">Add</button>';
     const customInput = customRow.querySelector('input');
     const customBtn = customRow.querySelector('button');

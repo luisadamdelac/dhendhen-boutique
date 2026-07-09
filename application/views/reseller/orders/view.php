@@ -87,12 +87,13 @@
                     <tbody>
                         <?php foreach ($order['items'] as $item): ?>
                             <?php $itemImage = $item['product_image'] ?? $item['image'] ?? ''; ?>
+                            <?php $noImageSvg = 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22%3E%3Crect width=%22100%22 height=%22100%22 fill=%22%23f0f0f0%22/%3E%3C/svg%3E'; ?>
                             <tr>
                                 <td style="display:flex; align-items:center; gap:12px;">
-                                    <img src="<?php echo !empty($itemImage) ? (BASE_URL . $itemImage) : (BASE_URL . 'public/images/no-image.jpg'); ?>"
+                                    <img src="<?php echo !empty($itemImage) ? (BASE_URL . $itemImage) : $noImageSvg; ?>"
                                          alt="<?php echo htmlspecialchars($item['product_name']); ?>"
                                          style="width:50px;height:50px;object-fit:cover;border-radius:8px;flex-shrink:0;"
-                                         onerror="this.src='<?php echo BASE_URL; ?>public/images/no-image.jpg'">
+                                         onerror="this.onerror=null; this.src='<?php echo $noImageSvg; ?>';">
                                     <strong><?php echo htmlspecialchars($item['product_name']); ?></strong>
                                 </td>
                                 <td>₱<?php echo number_format($item['unit_price'], 2); ?></td>

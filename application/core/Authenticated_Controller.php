@@ -117,9 +117,16 @@ class Authenticated_Controller extends CI_Controller {
         // computing them here — instead of in every individual controller —
         // is what keeps the badges from going stale as pages are added.
         if ($this->user_type === 'admin') {
-            $defaults['pending_resellers'] = (int) $this->db
+            // Direct reseller sign-ups AND customer upgrade applications both
+            // land on the Resellers tab's action queues — either kind sitting
+            // at 'pending' means admin has something to approve/reject there.
+            $pendingRegistrations = (int) $this->db
                 ->where('status', 'pending')
                 ->count_all_results(RESELLER_TABLE);
+            $pendingApplications = (int) $this->db
+                ->where('status', 'pending')
+                ->count_all_results(RESELLER_APPLICATION_TABLE);
+            $defaults['pending_resellers'] = $pendingRegistrations + $pendingApplications;
 
             // Only count withdrawals the admin can actually act on right now
             // (reseller has verified their OTP) — otherwise the badge would
@@ -129,6 +136,24 @@ class Authenticated_Controller extends CI_Controller {
                 ->where('status', 'pending')
                 ->where('otp_verified', 1)
                 ->count_all_results(WITHDRAWAL_TABLE);
+
+            // Orders still awaiting admin's manual payment verification —
+            // this was always in the sidebar template but never actually
+            // computed anywhere, so the Orders badge silently never showed.
+            $defaults['pending_orders_notifications'] = (int) $this->db
+                ->where('order_status', 'pending')
+                ->count_all_results(ORDER_TABLE);
+
+            // Products at/below their own min_stock_alert (including sold
+            // out, 0) — same gap: the Inventory badge template existed but
+            // this was never populated, so a product selling down to zero
+            // never surfaced anywhere in the nav.
+            $defaults['low_stock_products'] = $this->db
+                ->select('product_id')
+                ->where('is_archived', 0)
+                ->where('min_stock_alert IS NOT NULL')
+                ->where('stock <= min_stock_alert')
+                ->get(PRODUCT_TABLE)->result_array();
         }
 
         return array_merge($defaults, $extra);

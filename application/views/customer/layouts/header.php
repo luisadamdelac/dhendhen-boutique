@@ -26,9 +26,6 @@
                 <i class="fas fa-phone"></i> +63 123 456 7890
                 <span style="margin-left: 20px;"><i class="fas fa-envelope"></i> info@dhendhen.com</span>
             </div>
-            <div>
-                <i class="fas fa-shipping-fast"></i> Free Shipping on Orders Over ₱1000
-            </div>
         </div>
     </div>
     
@@ -64,7 +61,7 @@
                         <i class="fas fa-shopping-cart"></i>
                         <span>Cart</span>
                         <?php if (isset($_SESSION['cart']) && count($_SESSION['cart']) > 0): ?>
-                            <span class="cart-badge"><?php echo array_sum($_SESSION['cart']); ?></span>
+                            <span class="cart-badge" id="cartBadgeCount"><?php echo array_sum(array_column($_SESSION['cart'], 'qty')); ?></span>
                         <?php endif; ?>
                     </a>
                     <a href="<?php echo BASE_URL; ?>settings" class="header-btn" title="Settings">

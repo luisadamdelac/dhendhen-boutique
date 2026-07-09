@@ -92,6 +92,7 @@
     </div>
 <?php else: ?>
     <div class="cart-container">
+        <div class="table-responsive">
         <table class="cart-table">
             <?php foreach ($cartItems as $item): ?>
                 <tr class="cart-item">
@@ -142,7 +143,8 @@
                 </tr>
             <?php endforeach; ?>
         </table>
-        
+        </div>
+
         <div class="cart-summary">
             <div class="summary-row">
                 <span>Subtotal:</span>

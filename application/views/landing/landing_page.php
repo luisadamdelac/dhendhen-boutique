@@ -256,7 +256,11 @@
       .hero-grid{ grid-template-columns:1fr; }
       .features-grid{ grid-template-columns:1fr; }
       .hero-title{ font-size:38px; }
-      .nav-links{ display:none; }
+      /* Previously hidden outright with no alternative — instead, wrap the
+         nav row and drop the in-page links to their own centered row below
+         the brand/CTAs, so they stay reachable on every screen size. */
+      .nav-inner{ flex-wrap:wrap; row-gap:10px; }
+      .nav-links{ order:3; width:100%; justify-content:center; }
     }
   </style>
 </head>

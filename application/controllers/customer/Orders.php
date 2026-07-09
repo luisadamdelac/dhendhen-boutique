@@ -79,9 +79,7 @@ class Orders extends CI_Controller {
         $items = $this->db->where('order_id', $id)->get(ORDER_DETAILS_TABLE)->result_array();
         foreach ($items as $item) {
             if (!empty($item['variation_id'])) {
-                $this->db->set('stock', 'stock + ' . (int) $item['quantity'], FALSE)
-                    ->where('variation_id', $item['variation_id'])
-                    ->update(PRODUCT_VARIATION_TABLE);
+                StockService::restoreStock($item['product_id'], $item['quantity'], 'order', $id, NULL, NULL, (int) $item['variation_id']);
             } else {
                 StockService::restoreStock($item['product_id'], $item['quantity'], 'order', $id);
             }

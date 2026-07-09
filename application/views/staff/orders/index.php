@@ -37,21 +37,31 @@ table.dataTable thead th.sorting:hover { color: var(--primary-pink); cursor: poi
                                     <td>#<?php echo (int) $order['customer_id']; ?></td>
                                     <td><?php echo CURRENCY . number_format($order['total_amount'], 2); ?></td>
                                     <td><?php echo ucfirst($order['delivery_method']); ?></td>
-                                    <td>
-                                        <select class="form-control form-select form-select-sm" id="status-<?php echo $order['order_id']; ?>">
-                                            <?php foreach (['pending', 'processing', 'to_ship', 'delivered', 'return_refund', 'cancelled'] as $status): ?>
-                                                <option value="<?php echo $status; ?>" <?php echo $order['order_status'] === $status ? 'selected' : ''; ?>>
-                                                    <?php echo ucfirst(str_replace('_', ' ', $status)); ?>
-                                                </option>
-                                            <?php endforeach; ?>
-                                        </select>
-                                    </td>
-                                    <td><small><?php echo date('M d, Y', strtotime($order['created_at'])); ?></small></td>
-                                    <td>
-                                        <button class="btn btn-sm btn-primary" onclick="updateOrderStatus(<?php echo $order['order_id']; ?>)">
-                                            <i class="fas fa-save"></i> Update
-                                        </button>
-                                    </td>
+                                    <?php if ($order['order_status'] === 'pending'): ?>
+                                        <td>
+                                            <span class="badge bg-warning text-dark" style="font-size:.75rem;white-space:normal;">
+                                                <i class="fas fa-hourglass-half"></i> Awaiting payment verification by admin
+                                            </span>
+                                        </td>
+                                        <td><small><?php echo date('M d, Y', strtotime($order['created_at'])); ?></small></td>
+                                        <td><span class="text-muted small">Not yet actionable</span></td>
+                                    <?php else: ?>
+                                        <td>
+                                            <select class="form-control form-select form-select-sm" id="status-<?php echo $order['order_id']; ?>">
+                                                <?php foreach (['processing', 'to_ship', 'delivered'] as $status): ?>
+                                                    <option value="<?php echo $status; ?>" <?php echo $order['order_status'] === $status ? 'selected' : ''; ?>>
+                                                        <?php echo ucfirst(str_replace('_', ' ', $status)); ?>
+                                                    </option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                        </td>
+                                        <td><small><?php echo date('M d, Y', strtotime($order['created_at'])); ?></small></td>
+                                        <td>
+                                            <button class="btn btn-sm btn-primary" onclick="updateOrderStatus(<?php echo $order['order_id']; ?>)">
+                                                <i class="fas fa-save"></i> Update
+                                            </button>
+                                        </td>
+                                    <?php endif; ?>
                                 </tr>
                             <?php endforeach; ?>
                         </tbody>

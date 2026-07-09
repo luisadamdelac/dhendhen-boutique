@@ -282,12 +282,20 @@
                     </span>
                 </div>
 
+                <?php if ($payStatus === 'failed'): ?>
+                    <div style="margin-top:12px; background:#f8d7da; color:#842029; border:1px solid #f5c2c7; border-radius:8px; padding:12px 14px; font-size:13px;">
+                        <i class="fas fa-exclamation-circle"></i> Payment rejected: <strong><?php echo htmlspecialchars($order['payment']['rejection_reason'] ?? 'Please contact support.'); ?></strong>
+                        <div style="margin-top:8px;">
+                            <a href="<?php echo BASE_URL; ?>checkout/resubmit_payment/<?php echo $order['order_id']; ?>" class="btn btn-danger btn-sm">
+                                <i class="fas fa-redo"></i> Resubmit Payment
+                            </a>
+                        </div>
+                    </div>
+                <?php endif; ?>
+
                 <?php if ($pm === 'GCash' && !empty($order['payment'])): ?>
                     <?php if (!empty($order['payment']['payment_reference'])): ?>
                         <div><strong>Ref. Number:</strong> <span style="color:#007DFF; font-weight:600;"><?php echo htmlspecialchars($order['payment']['payment_reference']); ?></span></div>
-                    <?php endif; ?>
-                    <?php if (!empty($order['payment']['gcash_sender_number'])): ?>
-                        <div><strong>GCash No.:</strong> <?php echo htmlspecialchars($order['payment']['gcash_sender_number']); ?></div>
                     <?php endif; ?>
                     <?php if (!empty($order['payment']['receipt_image'])): ?>
                         <div style="margin-top:10px;">
