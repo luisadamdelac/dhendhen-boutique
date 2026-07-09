@@ -27,9 +27,13 @@
             <div class="card" style="text-align: center;">
                 <?php
                     $initials = strtoupper(substr($reseller['first_name'] ?? 'R', 0, 1) . substr($reseller['last_name'] ?? '', 0, 1));
+                    // r.status: this reseller's own approval state
+                    // (pending/active/rejected) — not to be confused with
+                    // account_status (the login account's active/inactive
+                    // toggle used by Suspend/Activate below).
                     $rStatus  = $reseller['status'] ?? 'active';
-                    $rBadge   = $rStatus === 'active' ? 'success' : 'danger';
-                    $rBadgeStatus = $rStatus === 'active' ? 'badge-active' : 'badge-inactive';
+                    $rBadgeStatus = $rStatus === 'active' ? 'badge-active' : ($rStatus === 'rejected' ? 'badge-rejected' : 'badge-pending');
+                    $accountStatus = $reseller['account_status'] ?? 'active';
                 ?>
                 <div style="width:64px;height:64px;border-radius:50%;background:var(--gradient-primary);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:22px;margin:0 auto 14px;">
                     <?= $initials; ?>
@@ -44,6 +48,7 @@
                 <span class="badge-status <?= $rBadgeStatus; ?>"><?= ucfirst($rStatus); ?></span>
             </div>
 
+            <?php if ($rStatus === 'active'): ?>
             <!-- Commission Summary -->
             <div class="card">
                 <div class="card-header">
@@ -70,7 +75,7 @@
                     </div>
                 </div>
                 <div class="card-footer" style="border-top: none; padding-top: 0;">
-                    <?php if ($rStatus === 'active'): ?>
+                    <?php if ($accountStatus === 'active'): ?>
                         <button class="btn btn-danger btn-sm" style="width: 100%;" id="suspendBtn"
                                 data-id="<?= $reseller['reseller_id']; ?>">
                             <i class="fas fa-ban"></i> Suspend Reseller
@@ -83,6 +88,28 @@
                     <?php endif; ?>
                 </div>
             </div>
+            <?php else: ?>
+            <!-- Not yet an active reseller: commission/suspend controls don't
+                 apply — surface the approval state and, if rejected, a
+                 re-approve action instead. -->
+            <div class="card">
+                <div class="card-body" style="text-align:center;">
+                    <i class="fas fa-hourglass-half" style="font-size:22px;color:var(--gray);margin-bottom:8px;display:block;"></i>
+                    <?php if ($rStatus === 'rejected'): ?>
+                        <p style="color:var(--gray);font-size:13px;margin-bottom:<?= !empty($reseller['admin_remarks']) ? '6px' : '14px'; ?>;">This registration was rejected. Commission and order data aren't available until it's approved.</p>
+                        <?php if (!empty($reseller['admin_remarks'])): ?>
+                            <p style="color:var(--gray);font-size:12px;font-style:italic;margin-bottom:14px;">"<?= htmlspecialchars($reseller['admin_remarks']); ?>"</p>
+                        <?php endif; ?>
+                        <button class="btn btn-success btn-sm" style="width: 100%;" id="reapproveBtn"
+                                data-id="<?= $reseller['reseller_id']; ?>">
+                            <i class="fas fa-undo"></i> Re-approve Reseller
+                        </button>
+                    <?php else: ?>
+                        <p style="color:var(--gray);font-size:13px;margin-bottom:0;">This registration is still pending review. Commission and order data aren't available until it's approved.</p>
+                    <?php endif; ?>
+                </div>
+            </div>
+            <?php endif; ?>
 
         </div>
 
@@ -134,6 +161,7 @@
                 </div>
             </div>
 
+            <?php if ($rStatus === 'active'): ?>
             <!-- Recent Orders -->
             <div class="card">
                 <div class="card-header">
@@ -189,6 +217,7 @@
                     </table>
                 </div>
             </div>
+            <?php endif; ?>
 
         </div>
     </div>
@@ -196,8 +225,9 @@
 
 <script>
 (function() {
-    var suspendBtn  = document.getElementById('suspendBtn');
-    var activateBtn = document.getElementById('activateBtn');
+    var suspendBtn   = document.getElementById('suspendBtn');
+    var activateBtn  = document.getElementById('activateBtn');
+    var reapproveBtn = document.getElementById('reapproveBtn');
 
     function doAction(url, confirmMsg) {
         if (!confirm(confirmMsg)) return;
@@ -218,6 +248,11 @@
     if (activateBtn) {
         activateBtn.addEventListener('click', function() {
             doAction('<?= site_url('admin/reseller/activate/'); ?>' + this.dataset.id, 'Activate this reseller?');
+        });
+    }
+    if (reapproveBtn) {
+        reapproveBtn.addEventListener('click', function() {
+            doAction('<?= site_url('admin/reseller/approve-registration/'); ?>' + this.dataset.id, 'Re-approve this reseller?');
         });
     }
 })();

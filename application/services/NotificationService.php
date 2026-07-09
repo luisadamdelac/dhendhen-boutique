@@ -52,7 +52,7 @@ class NotificationService {
      * Create the same notification for every admin account.
      * Replaces the previous hardcoded admin_id=1 broadcasts.
      */
-    private static function notifyAllAdmins($title, $message, $type = 'system', $relatedId = NULL) {
+    public static function notifyAllAdmins($title, $message, $type = 'system', $relatedId = NULL) {
         $CI =& get_instance();
         $CI->load->database();
 

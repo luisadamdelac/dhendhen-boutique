@@ -53,12 +53,6 @@
                 <div class="row">
                     <div class="col col-4">
                         <div class="form-group">
-                            <label>Street</label>
-                            <input type="text" class="form-control" name="street" value="<?php echo htmlspecialchars($staff['street'] ?? ''); ?>">
-                        </div>
-                    </div>
-                    <div class="col col-4">
-                        <div class="form-group">
                             <label>City / Municipality</label>
                             <select class="form-control" id="city" name="city">
                                 <option value="">Select City / Municipality</option>
@@ -71,6 +65,12 @@
                             <select class="form-control" id="barangay" name="barangay" disabled>
                                 <option value="">Select City / Municipality first</option>
                             </select>
+                        </div>
+                    </div>
+                    <div class="col col-4">
+                        <div class="form-group">
+                            <label>Street</label>
+                            <input type="text" class="form-control" name="street" value="<?php echo htmlspecialchars($staff['street'] ?? ''); ?>">
                         </div>
                     </div>
                 </div>

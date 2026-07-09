@@ -61,7 +61,7 @@ class Order extends Authenticated_Controller {
         }
         $order_ids = array_column($orders, 'order_id');
         $latest = $this->db
-            ->select('pt.order_id, pt.payment_method, pt.status as payment_tx_status, pt.payment_reference, pt.gcash_sender_number, pt.receipt_image, pt.amount as payment_amount, pt.paid_at')
+            ->select('pt.order_id, pt.payment_method, pt.status as payment_tx_status, pt.payment_reference, pt.gcash_sender_number, pt.receipt_image, pt.amount as payment_amount, pt.paid_at, pt.paymongo_checkout_session_id, pt.paymongo_payment_id')
             ->from(PAYMENTS_TABLE . ' pt')
             ->join('(SELECT order_id, MAX(payment_id) as latest_id FROM ' . PAYMENTS_TABLE . ' GROUP BY order_id) latest_pt',
                 'latest_pt.order_id = pt.order_id AND latest_pt.latest_id = pt.payment_id', 'inner', FALSE)
@@ -147,7 +147,12 @@ class Order extends Authenticated_Controller {
             return;
         }
 
-        $valid_statuses = ['pending', 'completed', 'failed', 'refunded'];
+        // 'failed' isn't offered as a manual choice here — PayMongo reports
+        // failed payments itself via the webhook (see
+        // OrderFulfillmentService::markOrderPaymentFailed()); an admin's
+        // manual recourse for a payment that isn't coming through is to
+        // cancel the order instead, not hand-pick "Failed" here.
+        $valid_statuses = ['pending', 'completed', 'refunded'];
         $status = $this->input->post('payment_status', TRUE);
         if (!in_array($status, $valid_statuses, TRUE)) {
             echo json_encode(['success' => FALSE, 'message' => 'Invalid payment status']);

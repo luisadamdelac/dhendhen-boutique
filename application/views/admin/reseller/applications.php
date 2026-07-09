@@ -99,6 +99,15 @@ $current_page = 'reseller';
                                                 <i class="fas fa-times" style="font-size:11px;"></i>
                                             </button>
                                         </div>
+                                    <?php elseif ($aStatus === 'rejected'): ?>
+                                        <div class="d-flex gap-1 justify-content-center">
+                                            <a href="<?= site_url('admin/reseller/view_application/' . $application['application_id']); ?>" class="btn btn-sm btn-outline-info" title="Review" style="width:30px;height:30px;padding:0;display:flex;align-items:center;justify-content:center;">
+                                                <i class="fas fa-eye" style="font-size:11px;"></i>
+                                            </a>
+                                            <button class="btn btn-sm btn-outline-success approve-btn" data-id="<?= $application['application_id']; ?>" data-reapprove="1" title="Re-approve" style="width:30px;height:30px;padding:0;display:flex;align-items:center;justify-content:center;">
+                                                <i class="fas fa-undo" style="font-size:11px;"></i>
+                                            </button>
+                                        </div>
                                     <?php else: ?>
                                         <span class="text-muted small">Completed</span>
                                     <?php endif; ?>
@@ -173,9 +182,12 @@ $current_page = 'reseller';
 
     document.querySelectorAll('.approve-btn').forEach(function (btn) {
         btn.addEventListener('click', function () {
+            var isReapprove = btn.dataset.reapprove === '1';
             pendingAction = { id: btn.dataset.id, type: 'approve' };
-            document.getElementById('appModalTitle').textContent = 'Approve Application';
-            document.getElementById('appModalBody').textContent = 'Approve this reseller application?';
+            document.getElementById('appModalTitle').textContent = isReapprove ? 'Re-approve Application' : 'Approve Application';
+            document.getElementById('appModalBody').textContent = isReapprove
+                ? 'This application was previously rejected. Re-approve it and create a reseller account?'
+                : 'Approve this reseller application?';
             document.getElementById('appRemarksGroup').style.display = 'none';
             document.getElementById('appModalHeader').style.background = 'linear-gradient(135deg, #28a745 0%, #218838 100%)';
             document.getElementById('appModalHeader').style.color = '#fff';

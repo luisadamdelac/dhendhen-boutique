@@ -18,9 +18,7 @@ class Checkout extends CI_Controller {
         }
         $this->load->model(['order_model', 'settings_model']);
         require_once APPPATH . 'services/CartService.php';
-        require_once APPPATH . 'services/StockService.php';
-        require_once APPPATH . 'services/CommissionService.php';
-        require_once APPPATH . 'services/NotificationService.php';
+        require_once APPPATH . 'services/PaymongoService.php';
     }
 
     public function index() {
@@ -55,9 +53,6 @@ class Checkout extends CI_Controller {
         $data['subtotal'] = $subtotal;
         $data['page_title'] = 'Checkout - DropSell';
         $data['addresses'] = $addresses;
-        $data['gcash_name'] = $this->settings_model->get('gcash_name') ?: 'DropSell';
-        $data['gcash_number'] = $this->settings_model->get('gcash_number') ?: '09123456789';
-        $data['gcash_qr_code'] = $this->settings_model->get('gcash_qr_code');
         $data['shipping_fees'] = $this->settings_model->get_shipping_fees();
         $data['barangay_data'] = get_oriental_mindoro_barangays();
 
@@ -72,6 +67,15 @@ class Checkout extends CI_Controller {
      * resolved to a specific reseller's listing (see CartService), so there's
      * nothing left unpurchasable at this point.
      */
+    /**
+     * Create pending order(s) + line items, then create a PayMongo Checkout
+     * Session for the combined total and hand back its hosted URL. Stock is
+     * NOT deducted and no commission is created here — that only happens
+     * once PayMongo's webhook confirms payment (see
+     * OrderFulfillmentService::finalizeOrderPayment(), called from
+     * Webhooks::paymongo()). The cart is left intact until then too, since
+     * the customer hasn't actually paid yet.
+     */
     public function process() {
         $customer_id = $this->session->userdata('user_id');
 
@@ -82,17 +86,14 @@ class Checkout extends CI_Controller {
         $this->load->library('form_validation');
         $this->form_validation->set_rules('delivery_type', 'Delivery Method', 'required|in_list[pickup,pasabay_jeep]');
         $this->form_validation->set_rules('address_id', 'Delivery Address', 'required|numeric');
-        // Real GCash reference numbers are always exactly 13 digits, and the
-        // GCash-registered mobile number the customer paid from is always an
-        // 11-digit PH number starting with 09 — reject anything else outright
-        // rather than storing an unusable reference for admin to reconcile.
-        $this->form_validation->set_rules('gcash_reference', 'GCash Reference Number', 'required|trim|regex_match[/^\d{13}$/]',
-            ['regex_match' => 'GCash Reference Number must be exactly 13 digits.']);
-        $this->form_validation->set_rules('gcash_sender_number', 'GCash Number Used', 'required|trim|regex_match[/^09\d{9}$/]',
-            ['regex_match' => 'GCash Number Used must be a valid 11-digit number starting with 09.']);
 
         if (!$this->form_validation->run()) {
             echo json_encode(['success' => FALSE, 'message' => validation_errors(' ', ' ')]);
+            return;
+        }
+
+        if (!PaymongoService::isEnabled()) {
+            echo json_encode(['success' => FALSE, 'message' => 'Online payment is currently unavailable. Please try again later.']);
             return;
         }
 
@@ -112,33 +113,15 @@ class Checkout extends CI_Controller {
             return;
         }
 
-        if (empty($_FILES['gcash_receipt']['name'])) {
-            echo json_encode(['success' => FALSE, 'message' => 'Please upload a screenshot of your GCash receipt.']);
-            return;
-        }
-
-        $upload_path = FCPATH . 'public/uploads/receipts/';
-        if (!is_dir($upload_path)) {
-            mkdir($upload_path, 0755, TRUE);
-        }
-        $this->load->library('upload', [
-            'upload_path'   => $upload_path,
-            'allowed_types' => 'jpg|jpeg|png',
-            'max_size'      => 2048,
-            'encrypt_name'  => TRUE,
-        ]);
-        if (!$this->upload->do_upload('gcash_receipt')) {
-            echo json_encode(['success' => FALSE, 'message' => 'Receipt upload failed: ' . $this->upload->display_errors('', '')]);
-            return;
-        }
-        $receipt_image = 'public/uploads/receipts/' . $this->upload->data('file_name');
-
         $delivery_method = $this->input->post('delivery_type', TRUE) === 'pickup' ? 'pickup' : 'pasabay';
         $delivery_fee_total = $delivery_method === 'pasabay'
             ? $this->settings_model->get_shipping_fee_for_municipality($address['municipality'])
             : 0.00;
-        $gcash_reference = $this->input->post('gcash_reference', TRUE);
-        $gcash_sender_number = $this->input->post('gcash_sender_number', TRUE);
+        // order_details.commission_earned is a per-line reporting snapshot
+        // read directly by reseller/Sales.php (SUM(od.commission_earned))
+        // and other reports — still computed and stored here even though
+        // the actual commission_transaction_tbl ledger row (which drives
+        // the reseller's wallet) isn't created until payment is confirmed.
         $commission_rate = (float) $this->settings_model->get_commission_rate();
 
         $groups = [];
@@ -148,91 +131,66 @@ class Checkout extends CI_Controller {
 
         $created_order_ids = [];
         $fee_remaining = $delivery_fee_total;
+        $line_items = [];
 
         $this->db->trans_start();
 
-        try {
-            foreach ($groups as $reseller_id => $items) {
-                $group_subtotal = array_sum(array_column($items, 'item_total'));
-                $fee_for_this_order = $fee_remaining;
-                $fee_remaining = 0; // only charge delivery once, on the first order
+        foreach ($groups as $reseller_id => $items) {
+            $group_subtotal = array_sum(array_column($items, 'item_total'));
+            $fee_for_this_order = $fee_remaining;
+            $fee_remaining = 0; // only charge delivery once, on the first order
+            $order_total = $group_subtotal + $fee_for_this_order;
 
-                $order_id = $this->order_model->create([
-                    'order_number' => 'ORD' . date('ymdHis') . str_pad((string) random_int(0, 99), 2, '0', STR_PAD_LEFT),
-                    'customer_id' => $customer_id,
-                    'reseller_id' => $reseller_id,
-                    'total_amount' => $group_subtotal + $fee_for_this_order,
-                    'delivery_method' => $delivery_method,
-                    'delivery_street' => $address['street'],
-                    'delivery_barangay' => $address['barangay'],
-                    'delivery_city' => $address['municipality'],
-                    'delivery_fee' => $fee_for_this_order,
-                    'order_status' => 'pending',
-                ]);
+            $order_id = $this->order_model->create([
+                'order_number' => 'ORD' . date('ymdHis') . str_pad((string) random_int(0, 99), 2, '0', STR_PAD_LEFT),
+                'customer_id' => $customer_id,
+                'reseller_id' => $reseller_id,
+                'total_amount' => $order_total,
+                'delivery_method' => $delivery_method,
+                'delivery_street' => $address['street'],
+                'delivery_barangay' => $address['barangay'],
+                'delivery_city' => $address['municipality'],
+                'delivery_fee' => $fee_for_this_order,
+                'order_status' => 'pending',
+            ]);
 
-                foreach ($items as $item) {
-                    $commission_earned = round($item['item_total'] * $commission_rate / 100, 2);
+            foreach ($items as $item) {
+                $commission_earned = round($item['item_total'] * $commission_rate / 100, 2);
 
-                    $this->db->insert(ORDER_DETAILS_TABLE, [
-                        'order_id' => $order_id,
-                        'product_id' => $item['product_id'],
-                        'variation_id' => $item['variation_id'] ?? NULL,
-                        'variation_label' => !empty($item['variation_type']) ? ($item['variation_type'] . ': ' . $item['variation_value']) : NULL,
-                        'quantity' => $item['quantity'],
-                        'unit_price' => $item['price'],
-                        'total_price' => $item['item_total'],
-                        'commission_earned' => $commission_earned,
-                        'created_at' => date('Y-m-d H:i:s'),
-                    ]);
-
-                    // Variation stock is tracked centrally on product_variation_tbl,
-                    // independent of the branch/batch system deductStock() uses —
-                    // so a variant line deducts there instead of touching branch stock.
-                    if (!empty($item['variation_id'])) {
-                        $updated = $this->db->where('variation_id', $item['variation_id'])
-                            ->where('stock >=', $item['quantity'])
-                            ->set('stock', 'stock - ' . (int) $item['quantity'], FALSE)
-                            ->update(PRODUCT_VARIATION_TABLE);
-                        if (!$updated || $this->db->affected_rows() === 0) {
-                            throw new Exception('Insufficient stock for one or more selected variations. Please review your cart.');
-                        }
-                    } else {
-                        // Race with another concurrent checkout can exhaust stock
-                        // between cart validation and this point — deductStock()
-                        // returns FALSE rather than throwing, so its result must be
-                        // checked or the order/payment/commission below would be
-                        // created without any stock actually backing them.
-                        if (!StockService::deductStock($item['product_id'], $item['quantity'], 'sale', 'order', $order_id)) {
-                            throw new Exception('Insufficient stock for one or more items. Please review your cart.');
-                        }
-                    }
-                }
-
-                $this->db->insert(PAYMENTS_TABLE, [
-                    'payment_number' => 'PAY-' . date('Ymd-His') . '-' . random_int(10, 99),
+                $this->db->insert(ORDER_DETAILS_TABLE, [
                     'order_id' => $order_id,
-                    'customer_id' => $customer_id,
-                    'amount' => $group_subtotal + $fee_for_this_order,
-                    'payment_method' => 'GCash',
-                    'payment_reference' => $gcash_reference,
-                    'gcash_sender_number' => $gcash_sender_number,
-                    'receipt_image' => $receipt_image,
-                    'status' => 'pending',
+                    'product_id' => $item['product_id'],
+                    'variation_id' => $item['variation_id'] ?? NULL,
+                    'variation_label' => !empty($item['variation_type']) ? ($item['variation_type'] . ': ' . $item['variation_value']) : NULL,
+                    'quantity' => $item['quantity'],
+                    'unit_price' => $item['price'],
+                    'total_price' => $item['item_total'],
+                    'commission_earned' => $commission_earned,
                     'created_at' => date('Y-m-d H:i:s'),
                 ]);
 
-                CommissionService::createCommission($order_id, $reseller_id, $group_subtotal, $commission_rate);
-
-                $customer = $this->db->where('customer_id', $customer_id)->get(CUSTOMER_TABLE)->row_array();
-                $account = $this->db->where('user_account_id', $this->session->userdata('user_account_id'))->get(USER_ACCOUNT_TABLE)->row_array();
-                NotificationService::orderPlaced($order_id, $customer_id, $reseller_id, $account['email'] ?? '');
-
-                $created_order_ids[] = $order_id;
+                $line_items[] = [
+                    'name' => $item['product_name'] . (!empty($item['variation_value']) ? ' (' . $item['variation_value'] . ')' : ''),
+                    'amount' => $item['price'],
+                    'quantity' => $item['quantity'],
+                ];
             }
-        } catch (Exception $e) {
-            $this->db->trans_complete();
-            echo json_encode(['success' => FALSE, 'message' => $e->getMessage()]);
-            return;
+
+            $this->db->insert(PAYMENTS_TABLE, [
+                'payment_number' => 'PAY-' . date('Ymd-His') . '-' . random_int(10, 99),
+                'order_id' => $order_id,
+                'customer_id' => $customer_id,
+                'amount' => $order_total,
+                'payment_method' => 'PayMongo',
+                'status' => 'pending',
+                'created_at' => date('Y-m-d H:i:s'),
+            ]);
+
+            $created_order_ids[] = $order_id;
+        }
+
+        if ($delivery_fee_total > 0) {
+            $line_items[] = ['name' => 'Delivery Fee', 'amount' => $delivery_fee_total, 'quantity' => 1];
         }
 
         $this->db->trans_complete();
@@ -242,14 +200,79 @@ class Checkout extends CI_Controller {
             return;
         }
 
-        // Cart is fully consumed — every line that made it into $cartItems was purchased.
-        $this->session->set_userdata('cart', []);
+        $account = $this->db->where('user_account_id', $this->session->userdata('user_account_id'))->get(USER_ACCOUNT_TABLE)->row_array();
+        $session = PaymongoService::createCheckoutSession(
+            $line_items,
+            $created_order_ids,
+            $account['email'] ?? NULL,
+            site_url('checkout/return') . '?session={CHECKOUT_SESSION_ID}',
+            site_url('checkout')
+        );
+
+        if (!$session['success']) {
+            // Nothing was deducted for these orders, so cancelling them
+            // outright is a clean rollback — no stock/commission to reverse.
+            $this->db->where_in('order_id', $created_order_ids)->update(ORDER_TABLE, ['order_status' => 'cancelled']);
+            $this->db->where_in('order_id', $created_order_ids)->update(PAYMENTS_TABLE, ['status' => 'failed']);
+            echo json_encode(['success' => FALSE, 'message' => $session['message']]);
+            return;
+        }
+
+        $this->db->where_in('order_id', $created_order_ids)
+            ->update(ORDER_TABLE, ['paymongo_checkout_session_id' => $session['session_id']]);
+        $this->db->where_in('order_id', $created_order_ids)
+            ->update(PAYMENTS_TABLE, ['paymongo_checkout_session_id' => $session['session_id']]);
 
         echo json_encode([
             'success' => TRUE,
-            'message' => 'Order placed successfully!',
-            'order_id' => $created_order_ids[0],
-            'redirect_url' => site_url('customer/orders/view/' . $created_order_ids[0]),
+            'checkout_url' => $session['checkout_url'],
+        ]);
+    }
+
+    /**
+     * Landing page after PayMongo redirects the customer back. The redirect
+     * itself is NOT proof of payment — the webhook is the sole source of
+     * truth — so this just renders a "confirming your payment" screen that
+     * polls status() until the webhook has caught up (or the customer gives
+     * up waiting).
+     */
+    public function return_page() {
+        $session_id = $this->input->get('session', TRUE);
+        $data['page_title'] = 'Confirming Payment - DropSell';
+        $data['session_id'] = $session_id;
+        $this->load->view('customer/layouts/header', $data);
+        $this->load->view('customer/cart/checkout_return', $data);
+        $this->load->view('customer/layouts/footer', $data);
+    }
+
+    /**
+     * Polled by checkout_return.php while waiting for the webhook. Clears
+     * the cart the moment payment is observed as confirmed — not before,
+     * so an abandoned/failed payment leaves the cart intact.
+     */
+    public function status() {
+        $session_id = $this->input->get('session', TRUE);
+        $customer_id = $this->session->userdata('user_id');
+
+        $order = $session_id
+            ? $this->db->where('paymongo_checkout_session_id', $session_id)
+                ->where('customer_id', $customer_id)
+                ->order_by('order_id', 'ASC')
+                ->get(ORDER_TABLE)->row_array()
+            : NULL;
+
+        if (!$order) {
+            echo json_encode(['order_status' => 'unknown']);
+            return;
+        }
+
+        if ($order['order_status'] === 'paid' || $order['order_status'] === 'processing') {
+            $this->session->set_userdata('cart', []);
+        }
+
+        echo json_encode([
+            'order_status' => $order['order_status'],
+            'order_id' => $order['order_id'],
         ]);
     }
 }

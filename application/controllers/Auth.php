@@ -701,7 +701,8 @@ class Auth extends CI_Controller {
         $data['user_type'] = $user_type;
         $data['error'] = $this->session->flashdata('error');
         $data['success'] = $this->session->flashdata('success');
-        
+        $data['old'] = [];
+
         $this->load->view('auth/register', $data);
     }
 
@@ -719,6 +720,10 @@ class Auth extends CI_Controller {
         $data['page_title'] = 'Register - DropSell';
         $data['user_type'] = $this->input->get('role', TRUE) ?? 'customer';
         $data['success'] = NULL;
+        // Re-echoed into the form on any validation failure below so the
+        // customer doesn't have to retype everything (password excluded).
+        $data['old'] = $this->input->post();
+        unset($data['old']['password'], $data['old']['password_confirm']);
 
         // Validate form
         // Note: registration only ever creates a customer profile. Becoming a

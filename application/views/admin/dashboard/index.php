@@ -18,7 +18,7 @@ $is_admin_only = !$is_staff_view && !$is_reseller_view;
     <div class="row g-3">
         <?php if ($is_admin_only): ?>
         <!-- Total Sales - Admin Only -->
-            <div class="col-6 col-md-3">
+            <div class="col-12 col-md-6 col-xl-3">
                 <div class="stat-card">
                     <div class="stat-icon" style="background:#e8f5e9;color:#2e7d32;"><i class="fas fa-dollar-sign"></i></div>
                     <div>
@@ -30,7 +30,7 @@ $is_admin_only = !$is_staff_view && !$is_reseller_view;
         <?php endif; ?>
 
         <!-- Total Orders -->
-        <div class="col-6 col-md-3">
+        <div class="col-12 col-md-6 col-xl-3">
             <div class="stat-card">
                 <div class="stat-icon" style="background:#eef0ff;color:#4361ee;"><i class="fas fa-shopping-cart"></i></div>
                 <div>
@@ -42,7 +42,7 @@ $is_admin_only = !$is_staff_view && !$is_reseller_view;
 
         <?php if ($is_admin_only): ?>
         <!-- Active Resellers - Admin Only -->
-        <div class="col-6 col-md-3">
+        <div class="col-12 col-md-6 col-xl-3">
             <div class="stat-card">
                 <div class="stat-icon" style="background:#ede7f6;color:#5e35b1;"><i class="fas fa-users"></i></div>
                 <div>
@@ -54,7 +54,7 @@ $is_admin_only = !$is_staff_view && !$is_reseller_view;
         <?php endif; ?>
 
         <!-- Total Products -->
-        <div class="col-6 col-md-3">
+        <div class="col-12 col-md-6 col-xl-3">
             <div class="stat-card">
                 <div class="stat-icon" style="background:#e0f7fa;color:#00838f;"><i class="fas fa-boxes"></i></div>
                 <div>
@@ -67,7 +67,7 @@ $is_admin_only = !$is_staff_view && !$is_reseller_view;
 
     <!-- Order Status Cards -->
     <div class="row g-3 mt-1">
-        <div class="col-6 col-md-3">
+        <div class="col-12 col-md-6 col-xl-3">
             <div class="stat-card">
                 <div class="stat-icon" style="background:#fff8e1;color:#f57f17;"><i class="fas fa-clock"></i></div>
                 <div>
@@ -77,7 +77,7 @@ $is_admin_only = !$is_staff_view && !$is_reseller_view;
             </div>
         </div>
 
-        <div class="col-6 col-md-3">
+        <div class="col-12 col-md-6 col-xl-3">
             <div class="stat-card">
                 <div class="stat-icon" style="background:#e3f2fd;color:#1565c0;"><i class="fas fa-cog fa-spin"></i></div>
                 <div>
@@ -87,7 +87,7 @@ $is_admin_only = !$is_staff_view && !$is_reseller_view;
             </div>
         </div>
 
-        <div class="col-6 col-md-3">
+        <div class="col-12 col-md-6 col-xl-3">
             <div class="stat-card">
                 <div class="stat-icon" style="background:#e8eaf6;color:#3949ab;"><i class="fas fa-truck"></i></div>
                 <div>
@@ -97,7 +97,7 @@ $is_admin_only = !$is_staff_view && !$is_reseller_view;
             </div>
         </div>
 
-        <div class="col-6 col-md-3">
+        <div class="col-12 col-md-6 col-xl-3">
             <div class="stat-card">
                 <div class="stat-icon" style="background:#e8f5e9;color:#2e7d32;"><i class="fas fa-check-circle"></i></div>
                 <div>
@@ -110,7 +110,7 @@ $is_admin_only = !$is_staff_view && !$is_reseller_view;
 
     <!-- Additional Status Cards -->
     <div class="row g-3 mt-1">
-        <div class="col-md-4">
+        <div class="col-12 col-md-6 col-xl-4">
             <div class="stat-card">
                 <div class="stat-icon" style="background:#fff8e1;color:#f57f17;"><i class="fas fa-undo"></i></div>
                 <div>
@@ -120,7 +120,7 @@ $is_admin_only = !$is_staff_view && !$is_reseller_view;
             </div>
         </div>
 
-        <div class="col-md-4">
+        <div class="col-12 col-md-6 col-xl-4">
             <div class="stat-card">
                 <div class="stat-icon" style="background:#e8f5e9;color:#2e7d32;"><i class="fas fa-wallet"></i></div>
                 <div>
@@ -130,7 +130,7 @@ $is_admin_only = !$is_staff_view && !$is_reseller_view;
             </div>
         </div>
 
-        <div class="col-md-4">
+        <div class="col-12 col-md-6 col-xl-4">
             <div class="stat-card">
                 <div class="stat-icon" style="background:#ffebee;color:#c62828;"><i class="fas fa-times-circle"></i></div>
                 <div>

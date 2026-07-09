@@ -55,30 +55,6 @@
         min-height: 100px;
     }
 
-    .gcash-input-wrap { position: relative; }
-    .gcash-status-icon {
-        position: absolute;
-        right: 14px;
-        top: 50%;
-        transform: translateY(-50%);
-        font-size: 15px;
-        display: none;
-        pointer-events: none;
-    }
-    .gcash-field.is-valid .gcash-input-wrap input { border-color: #22c55e !important; }
-    .gcash-field.is-valid .gcash-status-icon.icon-valid { display: block; color: #22c55e; }
-    .gcash-field.is-invalid .gcash-input-wrap input { border-color: #e53935 !important; }
-    .gcash-field.is-invalid .gcash-status-icon.icon-invalid { display: block; color: #e53935; }
-    .gcash-field-message {
-        font-size: 11.5px;
-        margin-top: 5px;
-        display: none;
-        align-items: center;
-        gap: 5px;
-        color: #e53935;
-    }
-    .gcash-field.is-invalid .gcash-field-message { display: flex; }
-
     .delivery-options {
         display: flex;
         flex-direction: column;
@@ -269,7 +245,7 @@
         </a>
     </div>
 <?php else: ?>
-    <form method="POST" action="<?php echo BASE_URL; ?>checkout/process" id="checkoutForm" enctype="multipart/form-data">
+    <form method="POST" action="<?php echo BASE_URL; ?>checkout/process" id="checkoutForm">
         <div class="checkout-container">
             <!-- Left Column -->
             <div>
@@ -321,104 +297,21 @@
                     </button>
                 </div>
                 
-                <!-- Payment Method Section (GCash only) -->
+                <!-- Payment Method Section (PayMongo) -->
                 <div class="checkout-section" style="margin-top: 20px;">
-                    <h2 class="section-title"><i class="fas fa-wallet"></i> Payment Method</h2>
-                    <div class="payment-options">
-                        <label class="payment-option selected">
-                            <input type="hidden" name="payment_method" value="gcash">
-                            <div class="payment-info">
-                                <div class="payment-name">
-                                    <i class="fas fa-mobile-alt" style="color: #007DFF;"></i>
-                                    GCash
-                                </div>
-                                <div style="font-size:12px; color:#888; margin-top:4px;">Pay via GCash mobile wallet</div>
-                            </div>
-                        </label>
-                    </div>
-
-                    <!-- GCash Payment Details (shown when GCash is selected) -->
-                    <div id="gcashPaymentSection" style="margin-top:20px; background:linear-gradient(135deg, #007DFF10, #007DFF05); border:2px solid #007DFF40; border-radius:12px; padding:20px;">
-                        <div style="text-align:center; margin-bottom:15px;">
-                            <div style="width:50px; height:50px; background:#007DFF; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; margin-bottom:10px;">
-                                <i class="fas fa-mobile-alt" style="font-size:24px; color:white;"></i>
-                            </div>
-                            <h3 style="color:#007DFF; margin:0; font-size:16px;">Send Payment via GCash</h3>
+                    <h2 class="section-title"><i class="fas fa-wallet"></i> Payment</h2>
+                    <input type="hidden" name="payment_method" value="paymongo">
+                    <div style="background:linear-gradient(135deg, #007DFF10, #007DFF05); border:2px solid #007DFF40; border-radius:12px; padding:20px; display:flex; align-items:center; gap:14px;">
+                        <div style="width:44px; height:44px; background:#007DFF; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                            <i class="fas fa-shield-halved" style="font-size:18px; color:white;"></i>
                         </div>
-
-                        <?php if (!empty($gcash_qr_code)): ?>
-                        <div style="background:white; border-radius:10px; padding:20px; margin-bottom:15px; text-align:center;">
-                            <img src="<?php echo BASE_URL . htmlspecialchars($gcash_qr_code); ?>" alt="GCash QR Code" style="width:180px; height:180px; object-fit:contain; display:block; margin:0 auto;">
-                            <p style="margin:10px 0 0; font-size:12px; color:#666;"><i class="fas fa-qrcode"></i> Scan this QR code using your GCash app to pay</p>
-                            <a href="<?php echo BASE_URL . htmlspecialchars($gcash_qr_code); ?>" download="GCash-QR-Code"
-                               style="display:inline-flex; align-items:center; gap:6px; margin-top:10px; font-size:12px; color:#007DFF; text-decoration:none; font-weight:600;">
-                                <i class="fas fa-download"></i> Download QR Code
-                            </a>
+                        <div>
+                            <div style="font-weight:600; color:#333;">Pay securely with PayMongo</div>
+                            <div style="font-size:13px; color:#666; margin-top:2px;">You'll be redirected to PayMongo's checkout page to pay via GCash, GrabPay, Maya, or card.</div>
                         </div>
-                        <?php else: ?>
-                        <div style="background:#fff3cd; border-radius:8px; padding:10px 14px; margin-bottom:15px; font-size:12px; color:#856404; text-align:center;">
-                            <i class="fas fa-info-circle"></i> No GCash QR code has been set up yet — send payment manually to the number below.
-                        </div>
-                        <?php endif; ?>
-
-                        <div style="background:white; border-radius:10px; padding:15px; margin-bottom:15px;">
-                            <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #eee;">
-                                <span style="color:#666; font-size:13px;">Account Name:</span>
-                                <span style="font-weight:600; color:#333;"><?php echo htmlspecialchars($gcash_name); ?></span>
-                            </div>
-                            <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #eee;">
-                                <span style="color:#666; font-size:13px;">GCash Number:</span>
-                                <span style="font-weight:600; color:#007DFF; font-size:16px;" id="gcash-display-number"><?php echo htmlspecialchars($gcash_number); ?></span>
-                            </div>
-                            <div style="display:flex; justify-content:space-between; padding:8px 0;">
-                                <span style="color:#666; font-size:13px;">Amount to Send:</span>
-                                <span style="font-weight:700; color:#007DFF; font-size:18px;" id="gcash-amount">₱<?php echo number_format($subtotal, 2); ?></span>
-                            </div>
-                        </div>
-                        
-                        <div style="background:#fff3cd; border-radius:8px; padding:10px 14px; margin-bottom:15px; font-size:12px; color:#856404;">
-                            <i class="fas fa-info-circle"></i> Send the exact amount to the GCash number above, then fill in your details below.
-                        </div>
-                        
-                        <div class="form-group gcash-field" style="margin-bottom:12px;">
-                            <label style="font-size:13px; font-weight:600; color:#333;">GCash Reference Number *</label>
-                            <div class="gcash-input-wrap">
-                                <input type="text" name="gcash_reference" id="gcash_reference" placeholder="13 digits, e.g. 1234567890123"
-                                       style="width:100%; padding:10px 40px 10px 14px; border:2px solid #ddd; border-radius:8px; font-size:14px; font-family:inherit; box-sizing:border-box;"
-                                       inputmode="numeric" pattern="\d{13}" maxlength="13">
-                                <i class="fas fa-check-circle gcash-status-icon icon-valid"></i>
-                                <i class="fas fa-exclamation-circle gcash-status-icon icon-invalid"></i>
-                            </div>
-                            <small style="color:#888;">Exactly 13 digits, as shown in your GCash receipt.</small>
-                            <div class="gcash-field-message"><i class="fas fa-circle-exclamation"></i> Enter a valid 13-digit reference number.</div>
-                        </div>
-
-                        <div class="form-group gcash-field" style="margin-bottom:12px;">
-                            <label style="font-size:13px; font-weight:600; color:#333;">GCash Number Used *</label>
-                            <div class="gcash-input-wrap">
-                                <input type="text" name="gcash_sender_number" id="gcash_sender_number" placeholder="e.g., 09171234567"
-                                       style="width:100%; padding:10px 40px 10px 14px; border:2px solid #ddd; border-radius:8px; font-size:14px; font-family:inherit; box-sizing:border-box;"
-                                       inputmode="numeric" pattern="09\d{9}" maxlength="11">
-                                <i class="fas fa-check-circle gcash-status-icon icon-valid"></i>
-                                <i class="fas fa-exclamation-circle gcash-status-icon icon-invalid"></i>
-                            </div>
-                            <small style="color:#888;">11 digits, starting with 09.</small>
-                            <div class="gcash-field-message"><i class="fas fa-circle-exclamation"></i> Enter an 11-digit number starting with 09.</div>
-                        </div>
-
-                        <div class="form-group" style="margin-bottom:0;">
-                            <label style="font-size:13px; font-weight:600; color:#333;">GCash Receipt Screenshot *</label>
-                            <input type="file" name="gcash_receipt" id="gcash_receipt" accept="image/*"
-                                   style="width:100%; padding:10px 14px; border:2px solid #ddd; border-radius:8px; font-size:13px; font-family:inherit; box-sizing:border-box; background:white;">
-                            <small style="color:#888;">Upload a screenshot of your GCash payment confirmation (JPG/PNG, max 2MB).</small>
-                            <div id="receipt-preview" style="display:none; margin-top:10px; text-align:center;">
-                                <img id="receipt-preview-img" src="" alt="Receipt preview" style="max-width:160px; max-height:160px; border-radius:8px; border:2px solid #007DFF;">
-                            </div>
-                        </div>
-
                     </div>
                 </div>
-                
+
                 <!-- Order Notes Section -->
                 <div class="checkout-section" style="margin-top: 20px;">
                     <h2 class="section-title"><i class="fas fa-comment"></i> Order Notes (Optional)</h2>
@@ -534,17 +427,6 @@
                 <span>Payment:</span>
                 <span style="font-weight:600;" id="confirm-payment">--</span>
             </div>
-            <!-- GCash details in confirm modal -->
-            <div id="confirm-gcash-details" style="display:none; padding:10px 0 4px; border-top:1px dashed #ddd; margin-top:4px;">
-                <div style="display:flex; justify-content:space-between; padding:4px 0; font-size:13px; color:#555;">
-                    <span>Ref. Number:</span>
-                    <span style="font-weight:600; color:#007DFF;" id="confirm-gcash-ref">--</span>
-                </div>
-                <div style="display:flex; justify-content:space-between; padding:4px 0; font-size:13px; color:#555;">
-                    <span>Sender:</span>
-                    <span style="font-weight:600;" id="confirm-gcash-sender">--</span>
-                </div>
-            </div>
             <div style="display:flex; justify-content:space-between; padding:12px 0 0; font-size:18px; font-weight:700; color:var(--primary-pink); border-top:2px solid #ddd; margin-top:8px;">
                 <span>Total:</span>
                 <span id="confirm-total">₱<?php echo number_format($subtotal, 2); ?></span>
@@ -637,22 +519,6 @@
         return shippingFees[selectedMunicipality] ?? 30;
     }
 
-    document.getElementById('gcash_receipt').addEventListener('change', function () {
-        const file = this.files[0];
-        const preview = document.getElementById('receipt-preview');
-        const img = document.getElementById('receipt-preview-img');
-        if (!file) { preview.style.display = 'none'; return; }
-        if (file.size > 2 * 1024 * 1024) {
-            showCheckoutNotice('Receipt image must be 2MB or smaller.');
-            this.value = '';
-            preview.style.display = 'none';
-            return;
-        }
-        const reader = new FileReader();
-        reader.onload = e => { img.src = e.target.result; preview.style.display = 'block'; };
-        reader.readAsDataURL(file);
-    });
-
     function selectDelivery(element, type) {
         document.querySelectorAll('#deliveryMethodOptions .delivery-option').forEach(opt => opt.classList.remove('selected'));
         element.classList.add('selected');
@@ -673,67 +539,13 @@
         }
     }
 
-    function selectPayment(element, method) {
-        document.querySelectorAll('.payment-option').forEach(opt => opt.classList.remove('selected'));
-        element.classList.add('selected');
-        selectedPayment = method;
-        
-        // Show/hide GCash payment section
-        const gcashSection = document.getElementById('gcashPaymentSection');
-        if (method === 'gcash') {
-            gcashSection.style.display = 'block';
-            updateGcashAmount();
-        } else {
-            gcashSection.style.display = 'none';
-        }
-    }
-    
     function updateTotal() {
         const total = subtotal + deliveryFee;
         document.getElementById('delivery-fee-display').textContent = '₱' + deliveryFee.toFixed(2);
         document.getElementById('total-display').textContent = '₱' + total.toFixed(2);
         document.getElementById('delivery_fee').value = deliveryFee;
         document.getElementById('total_amount').value = total;
-        updateGcashAmount();
     }
-    
-    function updateGcashAmount() {
-        const total = subtotal + deliveryFee;
-        const gcashAmountEl = document.getElementById('gcash-amount');
-        if (gcashAmountEl) {
-            gcashAmountEl.textContent = '₱' + total.toFixed(2);
-        }
-    }
-
-    // Live red/green validation on the GCash fields, same pattern as the
-    // registration forms' email/contact fields.
-    function setGcashFieldState(input, regex) {
-        const group = input.closest('.gcash-field');
-        if (!group) return;
-        const val = input.value.trim();
-        if (val === '') {
-            group.classList.remove('is-valid', 'is-invalid');
-            return;
-        }
-        const valid = regex.test(val);
-        group.classList.toggle('is-valid', valid);
-        group.classList.toggle('is-invalid', !valid);
-    }
-
-    (function() {
-        const gcashRefInput = document.getElementById('gcash_reference');
-        const gcashSenderInput = document.getElementById('gcash_sender_number');
-        if (gcashRefInput) {
-            const check = () => setGcashFieldState(gcashRefInput, /^\d{13}$/);
-            gcashRefInput.addEventListener('input', check);
-            gcashRefInput.addEventListener('blur', check);
-        }
-        if (gcashSenderInput) {
-            const check = () => setGcashFieldState(gcashSenderInput, /^09\d{9}$/);
-            gcashSenderInput.addEventListener('input', check);
-            gcashSenderInput.addEventListener('blur', check);
-        }
-    })();
 
     function showConfirmModal() {
         const deliveryTypeInput = document.querySelector('input[name="delivery_type"]:checked');
@@ -741,35 +553,15 @@
         const addressInput = document.querySelector('input[name="address_id"]:checked');
 
         if (!deliveryTypeInput) { showCheckoutNotice('Please select a delivery method'); return; }
-        if (!paymentMethod || paymentMethod.value !== 'gcash') { showCheckoutNotice('Payment method is not properly set to GCash. Please reload the page.'); return; }
+        if (!paymentMethod || paymentMethod.value !== 'paymongo') { showCheckoutNotice('Payment method is not properly set. Please reload the page.'); return; }
         if (!addressInput) { showCheckoutNotice('Please select a delivery address'); return; }
-
-        // GCash validation — real GCash reference numbers are exactly 13
-        // digits, and the sender's GCash number is an 11-digit PH mobile
-        // number starting with 09. Reject anything else before it ever hits
-        // the server.
-        if (paymentMethod.value === 'gcash') {
-            const gcashRef = document.getElementById('gcash_reference').value.trim();
-            const gcashSender = document.getElementById('gcash_sender_number').value.trim();
-
-            if (!/^\d{13}$/.test(gcashRef)) { showCheckoutNotice('GCash Reference Number must be exactly 13 digits.', 'gcash_reference'); return; }
-            if (!/^09\d{9}$/.test(gcashSender)) { showCheckoutNotice('GCash Number Used must be a valid 11-digit number starting with 09.', 'gcash_sender_number'); return; }
-            if (!document.getElementById('gcash_receipt').files.length) { showCheckoutNotice('Please upload a screenshot of your GCash receipt.'); return; }
-
-            // Show GCash details in confirm modal
-            document.getElementById('confirm-gcash-details').style.display = 'block';
-            document.getElementById('confirm-gcash-ref').textContent = gcashRef;
-            document.getElementById('confirm-gcash-sender').textContent = gcashSender;
-        } else {
-            document.getElementById('confirm-gcash-details').style.display = 'none';
-        }
 
         const deliveryLabels = {
             'pickup': 'Pick-up (Store, FREE)',
             'pasabay_jeep': 'Pasabay via Jeep (₱' + deliveryFee.toFixed(2) + ')'
         };
         const paymentLabels = {
-            'gcash': 'GCash'
+            'paymongo': 'PayMongo (GCash / GrabPay / Maya / Card)'
         };
 
         document.getElementById('confirm-delivery').textContent = deliveryLabels[deliveryTypeInput.value] || deliveryTypeInput.value;
@@ -789,16 +581,16 @@
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
         document.getElementById('confirmModal').style.display = 'none';
 
-        // checkout/process returns JSON (order_id + redirect_url), so this
-        // must be submitted via fetch — a native form .submit() would
-        // navigate the whole page to that raw JSON response instead of the
-        // order confirmation page.
+        // checkout/process returns JSON (checkout_url), so this must be
+        // submitted via fetch — a native form .submit() would navigate the
+        // whole page to that raw JSON response instead of redirecting to
+        // PayMongo's hosted checkout page.
         const form = document.getElementById('checkoutForm');
         fetch(form.action, { method: 'POST', body: new FormData(form) })
             .then(res => res.json())
             .then(data => {
                 if (data.success) {
-                    window.location.href = data.redirect_url;
+                    window.location.href = data.checkout_url;
                 } else {
                     showCheckoutNotice(data.message || 'Failed to place order. Please try again.');
                     btn.disabled = false;

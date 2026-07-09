@@ -608,7 +608,7 @@
                                 <label for="first_name">First Name <span class="required-tag">*</span></label>
                                 <div class="input-group">
                                     <i class="fas fa-user field-icon"></i>
-                                    <input type="text" name="first_name" id="first_name" placeholder="Juan" required>
+                                    <input type="text" name="first_name" id="first_name" placeholder="Juan" value="<?php echo htmlspecialchars($old['first_name'] ?? ''); ?>" required>
                                     <i class="fas fa-check-circle field-status-icon icon-valid"></i>
                                     <i class="fas fa-exclamation-circle field-status-icon icon-invalid"></i>
                                 </div>
@@ -618,7 +618,7 @@
                                 <label for="last_name">Last Name <span class="required-tag">*</span></label>
                                 <div class="input-group">
                                     <i class="fas fa-user field-icon"></i>
-                                    <input type="text" name="last_name" id="last_name" placeholder="Dela Cruz" required>
+                                    <input type="text" name="last_name" id="last_name" placeholder="Dela Cruz" value="<?php echo htmlspecialchars($old['last_name'] ?? ''); ?>" required>
                                     <i class="fas fa-check-circle field-status-icon icon-valid"></i>
                                     <i class="fas fa-exclamation-circle field-status-icon icon-invalid"></i>
                                 </div>
@@ -630,7 +630,7 @@
                             <label for="middle_name">Middle Name <span class="optional-tag">(optional)</span></label>
                             <div class="input-group">
                                 <i class="fas fa-user field-icon"></i>
-                                <input type="text" name="middle_name" id="middle_name" placeholder="Santos">
+                                <input type="text" name="middle_name" id="middle_name" placeholder="Santos" value="<?php echo htmlspecialchars($old['middle_name'] ?? ''); ?>">
                             </div>
                         </div>
 
@@ -650,7 +650,7 @@
                             <label for="email">Email Address <span class="required-tag">*</span></label>
                             <div class="input-group">
                                 <i class="fas fa-envelope field-icon"></i>
-                                <input type="email" name="email" id="email" placeholder="your@email.com" required>
+                                <input type="email" name="email" id="email" placeholder="your@email.com" value="<?php echo htmlspecialchars($old['email'] ?? ''); ?>" required>
                                 <i class="fas fa-check-circle field-status-icon icon-valid"></i>
                                 <i class="fas fa-exclamation-circle field-status-icon icon-invalid"></i>
                             </div>
@@ -661,7 +661,7 @@
                             <label for="contact_number">Contact Number <span class="required-tag">*</span></label>
                             <div class="input-group">
                                 <i class="fas fa-phone field-icon"></i>
-                                <input type="text" name="contact_number" id="contact_number" placeholder="09XXXXXXXXX" maxlength="11" required>
+                                <input type="text" name="contact_number" id="contact_number" placeholder="09XXXXXXXXX" maxlength="11" value="<?php echo htmlspecialchars($old['contact_number'] ?? ''); ?>" required>
                                 <i class="fas fa-check-circle field-status-icon icon-valid"></i>
                                 <i class="fas fa-exclamation-circle field-status-icon icon-invalid"></i>
                             </div>
@@ -708,7 +708,7 @@
                             <label for="street">Street / House No. <span class="required-tag">*</span></label>
                             <div class="input-group">
                                 <i class="fas fa-map-marker-alt field-icon"></i>
-                                <input type="text" name="street" id="street" placeholder="House No., Street" maxlength="100" required>
+                                <input type="text" name="street" id="street" placeholder="House No., Street" maxlength="100" value="<?php echo htmlspecialchars($old['street'] ?? ''); ?>" required>
                                 <i class="fas fa-check-circle field-status-icon icon-valid"></i>
                                 <i class="fas fa-exclamation-circle field-status-icon icon-invalid"></i>
                             </div>
@@ -768,7 +768,7 @@
                         </div>
 
                         <label class="checkbox-group">
-                            <input type="checkbox" name="terms" id="terms" required>
+                            <input type="checkbox" name="terms" id="terms" <?php echo !empty($old['terms']) ? 'checked' : ''; ?> required>
                             <span>I agree to the <a href="#" data-legal="terms">Terms of Service</a> and <a href="#" data-legal="privacy">Privacy Policy</a></span>
                         </label>
 
@@ -880,6 +880,8 @@
     (function() {
         var mun = document.getElementById('municipality');
         var brgy = document.getElementById('barangay');
+        var oldMunicipality = <?php echo json_encode($old['municipality'] ?? ''); ?>;
+        var oldBarangay = <?php echo json_encode($old['barangay'] ?? ''); ?>;
 
         Object.keys(ORIENTAL_MINDORO_BARANGAYS).sort().forEach(function(name) {
             var opt = document.createElement('option');
@@ -887,8 +889,8 @@
             mun.appendChild(opt);
         });
 
-        mun.addEventListener('change', function() {
-            var barangays = ORIENTAL_MINDORO_BARANGAYS[this.value] || [];
+        function populateBarangays(municipality) {
+            var barangays = ORIENTAL_MINDORO_BARANGAYS[municipality] || [];
             brgy.innerHTML = '';
 
             if (!barangays.length) {
@@ -899,9 +901,22 @@
                 brgy.appendChild(new Option('Select Barangay', ''));
                 barangays.forEach(function(b) { brgy.appendChild(new Option(b, b)); });
             }
+        }
+
+        mun.addEventListener('change', function() {
+            populateBarangays(this.value);
             validateStepField('municipality');
         });
         brgy.addEventListener('change', function() { validateStepField('barangay'); });
+
+        // Restore the previously submitted municipality/barangay after a
+        // server-side validation failure, since these <option>s are built
+        // here rather than rendered server-side.
+        if (oldMunicipality && ORIENTAL_MINDORO_BARANGAYS[oldMunicipality]) {
+            mun.value = oldMunicipality;
+            populateBarangays(oldMunicipality);
+            if (oldBarangay) brgy.value = oldBarangay;
+        }
     })();
 
     /* ===================== Wizard navigation + inline validation ===================== */

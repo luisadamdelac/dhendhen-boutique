@@ -1,5 +1,5 @@
     <?php defined('BASEPATH') OR exit('No direct script access allowed'); ?>
-<link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap5.min.css">
+<link rel="stylesheet" href="<?php echo BASE_URL; ?>public/vendor/datatables/dataTables.bootstrap5.min.css">
 <style>
 /* DataTables controls restyled to match the existing filter-bar/pill look instead of its own defaults */
 .dataTables_wrapper .dataTables_filter input {
@@ -368,10 +368,6 @@ table.dataTable thead th.sorting:hover { color: var(--primary-pink); cursor: poi
                                required placeholder="e.g. Calapan City Branch">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-semibold small">Street / House No.</label>
-                        <input type="text" class="form-control" name="street" id="branch_street">
-                    </div>
-                    <div class="mb-3">
                         <label class="form-label fw-semibold small">Province</label>
                         <input type="text" class="form-control" value="Oriental Mindoro" readonly style="background:#f3f4f6;color:#666;">
                         <input type="hidden" name="province" value="Oriental Mindoro">
@@ -389,6 +385,10 @@ table.dataTable thead th.sorting:hover { color: var(--primary-pink); cursor: poi
                                 <option value="">Select City first</option>
                             </select>
                         </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">Street / House No.</label>
+                        <input type="text" class="form-control" name="street" id="branch_street">
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold small">Phone Number</label>
@@ -659,8 +659,8 @@ function restoreProduct(id, name) {
 }
 </script>
 
-<script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap5.min.js"></script>
+<script src="<?php echo BASE_URL; ?>public/vendor/datatables/jquery.dataTables.min.js"></script>
+<script src="<?php echo BASE_URL; ?>public/vendor/datatables/dataTables.bootstrap5.min.js"></script>
 <script>
 $(function () {
     // Excel/PDF export lives in Reports, not on this operational list page.

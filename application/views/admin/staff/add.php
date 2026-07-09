@@ -70,12 +70,6 @@ $password_value = isset($old_input['password']) ? htmlspecialchars($old_input['p
                 <div class="row g-3 mt-2">
                     <div class="col-md-4 col-sm-12">
                         <div class="form-group">
-                            <label for="street">Street</label>
-                            <input type="text" class="form-control" id="street" name="street" value="<?= $preserve_value('street'); ?>">
-                        </div>
-                    </div>
-                    <div class="col-md-4 col-sm-12">
-                        <div class="form-group">
                             <label for="city">City / Municipality</label>
                             <select class="form-control" id="city" name="city">
                                 <option value="">Select City / Municipality</option>
@@ -88,6 +82,12 @@ $password_value = isset($old_input['password']) ? htmlspecialchars($old_input['p
                             <select class="form-control" id="barangay" name="barangay" disabled>
                                 <option value="">Select City / Municipality first</option>
                             </select>
+                        </div>
+                    </div>
+                    <div class="col-md-4 col-sm-12">
+                        <div class="form-group">
+                            <label for="street">Street</label>
+                            <input type="text" class="form-control" id="street" name="street" value="<?= $preserve_value('street'); ?>">
                         </div>
                     </div>
                 </div>

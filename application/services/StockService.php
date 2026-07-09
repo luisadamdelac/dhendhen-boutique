@@ -37,16 +37,23 @@ class StockService {
 
     /**
      * Per-branch stock breakdown for a product: [branch_id => qty, ...]
+     *
+     * $variationId: 'ALL' (default) aggregates across every variation (and
+     * the base product) — used for the product-level branch/stock display.
+     * Pass an int to scope to one variation, or explicit NULL to scope to
+     * base-product-only batches (no variation).
      */
-    public static function getBranchStock($productId) {
+    public static function getBranchStock($productId, $variationId = 'ALL') {
         $CI =& get_instance();
         $CI->load->database();
 
-        $rows = $CI->db->select('branch_id, COALESCE(SUM(remaining_quantity), 0) as qty')
+        $query = $CI->db->select('branch_id, COALESCE(SUM(remaining_quantity), 0) as qty')
             ->where('product_id', $productId)
-            ->where('status', 'active')
-            ->group_by('branch_id')
-            ->get(INVENTORY_BATCH_TABLE)->result_array();
+            ->where('status', 'active');
+        if ($variationId !== 'ALL') {
+            $query->where('variation_id', $variationId);
+        }
+        $rows = $query->group_by('branch_id')->get(INVENTORY_BATCH_TABLE)->result_array();
 
         $out = [];
         foreach ($rows as $row) {
@@ -57,8 +64,9 @@ class StockService {
 
     /**
      * Receive a new batch of stock into a branch (product creation or restock).
+     * $variationId: NULL (default) = stock belongs to the base product.
      */
-    public static function addBatch($productId, $branchId, $quantity, $unitCost = 0, $receivedBy = NULL) {
+    public static function addBatch($productId, $branchId, $quantity, $unitCost = 0, $receivedBy = NULL, $variationId = NULL) {
         $CI =& get_instance();
         $CI->load->database();
 
@@ -72,6 +80,7 @@ class StockService {
         $CI->db->insert(INVENTORY_BATCH_TABLE, [
             'branch_id'          => $branchId,
             'product_id'         => $productId,
+            'variation_id'       => $variationId,
             'batch_quantity'     => $quantity,
             'remaining_quantity' => $quantity,
             'unit_cost'          => $unitCost,
@@ -86,6 +95,7 @@ class StockService {
         $CI->db->insert(INVENTORY_MOVEMENTS_TABLE, [
             'branch_id'          => $branchId,
             'product_id'         => $productId,
+            'variation_id'       => $variationId,
             'inventory_batch_id' => $batchId,
             'previous_quantity'  => 0,
             'quantity_changed'   => $quantity,
@@ -109,9 +119,15 @@ class StockService {
      * If $branchId is given, only that branch's batches are consumed;
      * otherwise the oldest available batch across all branches is used first
      * (a single order line may then span branches if one alone can't cover it).
+     *
+     * $variationId defaults to 'ANY' (no filter — consumes from any variation's
+     * batches, matching today's checkout behavior, which is not variation-aware).
+     * Admin-side callers (e.g. adjustStock) may pass an explicit variation id
+     * or NULL to scope the deduction correctly.
      */
     public static function deductStock($productId, $quantity, $movementType = 'sale', $referenceType = NULL,
-                                       $referenceId = NULL, $performedById = NULL, $notes = NULL, $branchId = NULL) {
+                                       $referenceId = NULL, $performedById = NULL, $notes = NULL, $branchId = NULL,
+                                       $variationId = 'ANY') {
         $CI =& get_instance();
         $CI->load->database();
 
@@ -128,6 +144,12 @@ class StockService {
             if ($branchId) {
                 $sql .= ' AND branch_id = ?';
                 $params[] = $branchId;
+            }
+            if ($variationId !== 'ANY') {
+                $sql .= $variationId === NULL ? ' AND variation_id IS NULL' : ' AND variation_id = ?';
+                if ($variationId !== NULL) {
+                    $params[] = $variationId;
+                }
             }
             $sql .= ' ORDER BY received_date ASC, inventory_batch_id ASC FOR UPDATE';
 
@@ -253,14 +275,14 @@ class StockService {
      * quantity delta. Positive = add a small adjustment batch, negative =
      * deduct via the normal FIFO path.
      */
-    public static function adjustStock($productId, $branchId, $delta, $performedById = NULL, $notes = NULL) {
+    public static function adjustStock($productId, $branchId, $delta, $performedById = NULL, $notes = NULL, $variationId = NULL) {
         if ($delta === 0) {
             return TRUE;
         }
         if ($delta > 0) {
-            return self::addBatch($productId, $branchId, $delta, 0, $performedById) !== FALSE;
+            return self::addBatch($productId, $branchId, $delta, 0, $performedById, $variationId) !== FALSE;
         }
-        return self::deductStock($productId, abs($delta), 'adjustment', 'manual', NULL, $performedById, $notes, $branchId);
+        return self::deductStock($productId, abs($delta), 'adjustment', 'manual', NULL, $performedById, $notes, $branchId, $variationId);
     }
 
     /**

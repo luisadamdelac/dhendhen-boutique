@@ -158,10 +158,18 @@ class EmailQueueService {
     public static function queueResellerApplicationRejected($resellerEmail, $resellerName, $reason = '') {
         $subject = 'Update on Your Reseller Application';
 
+        $contactEmail = self::getSetting('company_email');
+        $contactPhone = self::getSetting('company_phone');
+        $contactLines = array_filter([
+            $contactEmail ? 'Email: ' . htmlspecialchars($contactEmail) : '',
+            $contactPhone ? 'Phone: ' . htmlspecialchars($contactPhone) : '',
+        ]);
+
         $bodyHtml = '<p>Hello ' . htmlspecialchars($resellerName) . ',</p>'
             . '<p>After reviewing your reseller application, we are unable to approve it at this time.</p>'
             . (!empty($reason) ? '<p><strong>Reason:</strong> ' . htmlspecialchars($reason) . '</p>' : '')
-            . '<p>If you believe this was a mistake or would like more information, please contact our support team.</p>';
+            . '<p>If you believe this was a mistake or would like more information, please contact our support team.</p>'
+            . (!empty($contactLines) ? '<p>' . implode('<br>', $contactLines) . '</p>' : '');
 
         return self::queue($resellerEmail, $resellerName, $subject, self::wrapEmailTemplate('Application Update', $bodyHtml));
     }

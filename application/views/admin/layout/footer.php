@@ -17,11 +17,13 @@
     
     <!-- Custom JavaScript -->
     <script>
-        // Sidebar Toggle (desktop vs mobile)
+        // Sidebar Toggle — below 1200px (Tablet/Mobile) the sidebar is an
+        // off-canvas drawer; at 1200px+ (Desktop/Laptop) it's a manual
+        // expanded/icon-only collapse toggle for the fixed sidebar.
         const menuToggle = document.getElementById('menuToggle');
         if (menuToggle) {
             menuToggle.addEventListener('click', function() {
-                if (window.innerWidth <= 768) {
+                if (window.innerWidth < 1200) {
                     document.body.classList.toggle('sidebar-open');
                 } else {
                     document.body.classList.toggle('sidebar-collapsed');
@@ -44,6 +46,25 @@
             });
         }
         
+        // Search toggle (small phones — expands the collapsed search icon
+        // into a full-width bar instead of hiding search entirely)
+        const searchToggle = document.getElementById('searchToggle');
+        const headerSearchBox = document.getElementById('headerSearchBox');
+        if (searchToggle && headerSearchBox) {
+            searchToggle.addEventListener('click', function(e) {
+                e.stopPropagation();
+                headerSearchBox.classList.toggle('search-active');
+                if (headerSearchBox.classList.contains('search-active')) {
+                    headerSearchBox.querySelector('input').focus();
+                }
+            });
+            document.addEventListener('click', function(event) {
+                if (!headerSearchBox.contains(event.target) && !searchToggle.contains(event.target)) {
+                    headerSearchBox.classList.remove('search-active');
+                }
+            });
+        }
+
         // Global Search
         const globalSearch = document.getElementById('globalSearch');
         if (globalSearch) {
@@ -65,17 +86,38 @@
         }, 5000);
         
         // Responsive sidebar default state
+        // - Desktop/Laptop (>=1200px): fixed expanded sidebar; "collapsed"
+        //   only applies if the user manually toggled it via the hamburger.
+        // - Tablet/Mobile (<1200px): sidebar is off-canvas; collapsed must
+        //   NOT apply here or its higher-specificity width rule fights the
+        //   off-canvas transform and leaves a stuck icon strip on screen.
         function applySidebarResponsiveState() {
-            if (window.innerWidth <= 1024) {
-                document.body.classList.add('sidebar-collapsed');
-            } else {
+            if (window.innerWidth < 1200) {
                 document.body.classList.remove('sidebar-collapsed');
+            } else {
                 document.body.classList.remove('sidebar-open');
             }
         }
 
         applySidebarResponsiveState();
         window.addEventListener('resize', applySidebarResponsiveState);
+
+        // Tap-outside-to-close for the mobile off-canvas sidebar
+        const sidebarBackdrop = document.getElementById('sidebarBackdrop');
+        if (sidebarBackdrop) {
+            sidebarBackdrop.addEventListener('click', function() {
+                document.body.classList.remove('sidebar-open');
+            });
+        }
+
+        // Close the off-canvas drawer when a nav link is tapped
+        document.querySelectorAll('.sidebar .nav-link').forEach(function(link) {
+            link.addEventListener('click', function() {
+                if (window.innerWidth < 1200) {
+                    document.body.classList.remove('sidebar-open');
+                }
+            });
+        });
     </script>
     
     <!-- Define BASE_URL for JavaScript -->
@@ -83,8 +125,8 @@
         const BASE_URL = '<?php echo BASE_URL; ?>';
     </script>
     
-    <!-- Bootstrap 5 JS Bundle (modals, dropdowns, alerts) -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Bootstrap 5 JS Bundle (self-hosted — modals, dropdowns, alerts) -->
+    <script src="<?php echo BASE_URL; ?>public/vendor/bootstrap/bootstrap.bundle.min.js"></script>
 
     <script src="<?php echo BASE_URL; ?>public/js/admin-scripts.js?v=<?php echo time(); ?>"></script>
 </body>

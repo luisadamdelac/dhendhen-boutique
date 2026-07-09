@@ -13,8 +13,8 @@
         'average_order_value' => 0
     ];
 ?>
-<link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap5.min.css">
-<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css">
+<link rel="stylesheet" href="<?php echo BASE_URL; ?>public/vendor/datatables/dataTables.bootstrap5.min.css">
+<link rel="stylesheet" href="<?php echo BASE_URL; ?>public/vendor/datatables/buttons.bootstrap5.min.css">
 <style>
 .dataTables_wrapper .dataTables_filter input {
     border: 1px solid var(--border); border-radius: var(--radius-md);
@@ -142,8 +142,9 @@ table.dataTable thead th.sorting:hover { color: var(--primary-pink); cursor: poi
             <div class="col-md-3 col-sm-6">
                 <label class="form-label small text-muted mb-1">Payment Method</label>
                 <select id="filterPaymentMethod" class="form-select form-select-sm">
-                    <option value="">All Payment Methods</option>
-                    <option value="GCash" selected>GCash</option>
+                    <option value="" selected>All Payment Methods</option>
+                    <option value="GCash">GCash</option>
+                    <option value="PayMongo">PayMongo</option>
                 </select>
             </div>
             <div class="col-md-2 col-sm-6">
@@ -308,8 +309,9 @@ table.dataTable thead th.sorting:hover { color: var(--primary-pink); cursor: poi
                                                 'orderId'      => $orderId,
                                                 'status'       => $ptStatus,
                                                 'method'       => $hasPayment ? $order['payment_method'] : null,
-                                                'reference'    => $order['payment_reference'] ?? null,
+                                                'reference'    => $order['payment_reference'] ?? ($order['paymongo_checkout_session_id'] ?? null),
                                                 'senderNumber' => $order['gcash_sender_number'] ?? null,
+                                                'paymongoPaymentId' => $order['paymongo_payment_id'] ?? null,
                                                 'receiptImage' => !empty($order['receipt_image']) ? BASE_URL . $order['receipt_image'] : null,
                                                 'amount'       => $order['payment_amount'] ?? ($order['total_amount'] ?? 0),
                                                 'paidAt'       => $order['paid_at'] ?? null,
@@ -349,10 +351,10 @@ table.dataTable thead th.sorting:hover { color: var(--primary-pink); cursor: poi
                                 <div class="fw-semibold" id="paymentInfoMethod">—</div>
                             </div>
                             <div class="col-6">
-                                <label class="text-muted mb-1" style="font-size:12px;">Reference Number</label>
+                                <label class="text-muted mb-1" style="font-size:12px;" id="paymentInfoReferenceLabel">Reference Number</label>
                                 <div class="fw-semibold" id="paymentInfoReference">—</div>
                             </div>
-                            <div class="col-6">
+                            <div class="col-6" id="paymentInfoSenderWrap">
                                 <label class="text-muted mb-1" style="font-size:12px;">GCash Number Used</label>
                                 <div class="fw-semibold" id="paymentInfoSenderNumber">—</div>
                             </div>
@@ -383,7 +385,6 @@ table.dataTable thead th.sorting:hover { color: var(--primary-pink); cursor: poi
                             <select class="form-control" id="paymentStatusSelect" name="payment_status" required>
                                 <option value="pending">Pending</option>
                                 <option value="completed">Completed</option>
-                                <option value="failed">Failed</option>
                                 <option value="refunded">Refunded</option>
                             </select>
                         </div>
@@ -417,8 +418,8 @@ table.dataTable thead th.sorting:hover { color: var(--primary-pink); cursor: poi
 
 </div>
 
-<script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap5.min.js"></script>
+<script src="<?php echo BASE_URL; ?>public/vendor/datatables/jquery.dataTables.min.js"></script>
+<script src="<?php echo BASE_URL; ?>public/vendor/datatables/dataTables.bootstrap5.min.js"></script>
 
 <script>
 function printInvoice(orderId) {
@@ -435,6 +436,14 @@ function openPaymentModal(btn) {
 
     document.getElementById('paymentInfoMethod').textContent = info.method || '—';
     document.getElementById('paymentInfoReference').textContent = info.reference || '—';
+
+    // "GCash Number Used" only applies to the old manual-GCash flow — hide
+    // it for PayMongo orders (which have no sender-number concept) instead
+    // of always showing a blank "—". Relabel the reference field too, since
+    // for PayMongo it holds the checkout session id, not a GCash ref number.
+    const isGcash = info.method === 'GCash';
+    document.getElementById('paymentInfoReferenceLabel').textContent = isGcash ? 'Reference Number' : 'PayMongo Checkout Session';
+    document.getElementById('paymentInfoSenderWrap').style.display = isGcash ? '' : 'none';
     document.getElementById('paymentInfoSenderNumber').textContent = info.senderNumber || '—';
     document.getElementById('paymentInfoAmount').textContent = info.amount
         ? ('₱' + Number(info.amount).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }))
@@ -579,11 +588,6 @@ $(function () {
     $('#filterStatus, #filterPaymentMethod, #filterDateFrom, #filterDateTo').on('change', function () {
         table.draw();
     });
-
-    // Payment Method defaults to GCash, so the table must redraw once on
-    // load to actually apply it (the filter fn above is registered after
-    // DataTables' own initial draw already ran).
-    table.draw();
 
     $('#clearFiltersBtn').on('click', function () {
         $('#filterStatus, #filterPaymentMethod').val('');

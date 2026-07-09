@@ -242,16 +242,10 @@ class Product extends Authenticated_Controller {
         $description         = $this->input->post('description', TRUE) ?: NULL;
         $tags                = $this->input->post('tags', TRUE) ?: NULL;
 
-        // Per-branch stock quantities: stock_by_branch[branch_id] = qty
-        $branch_stock_input = (array) $this->input->post('stock_by_branch');
-        $branch_stock = [];
-        foreach ($branch_stock_input as $b_id => $qty) {
-            $qty = (int) $qty;
-            if ($qty > 0) {
-                $branch_stock[(int) $b_id] = $qty;
-            }
-        }
-        $stock = array_sum($branch_stock);
+        // Initial stock comes entirely from the Product Variations step now
+        // (each variation carries its own per-branch breakdown) — there is no
+        // separate flat branch-stock field on the Add Product form anymore.
+        $stock = $this->_posted_variation_stock_total();
 
         // --- Business-logic checks ---
         $errors = [];
@@ -280,6 +274,13 @@ class Product extends Authenticated_Controller {
         }
         if ($price <= $cost_price) {
             $errors[] = 'Selling Price must be greater than Cost Price.';
+        }
+        // Variations are optional, but every product needs stock somewhere —
+        // either in named variation values or, if it has none, in the base
+        // (no-variation) branch stock table. The JS wizard enforces this
+        // client-side too; this is the server-side backstop.
+        if ($stock <= 0) {
+            $errors[] = 'Product stock is required — enter a quantity for at least one branch.';
         }
         if ($min_stock_alert > $stock && $stock > 0) {
             $errors[] = 'Minimum Stock Alert cannot exceed current Stock Quantity.';
@@ -356,11 +357,8 @@ class Product extends Authenticated_Controller {
             'created_at'    => $now,
         ]);
 
-        // Initial stock batch per branch (also keeps product_tbl.stock in sync as the total)
-        foreach ($branch_stock as $b_id => $qty) {
-            StockService::addBatch($product_id, $b_id, $qty, $cost_price, $this->user_id);
-        }
-
+        // Initial stock (per branch, per variation) is created here — this
+        // also keeps product_tbl.stock in sync as the total.
         $this->_save_variations($product_id);
 
         $this->db->trans_complete();
@@ -377,7 +375,7 @@ class Product extends Authenticated_Controller {
 
         // Low-stock notification
         if ($stock <= $min_stock_alert) {
-            $this->_notify_low_stock($product_id, $product_name, $stock, count($branch_stock) . ' branch(es)');
+            $this->_notify_low_stock($product_id, $product_name, $stock, 'across branches');
         }
 
         // Audit log
@@ -470,6 +468,10 @@ class Product extends Authenticated_Controller {
             ->where('product_id', $product_id)->where('is_primary', 1)->get()->row_array();
         $data['variations'] = $this->db->select('*')->from(PRODUCT_VARIATION_TABLE)
             ->where('product_id', $product_id)->order_by('variation_id', 'ASC')->get()->result_array();
+        foreach ($data['variations'] as &$variation) {
+            $variation['branch_stock'] = StockService::getBranchStock($product_id, (int) $variation['variation_id']);
+        }
+        unset($variation);
 
         $this->load->view('admin/layout/header', $data);
         $this->load->view('admin/product/edit', $data);
@@ -679,21 +681,8 @@ class Product extends Authenticated_Controller {
 
         $this->Product_model->update($product_id, $product_data);
 
-        // Apply any per-branch stock adjustments (stock_by_branch[branch_id] = new total for that branch)
-        $posted_branch_stock = (array) $this->input->post('stock_by_branch');
-        if (!empty($posted_branch_stock)) {
-            require_once APPPATH . 'services/StockService.php';
-            $current = StockService::getBranchStock($product_id);
-            foreach ($posted_branch_stock as $b_id => $new_qty) {
-                $b_id = (int) $b_id;
-                $new_qty = (int) $new_qty;
-                $delta = $new_qty - ($current[$b_id] ?? 0);
-                if ($delta !== 0) {
-                    StockService::adjustStock($product_id, $b_id, $delta, $this->user_id, 'Admin stock edit');
-                }
-            }
-        }
-
+        // Stock (per branch, per variation) is fully replaced here — Product
+        // Variations is the only place stock is entered now.
         $this->_save_variations($product_id);
 
         $this->Activity_log_model->log_activity(get_user_id(), 'admin', 'update_product', 'Updated product: ' . $product_data['product_name'], get_client_ip());
@@ -702,14 +691,53 @@ class Product extends Authenticated_Controller {
     }
 
     /**
+     * Sum of stock across every variation row posted in variations_json —
+     * used for the initial-stock validation on Add Product. A row's Value is
+     * optional (blank = base/no-variation stock, see _save_variations()),
+     * but its branch_stock still counts toward the total either way.
+     */
+    private function _posted_variation_stock_total() {
+        $json = $this->input->post('variations_json', TRUE);
+        if (empty($json)) {
+            return 0;
+        }
+        $decoded = json_decode($json, TRUE);
+        if (!is_array($decoded)) {
+            return 0;
+        }
+        $total = 0;
+        foreach ($decoded as $v) {
+            $branch_stock = is_array($v['branch_stock'] ?? NULL) ? $v['branch_stock'] : [];
+            foreach ($branch_stock as $qty) {
+                $total += max(0, (int) $qty);
+            }
+        }
+        return $total;
+    }
+
+    /**
      * Replace a product's variations (Color, Size, Shade, etc.) from the
      * wizard's variations_json hidden field. Used by both add and edit —
      * simplest correct approach is to wipe and re-insert rather than diff
      * against what's already there.
+     *
+     * Each variation now carries a real per-branch stock breakdown
+     * (branch_stock: {branch_id: qty}) instead of one summed number —
+     * deleting a variation row cascades to delete its inventory_batches
+     * (migration 020), and a fresh batch per branch is opened here. This is
+     * the sole stock-entry mechanism for products now; there is no
+     * separate flat "Branch Distribution" step anymore.
+     *
+     * A row's Value is optional: if left blank, its branch_stock becomes
+     * base (no-variation) stock — batches with variation_id = NULL
+     * (migration 020) — instead of a product_variation_tbl row, since that
+     * table requires both variation_type and variation_value.
      */
     private function _save_variations($product_id) {
         $json = $this->input->post('variations_json', TRUE);
 
+        // Cascades (FK) to delete inventory_batches/inventory_movements rows
+        // tied to this product's variations — see migration 020.
         $this->db->where('product_id', $product_id)->delete(PRODUCT_VARIATION_TABLE);
 
         $variations = [];
@@ -721,40 +749,60 @@ class Product extends Authenticated_Controller {
         }
 
         $now = date('Y-m-d H:i:s');
-        $variation_stock_total = 0;
-        $saved_any = false;
         foreach ($variations as $v) {
             $type = trim((string) ($v['type'] ?? ''));
             $value = trim((string) ($v['value'] ?? ''));
+            $branch_stock = is_array($v['branch_stock'] ?? NULL) ? $v['branch_stock'] : [];
+
             if ($type === '' || $value === '') {
+                foreach ($branch_stock as $b_id => $qty) {
+                    $qty = (int) $qty;
+                    if ($qty > 0) {
+                        StockService::addBatch($product_id, (int) $b_id, $qty, 0, $this->user_id, NULL);
+                    }
+                }
                 continue;
             }
-            $stock = max(0, (int) ($v['stock'] ?? 0));
+
             $this->db->insert(PRODUCT_VARIATION_TABLE, [
                 'product_id'       => $product_id,
                 'variation_type'   => $type,
                 'variation_value'  => $value,
                 'price_adjustment' => (float) ($v['price_adjustment'] ?? 0),
-                'stock'            => $stock,
+                'stock'            => 0,
                 'status'           => 'active',
                 'created_at'       => $now,
                 'updated_at'       => $now,
             ]);
-            $variation_stock_total += $stock;
-            $saved_any = true;
+            $variation_id = $this->db->insert_id();
+
+            $variation_total = 0;
+            foreach ($branch_stock as $b_id => $qty) {
+                $qty = (int) $qty;
+                if ($qty > 0) {
+                    StockService::addBatch($product_id, (int) $b_id, $qty, 0, $this->user_id, $variation_id);
+                    $variation_total += $qty;
+                }
+            }
+
+            $this->db->where('variation_id', $variation_id)->update(PRODUCT_VARIATION_TABLE, ['stock' => $variation_total]);
         }
 
-        // Stock is tracked per-variation (not per-branch) once a product has
-        // variations, so product_tbl.stock — which the list/shop/reports pages
-        // all read as the denormalized total — must be kept in sync with the
-        // variation stock instead of the (unused) branch batches. Reverting a
-        // product back to no variations re-syncs it from the branch total.
-        if ($saved_any) {
-            $this->db->where('product_id', $product_id)->update(PRODUCT_TABLE, ['stock' => $variation_stock_total]);
-        } else {
-            $this->db->where('product_id', $product_id)
-                ->update(PRODUCT_TABLE, ['stock' => StockService::getAvailableStock($product_id)]);
-        }
+        // product_tbl.stock is the denormalized total the list/shop/reports
+        // pages read — addBatch() above already keeps it in sync as it goes,
+        // but re-syncing here also correctly zeroes it out when the product
+        // ends up with no variations (or none with any stock) left.
+        //
+        // Resolve the new stock value into a local variable *before*
+        // chaining where()->update() — StockService::getAvailableStock()
+        // runs its own get() on the same shared $this->db query builder,
+        // which resets any pending where() clauses. Passing it inline as
+        // update()'s argument let that reset fire between where() and
+        // update(), silently dropping the WHERE and overwriting every
+        // product's stock with the last-computed value.
+        $new_stock = StockService::getAvailableStock($product_id);
+        $this->db->where('product_id', $product_id)
+            ->update(PRODUCT_TABLE, ['stock' => $new_stock]);
     }
 }
 ?>

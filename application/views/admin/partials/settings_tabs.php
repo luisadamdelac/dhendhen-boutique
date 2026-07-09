@@ -5,6 +5,8 @@
             $activeTab = 'email_logs';
         } elseif (strpos($page_title, 'Email') !== false) {
             $activeTab = 'email';
+        } elseif (strpos($page_title, 'PayMongo') !== false) {
+            $activeTab = 'paymongo';
         } elseif (strpos($page_title, 'Payment') !== false) {
             $activeTab = 'payment';
         } elseif (strpos($page_title, 'Shipping') !== false) {
@@ -24,6 +26,9 @@
     </a>
     <a href="<?php echo site_url('admin/settings/payment'); ?>" class="page-tab <?php echo $activeTab === 'payment' ? 'active' : ''; ?>">
         <i class="fas fa-credit-card"></i> Payment
+    </a>
+    <a href="<?php echo site_url('admin/settings/paymongo'); ?>" class="page-tab <?php echo $activeTab === 'paymongo' ? 'active' : ''; ?>">
+        <i class="fas fa-shield-halved"></i> PayMongo
     </a>
     <a href="<?php echo site_url('admin/settings/shipping'); ?>" class="page-tab <?php echo $activeTab === 'shipping' ? 'active' : ''; ?>">
         <i class="fas fa-truck"></i> Shipping Fees

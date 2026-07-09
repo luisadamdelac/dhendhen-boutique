@@ -1,5 +1,5 @@
 <?php defined('BASEPATH') OR exit('No direct script access allowed'); ?>
-<link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap5.min.css">
+<link rel="stylesheet" href="<?php echo BASE_URL; ?>public/vendor/datatables/dataTables.bootstrap5.min.css">
 <style>
 .dataTables_wrapper .dataTables_filter input {
     border: 1px solid var(--border); border-radius: var(--radius-md);
@@ -79,7 +79,8 @@ table.dataTable thead th.sorting:hover { color: var(--primary-pink); cursor: poi
                 <select id="filterResellerStatus" class="form-select form-select-sm">
                     <option value="">All Statuses</option>
                     <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
+                    <option value="pending">Pending</option>
+                    <option value="rejected">Rejected</option>
                 </select>
             </div>
             <div class="col-md-2 d-flex">
@@ -136,7 +137,7 @@ table.dataTable thead th.sorting:hover { color: var(--primary-pink); cursor: poi
                             ₱<?= number_format($r['commission_balance'] ?? 0, 2); ?>
                         </td>
                         <td class="text-center">
-                            <span class="badge-status <?= $rStatus === 'active' ? 'badge-active' : 'badge-inactive'; ?>"><?= ucfirst($rStatus); ?></span>
+                            <span class="badge-status badge-<?= $rStatus === 'active' ? 'active' : ($rStatus === 'rejected' ? 'rejected' : 'inactive'); ?>"><?= ucfirst($rStatus); ?></span>
                         </td>
                         <td class="text-center pe-3">
                             <div class="d-flex gap-1 justify-content-center">
@@ -148,6 +149,13 @@ table.dataTable thead th.sorting:hover { color: var(--primary-pink); cursor: poi
                                    class="btn btn-sm btn-outline-warning" title="Edit" style="width:30px;height:30px;padding:0;display:flex;align-items:center;justify-content:center;">
                                     <i class="fas fa-edit" style="font-size:11px;"></i>
                                 </a>
+                                <?php if ($rStatus === 'rejected'): ?>
+                                <button type="button" class="btn btn-sm btn-outline-success btn-reapprove-reseller"
+                                        data-id="<?= $r['reseller_id']; ?>" data-name="<?= $fullName; ?>"
+                                        title="Re-approve" style="width:30px;height:30px;padding:0;display:flex;align-items:center;justify-content:center;">
+                                    <i class="fas fa-undo" style="font-size:11px;"></i>
+                                </button>
+                                <?php endif; ?>
                             </div>
                         </td>
                     </tr>
@@ -160,8 +168,30 @@ table.dataTable thead th.sorting:hover { color: var(--primary-pink); cursor: poi
 
 </div>
 
-<script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap5.min.js"></script>
+<!-- Re-approve Confirm Modal -->
+<div class="modal" id="reapproveModal">
+    <div class="modal-content modal-sm">
+        <div class="modal-header" style="background: linear-gradient(135deg, #28a745 0%, #218838 100%); color:#fff;">
+            <h3 class="modal-title">Re-approve Reseller</h3>
+            <button type="button" class="modal-close" onclick="closeModal(document.getElementById('reapproveModal'))">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <p id="reapproveModalBody"></p>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary btn-sm" id="reapproveBtnCancel" onclick="closeModal(document.getElementById('reapproveModal'))">Cancel</button>
+            <button type="button" class="btn btn-sm btn-success" id="reapproveBtnConfirm">
+                <span id="reapproveBtnConfirmText">Re-approve</span>
+                <span id="reapproveBtnConfirmSpinner" class="spinner-border spinner-border-sm ms-1 d-none"></span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<script src="<?php echo BASE_URL; ?>public/vendor/datatables/jquery.dataTables.min.js"></script>
+<script src="<?php echo BASE_URL; ?>public/vendor/datatables/dataTables.bootstrap5.min.js"></script>
 <script>
 $(function () {
     // Excel/PDF export lives in Reports, not on this operational list page.
@@ -182,6 +212,50 @@ $(function () {
     $('#clearResellerFiltersBtn').on('click', function () {
         $('#filterResellerStatus').val('');
         table.search('').draw();
+    });
+
+    let reapproveId = null;
+
+    function resetReapproveBtn() {
+        $('#reapproveBtnConfirm').prop('disabled', false);
+        $('#reapproveBtnCancel').prop('disabled', false);
+        $('#reapproveBtnConfirmText').text('Re-approve');
+        $('#reapproveBtnConfirmSpinner').addClass('d-none');
+    }
+
+    $('#resellersTable').on('click', '.btn-reapprove-reseller', function () {
+        reapproveId = $(this).data('id');
+        const name = $(this).data('name');
+        $('#reapproveModalBody').text('Re-approve ' + name + ' as a reseller?');
+        resetReapproveBtn();
+        openModal('reapproveModal');
+    });
+
+    $('#reapproveBtnConfirm').on('click', function () {
+        if (!reapproveId) return;
+
+        $(this).prop('disabled', true);
+        $('#reapproveBtnCancel').prop('disabled', true);
+        $('#reapproveBtnConfirmSpinner').removeClass('d-none');
+
+        fetch('<?= site_url('admin/reseller/approve-registration/'); ?>' + reapproveId, { method: 'POST' })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    closeModal(document.getElementById('reapproveModal'));
+                    alert(data.message || 'Action failed.');
+                    resetReapproveBtn();
+                    reapproveId = null;
+                }
+            })
+            .catch(() => {
+                closeModal(document.getElementById('reapproveModal'));
+                alert('Request failed. Please try again.');
+                resetReapproveBtn();
+                reapproveId = null;
+            });
     });
 });
 </script>

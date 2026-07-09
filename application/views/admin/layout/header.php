@@ -11,20 +11,20 @@
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Font Awesome (self-hosted — see public/vendor/) -->
+    <link rel="stylesheet" href="<?php echo BASE_URL; ?>public/vendor/fontawesome/css/all.min.css">
 
-    <!-- Bootstrap 5 (base layer — admin-style.css overrides theme portions) -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <!-- Bootstrap 5 (self-hosted; base layer — admin-style.css overrides theme portions) -->
+    <link rel="stylesheet" href="<?php echo BASE_URL; ?>public/vendor/bootstrap/bootstrap.min.css">
 
     <!-- Custom CSS -->
     <link rel="stylesheet" href="<?php echo BASE_URL; ?>public/css/admin-style.css?v=<?php echo @filemtime(FCPATH . 'public/css/admin-style.css') ?: time(); ?>">
-    
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    
-    <!-- jQuery -->
-    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+
+    <!-- Chart.js (self-hosted) -->
+    <script src="<?php echo BASE_URL; ?>public/vendor/chartjs/chart.umd.min.js"></script>
+
+    <!-- jQuery (self-hosted) -->
+    <script src="<?php echo BASE_URL; ?>public/vendor/jquery/jquery-3.7.0.min.js"></script>
 </head>
 <body>
     <div class="wrapper">
@@ -41,11 +41,16 @@
             
             <div class="header-right">
                 <!-- Search -->
-                <div class="header-search">
+                <div class="header-search" id="headerSearchBox">
                     <i class="fas fa-search"></i>
                     <input type="text" placeholder="Search..." id="globalSearch">
                 </div>
-                
+
+                <!-- Search toggle (small phones only — expands the search box) -->
+                <button type="button" class="header-icon search-toggle-btn" id="searchToggle" title="Search">
+                    <i class="fas fa-search"></i>
+                </button>
+
                 <!-- Icons -->
                 <div class="header-icons">
                     <?php
@@ -63,7 +68,7 @@
                                 <?php echo $unreadCount; ?>
                             </span>
                         </a>
-                        <div id="notificationPanel" style="display:none;position:absolute;top:100%;right:0;margin-top:8px;width:340px;max-height:420px;overflow-y:auto;background:#fff;border-radius:12px;box-shadow:0 12px 32px rgba(0,0,0,0.18);z-index:2000;">
+                        <div id="notificationPanel" class="notif-dropdown-panel" style="display:none;">
                             <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid #f0f0f0;">
                                 <strong style="font-size:14px;">Notifications</strong>
                                 <button type="button" id="markAllReadBtn" style="background:none;border:none;color:var(--primary-pink,#ff69b4);font-size:12px;font-weight:600;cursor:pointer;">
@@ -85,7 +90,7 @@
                                 <?php echo $messageCount; ?>
                             </span>
                         </a>
-                        <div id="messagePanel" style="display:none;position:absolute;top:100%;right:0;margin-top:8px;width:340px;max-height:420px;overflow-y:auto;background:#fff;border-radius:12px;box-shadow:0 12px 32px rgba(0,0,0,0.18);z-index:2000;">
+                        <div id="messagePanel" class="notif-dropdown-panel" style="display:none;">
                             <div style="padding:12px 16px;border-bottom:1px solid #f0f0f0;">
                                 <strong style="font-size:14px;">Order Alerts</strong>
                             </div>
@@ -116,6 +121,9 @@
                 </div>
             </div>
         </header>
+
+        <!-- Sidebar backdrop (mobile off-canvas overlay, tap to close) -->
+        <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
 
         <!-- Sidebar -->
         <aside class="sidebar" id="sidebar">

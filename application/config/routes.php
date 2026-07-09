@@ -76,6 +76,10 @@ $route['cart'] = 'customer/Cart';
 $route['cart/(:any)/(:any)'] = 'customer/Cart/$1/$2';
 $route['cart/(:any)'] = 'customer/Cart/$1';
 $route['checkout'] = 'customer/Checkout/index';
+// Must come before the checkout/(:any) wildcard below — "return" is a
+// reserved PHP keyword and can't be a method name, so the URL is mapped to
+// return_page() explicitly instead of relying on the 1:1 wildcard mapping.
+$route['checkout/return'] = 'customer/Checkout/return_page';
 $route['checkout/(:any)'] = 'customer/Checkout/$1';
 
 // Authentication Routes
@@ -173,3 +177,6 @@ $route['profile/(:any)'] = 'core/ProfileRedirect/$1';
 $route['api/notifications'] = 'api/notifications';
 $route['api/mark-notification-read'] = 'api/mark_notification_read';
 $route['api/get-all-notifications'] = 'api/get_all_notifications';
+
+// Webhooks (unauthenticated, server-to-server — see application/controllers/Webhooks.php)
+$route['webhooks/paymongo'] = 'webhooks/paymongo';

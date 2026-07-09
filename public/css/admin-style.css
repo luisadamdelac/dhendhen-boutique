@@ -192,6 +192,9 @@ img {
     display: flex;
     align-items: center;
     gap: var(--spacing-md);
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
 }
 
 .menu-toggle {
@@ -213,6 +216,10 @@ img {
     font-size: var(--font-size-2xl);
     font-weight: 700;
     color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
 }
 
 .header-right {
@@ -255,6 +262,14 @@ img {
     color: var(--gray);
 }
 
+/* Only shown on small phones, where the search box collapses to an icon
+   (see the max-width:480px block) that expands it back on tap. */
+.search-toggle-btn {
+    display: none;
+    border: none;
+    background: none;
+}
+
 .header-icons {
     display: flex;
     align-items: center;
@@ -284,6 +299,33 @@ img {
     color: var(--gray);
 }
 
+.notif-dropdown-panel {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 8px;
+    width: 340px;
+    max-width: calc(100vw - 24px);
+    max-height: 420px;
+    overflow-y: auto;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+    z-index: 2000;
+}
+
+@media (max-width: 480px) {
+    .notif-dropdown-panel {
+        position: fixed;
+        top: var(--header-height);
+        left: 12px;
+        right: 12px;
+        width: auto;
+        max-width: none;
+        margin-top: 0;
+    }
+}
+
 .header-icon .badge {
     position: absolute;
     top: 0;
@@ -304,6 +346,7 @@ img {
     border-radius: var(--radius-lg);
     cursor: pointer;
     transition: var(--transition-base);
+    flex-shrink: 0;
 }
 
 .user-menu:hover {
@@ -367,6 +410,18 @@ img {
 
 .sidebar-collapsed .sidebar {
     width: var(--sidebar-collapsed-width);
+}
+
+.sidebar-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(17, 24, 39, 0.5);
+    z-index: 999;
+}
+
+body.sidebar-open .sidebar-backdrop {
+    display: block;
 }
 
 .sidebar::-webkit-scrollbar {
@@ -720,7 +775,6 @@ img {
 .btn-danger:hover {
     filter: brightness(0.9);
 }
-}
 
 .btn-icon {
     width: 38px;
@@ -1041,26 +1095,28 @@ textarea.form-control {
     max-width: 100%;
 }
 
+/* flex intentionally NOT set here — Bootstrap already provides it (.col:
+   flex:1 0 0%; .col-N: flex:0 0 auto + width:N%). This project's markup
+   frequently combines both classes on one element, e.g. class="col col-8",
+   using .col only for the padding/gutter below. Redefining flex here would
+   load after Bootstrap and — with equal specificity — silently override
+   .col-N's width for every such element, collapsing all of them to an
+   equal flex share regardless of their stated fraction. That exact bug
+   previously made 4-field form rows (e.g. product add/edit) render as
+   evenly-squeezed ~120px columns instead of their intended 8/4/6/6 split. */
 .col {
-    flex: 1;
     padding: 0 var(--spacing-md);
     margin-bottom: var(--spacing-xl);
     min-width: 0;
     box-sizing: border-box;
 }
 
-.col-1 { flex: 0 0 8.333333%; max-width: 8.333333%; }
-.col-2 { flex: 0 0 16.666667%; max-width: 16.666667%; }
-.col-3 { flex: 0 0 25%; max-width: 25%; }
-.col-4 { flex: 0 0 33.333333%; max-width: 33.333333%; }
-.col-5 { flex: 0 0 41.666667%; max-width: 41.666667%; }
-.col-6 { flex: 0 0 50%; max-width: 50%; }
-.col-7 { flex: 0 0 58.333333%; max-width: 58.333333%; }
-.col-8 { flex: 0 0 66.666667%; max-width: 66.666667%; }
-.col-9 { flex: 0 0 75%; max-width: 75%; }
-.col-10 { flex: 0 0 83.333333%; max-width: 83.333333%; }
-.col-11 { flex: 0 0 91.666667%; max-width: 91.666667%; }
-.col-12 { flex: 0 0 100%; max-width: 100%; }
+/* .col-1..col-12 intentionally NOT redefined here — Bootstrap 5.3.3 (CDN)
+   already provides identical bare column values. A duplicate used to live
+   here; being unconditional (no media query) and loaded after Bootstrap, it
+   always beat Bootstrap's real breakpoint-scoped rules (.col-md-*, .col-xl-*)
+   for any element combining a bare .col-12 with a breakpoint class — exactly
+   the col-12 col-md-6 col-xl-3 pattern this project's forms/cards use. */
 
 /* ============================================
    UTILITIES
@@ -1098,71 +1154,34 @@ textarea.form-control {
 
 /* ============================================
    RESPONSIVE DESIGN
+   ------------------------------------------------
+   Desktop (>=1400px) and Laptop (1200-1399px) both
+   render the base (non-media) styles above — fixed
+   expanded sidebar, 4-column stat grids via Bootstrap's
+   own col-xl-3 — by design, so there is nothing to
+   override for either tier.
+
+   Below 1200px (Tablet Landscape/Portrait + Mobile) the
+   sidebar becomes a single consistent off-canvas drawer:
+   hidden by default, opened by the hamburger button,
+   dimmed backdrop, closes on outside tap or nav pick.
    ============================================ */
-@media (max-width: 1400px) {
+@media (max-width: 1199.98px) {
     .main-content {
         padding: var(--spacing-lg);
-    }
-
-    thead th,
-    tbody td {
-        padding: var(--spacing-xs) var(--spacing-sm);
-        font-size: var(--font-size-xs);
-    }
-
-    .btn-sm {
-        padding: 2px var(--spacing-sm);
-        font-size: var(--font-size-xs);
-    }
-}
-
-@media (max-width: 1024px) {
-    .main-content {
-        margin-left: var(--sidebar-collapsed-width);
-        max-width: calc(100vw - var(--sidebar-collapsed-width));
-    }
-
-    .sidebar {
-        width: var(--sidebar-collapsed-width);
-    }
-
-    .sidebar-brand {
-        display: none;
-    }
-
-    .nav-link span {
-        display: none;
-    }
-
-    .header {
-        left: var(--sidebar-collapsed-width);
-    }
-
-    .col-3 {
-        flex: 0 0 50%;
-        max-width: 50%;
-    }
-}
-
-@media (max-width: 768px) {
-    .col-3, .col-4, .col-6, .col-8, .col-12 {
-        flex: 0 0 100%;
-        max-width: 100%;
-    }
-
-    .main-content {
-        padding: var(--spacing-md);
         margin-left: 0;
         max-width: 100vw;
     }
 
-    .sidebar {
+    .sidebar,
+    .sidebar-collapsed .sidebar {
         width: var(--sidebar-width);
         transform: translateX(-100%);
         transition: transform var(--transition-base);
     }
 
-    /* When sidebar-open is set on body, slide sidebar in over content */
+    /* When sidebar-open is set on body, slide the full (expanded) sidebar
+       in as an overlay — never the icon-only collapsed strip. */
     .sidebar-open .sidebar {
         transform: translateX(0);
     }
@@ -1175,8 +1194,46 @@ textarea.form-control {
         display: inline;
     }
 
-    .header {
+    .header,
+    .sidebar-collapsed .header {
         left: 0;
+    }
+
+    thead th,
+    tbody td {
+        padding: var(--spacing-xs) var(--spacing-sm);
+        font-size: var(--font-size-xs);
+    }
+
+    .btn-sm {
+        padding: 2px var(--spacing-sm);
+        font-size: var(--font-size-xs);
+    }
+
+    /* Legacy 4-across form field groups (e.g. address rows) become 2x2 on
+       tablet; the 767.98 block below drops them to one-per-row on phones. */
+    .col-3 {
+        flex: 0 0 50%;
+        max-width: 50%;
+    }
+
+    /* The admin's business name/role text is long and has nowhere to go
+       once the sidebar leaves the layout — drop it for the whole
+       tablet/mobile tier and keep just the avatar, matching the compact
+       "hamburger, search, bell, avatar" mobile header. */
+    .user-info {
+        display: none;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .col-3, .col-4, .col-6, .col-8, .col-12 {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+
+    .main-content {
+        padding: var(--spacing-md);
     }
 
     .header-search input {
@@ -1190,10 +1247,6 @@ textarea.form-control {
     .card {
         padding: var(--spacing-md);
     }
-
-    .user-info {
-        display: none;
-    }
 }
 
 @media (max-width: 480px) {
@@ -1201,8 +1254,33 @@ textarea.form-control {
         padding: 0 var(--spacing-md);
     }
 
+    /* Collapse the inline search box to an icon; tapping it opens a
+       full-width search bar overlaid under the header instead. */
     .header-search {
         display: none;
+    }
+
+    .search-toggle-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .header-search.search-active {
+        display: flex;
+        position: fixed;
+        top: var(--header-height);
+        left: 0;
+        right: 0;
+        padding: var(--spacing-md);
+        background: var(--white);
+        box-shadow: var(--shadow-md);
+        z-index: 1500;
+    }
+
+    .header-search.search-active input {
+        width: 100%;
+        max-width: none;
     }
 
     .page-title {
@@ -1211,6 +1289,22 @@ textarea.form-control {
 
     .header-icons {
         gap: var(--spacing-xs);
+    }
+
+    /* Save a little more horizontal room in the icon cluster so the
+       avatar never gets pushed past the edge on narrow phones. */
+    .user-menu {
+        gap: 0;
+        padding: var(--spacing-xs);
+    }
+
+    .user-menu .fa-chevron-down {
+        display: none;
+    }
+
+    .user-avatar {
+        width: 32px;
+        height: 32px;
     }
 
     /* Make wide tables scrollable on very small screens */
@@ -1715,31 +1809,15 @@ textarea.form-control {
 .border-0 { border: none !important; }
 .shadow-sm { box-shadow: 0 1px 4px rgba(0,0,0,.07) !important; }
 
-/* Responsive grid additions */
-@media (min-width: 576px) {
-    .col-sm-6  { flex: 0 0 50%; max-width: 50%; }
-    .col-sm-12 { flex: 0 0 100%; max-width: 100%; }
-}
-@media (min-width: 768px) {
-    .col-md-2  { flex: 0 0 16.666%; max-width: 16.666%; }
-    .col-md-3  { flex: 0 0 25%; max-width: 25%; }
-    .col-md-4  { flex: 0 0 33.333%; max-width: 33.333%; }
-    .col-md-5  { flex: 0 0 41.666%; max-width: 41.666%; }
-    .col-md-6  { flex: 0 0 50%; max-width: 50%; }
-    .col-md-7  { flex: 0 0 58.333%; max-width: 58.333%; }
-    .col-md-8  { flex: 0 0 66.666%; max-width: 66.666%; }
-    .col-md-9  { flex: 0 0 75%; max-width: 75%; }
-    .col-md-12 { flex: 0 0 100%; max-width: 100%; }
-    .text-md-end   { text-align: right !important; }
-    .text-md-start { text-align: left !important; }
-}
-@media (min-width: 992px) {
-    .col-lg-3 { flex: 0 0 25%; max-width: 25%; }
-    .col-lg-4 { flex: 0 0 33.333%; max-width: 33.333%; }
-    .col-lg-5 { flex: 0 0 41.666%; max-width: 41.666%; }
-    .col-lg-8 { flex: 0 0 66.666%; max-width: 66.666%; }
-    .col-lg-9 { flex: 0 0 75%; max-width: 75%; }
-}
+/* NOTE: no hand-rolled .col-sm-*/.col-md-*/.col-lg-* shim here — Bootstrap
+   5.3.3 (CDN, loaded in header.php) already provides the full, correct grid
+   including xl/xxl. A duplicate shim previously lived here and, because it
+   loads after Bootstrap and never defined the xl/xxl tiers, it silently
+   overrode Bootstrap's real .col-xl-*/.col-xxl-* rules for any element that
+   also carried a .col-md-*/.col-lg-* class (equal specificity + later
+   source order = it always won). That capped every 4-per-row desktop grid
+   at 2-per-row. Removed rather than patched — it added nothing Bootstrap
+   doesn't already do correctly. */
 
 /* container-fluid */
 .container-fluid { width: 100%; padding-right: 0; padding-left: 0; }

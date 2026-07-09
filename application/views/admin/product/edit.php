@@ -457,48 +457,6 @@ $current_image_path = !empty($primary_image['image_path']) ? $primary_image['ima
                                     <small style="color: var(--gray);">Leave blank if not applicable</small>
                                 </div>
                             </div>
-                            <div class="col col-12" id="branchStockSection" style="margin-bottom:0;">
-                                <div class="form-group">
-                                    <label>Branch Distribution</label>
-                                    <div class="row">
-                                        <?php foreach ($branches as $b): ?>
-                                        <div class="col col-6">
-                                            <div class="form-group">
-                                                <label style="font-weight:500;"><?= htmlspecialchars($b['branch_name']); ?></label>
-                                                <input type="number" min="0" class="form-control branch-stock-input"
-                                                    name="stock_by_branch[<?= $b['branch_id']; ?>]"
-                                                    data-branch-id="<?= $b['branch_id']; ?>"
-                                                    value="<?= set_value('stock_by_branch[' . $b['branch_id'] . ']', $branch_stock[$b['branch_id']] ?? 0); ?>">
-                                                <div class="branch-stock-msg" id="branch_stock_msg_<?= $b['branch_id']; ?>"></div>
-                                            </div>
-                                        </div>
-                                        <?php endforeach; ?>
-                                    </div>
-                                </div>
-                                <label style="margin-bottom:6px;">Automatic Stock Summary</label>
-                                <div class="stock-summary">
-                                    <div class="stat-tile">
-                                        <div class="stat-lbl">Total Stock</div>
-                                        <div class="stat-val"><span id="totalStockDisplay">0</span> unit(s)</div>
-                                    </div>
-                                    <div class="stat-tile">
-                                        <div class="stat-lbl">Branches Stocked</div>
-                                        <div class="stat-val" id="branchesStockedDisplay">0</div>
-                                    </div>
-                                </div>
-                                <small style="color: var(--gray); display:block; margin-top:8px;">Changing a branch's quantity creates a stock adjustment batch for that branch (FIFO), it does not overwrite history.</small>
-                            </div>
-                            <div class="col col-12" id="variationStockNotice" style="display:none;margin-bottom:0;">
-                                <div style="background:#fff5f8;border:1px solid #ffccdc;border-radius:10px;padding:12px;">
-                                    <div style="display:flex;align-items:flex-start;gap:8px;">
-                                        <i class="fas fa-circle-info" style="color: var(--primary-pink); margin-top:2px;"></i>
-                                        <div style="font-size:.8rem;color:var(--text);">
-                                            <strong>Stock is managed per variation</strong><br>
-                                            This product has variations, so branch distribution is hidden — set each variation value's own stock below instead.
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -507,10 +465,10 @@ $current_image_path = !empty($primary_image['image_path']) ? $primary_image['ima
                 <div class="card" style="margin-top: 20px;">
                     <div class="card-body">
                         <div class="page-section" style="margin-top:0;">
-                            <span class="section-title"><i class="fas fa-layer-group me-2"></i>Product Variations</span>
+                            <span class="section-title"><i class="fas fa-layer-group me-2"></i>Product Variations &amp; Branch Stock</span>
                             <hr>
                         </div>
-                        <p class="text-muted" style="margin-top:-6px;font-size:.85rem;">Optional. Each variation value has its own stock and an optional price adjustment on top of the selling price above.</p>
+                        <p class="text-muted" style="margin-top:-6px;font-size:.85rem;">Optional. Each variation value has its own stock per branch and an optional price adjustment on top of the selling price above.</p>
 
                         <div id="variationTypesContainer"></div>
 
@@ -519,6 +477,21 @@ $current_image_path = !empty($primary_image['image_path']) ? $primary_image['ima
                                 <i class="fas fa-plus"></i> Add Variation Type
                             </button>
                             <div class="smart-select-dropdown" id="variationTypeDropdown" hidden style="position:absolute;top:calc(100% + 4px);left:0;min-width:200px;"></div>
+                        </div>
+
+                        <div style="margin-top:20px;">
+                            <label style="margin-bottom:6px;">Automatic Stock Summary</label>
+                            <div class="stock-summary">
+                                <div class="stat-tile">
+                                    <div class="stat-lbl">Total Stock</div>
+                                    <div class="stat-val"><span id="totalStockDisplay">0</span> unit(s)</div>
+                                </div>
+                                <div class="stat-tile">
+                                    <div class="stat-lbl">Branches Stocked</div>
+                                    <div class="stat-val" id="branchesStockedDisplay">0</div>
+                                </div>
+                            </div>
+                            <small style="color: var(--gray); display:block; margin-top:8px;">Changing a variation's branch quantity creates a stock adjustment batch for that branch (FIFO), it does not overwrite history.</small>
                         </div>
 
                         <input type="hidden" name="variations_json" id="variationsJson" value="">
@@ -680,44 +653,26 @@ costInput.addEventListener('input', updateMarkup);
 sellInput.addEventListener('input', updateMarkup);
 updateMarkup();
 
-/* ── Per-branch stock total ──────────────────────────────── */
-const branchStockInputs = document.querySelectorAll('.branch-stock-input');
+/* ── Stock total, summed across every variation's per-branch inputs ── */
 const totalStockDisplay = document.getElementById('totalStockDisplay');
 const branchesStockedDisplay = document.getElementById('branchesStockedDisplay');
 const editMinStockInput = document.getElementById('min_stock_alert');
 
-function updateBranchStockMessage(inp, minAlert) {
-    const branchId = inp.dataset.branchId;
-    const msgEl = document.getElementById('branch_stock_msg_' + branchId);
-    if (!msgEl) return;
-    const qty = parseInt(inp.value, 10) || 0;
-
-    if (qty === 0) {
-        msgEl.className = 'branch-stock-msg out';
-        msgEl.innerHTML = '<i class="fas fa-circle-exclamation"></i> Out of stock at this branch';
-    } else if (minAlert > 0 && qty <= minAlert) {
-        msgEl.className = 'branch-stock-msg warn';
-        msgEl.innerHTML = '<i class="fas fa-triangle-exclamation"></i> Only ' + qty + ' left — at or below your minimum alert (' + minAlert + ')';
-    } else {
-        msgEl.className = 'branch-stock-msg ok';
-        msgEl.innerHTML = '<i class="fas fa-check-circle"></i> ' + qty + ' in stock';
-    }
-}
-
 function updateTotalStock() {
+    // Variation rows are added/removed dynamically, so query fresh each time
+    // rather than caching a NodeList at page load.
+    const branchTotals = {};
     let total = 0;
-    let stocked = 0;
-    const minAlert = parseInt(editMinStockInput.value, 10) || 0;
-    branchStockInputs.forEach(inp => {
+    document.querySelectorAll('.variation-branch-stock-input').forEach(inp => {
         const qty = parseInt(inp.value, 10) || 0;
+        const branchId = inp.dataset.branchId;
+        branchTotals[branchId] = (branchTotals[branchId] || 0) + qty;
         total += qty;
-        if (qty > 0) stocked++;
-        updateBranchStockMessage(inp, minAlert);
     });
+    const stocked = Object.values(branchTotals).filter(qty => qty > 0).length;
     totalStockDisplay.textContent = total;
     branchesStockedDisplay.textContent = stocked;
 }
-branchStockInputs.forEach(inp => inp.addEventListener('input', updateTotalStock));
 editMinStockInput.addEventListener('input', updateTotalStock);
 updateTotalStock();
 
@@ -1055,12 +1010,42 @@ function addedVariationTypes() {
     return Array.from(variationTypesContainer.querySelectorAll('.variation-type-block')).map(b => b.dataset.type);
 }
 
+function commitCustomVariationType(input) {
+    const added = addedVariationTypes();
+    const type = input.value.trim();
+    if (!type) return;
+    if (added.some(t => t.toLowerCase() === type.toLowerCase())) {
+        input.style.borderColor = 'var(--danger, #dc3545)';
+        return;
+    }
+    addVariationTypeBlock(type);
+    variationTypeDropdown.hidden = true;
+}
+
 addVariationTypeBtn.addEventListener('click', () => {
     const added = addedVariationTypes();
     const available = VARIATION_TYPES.filter(t => !added.includes(t));
     variationTypeDropdown.innerHTML = '';
+
+    const customRow = document.createElement('div');
+    customRow.style.cssText = 'display:flex;gap:6px;padding:8px;border-bottom:1px solid var(--border);';
+    customRow.innerHTML =
+        '<input type="text" class="form-control form-control-sm" placeholder="Type a custom name…" maxlength="50">' +
+        '<button type="button" class="btn btn-primary btn-sm" style="flex-shrink:0;">Add</button>';
+    const customInput = customRow.querySelector('input');
+    const customBtn = customRow.querySelector('button');
+    customBtn.addEventListener('mousedown', (e) => { e.preventDefault(); commitCustomVariationType(customInput); });
+    customInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); commitCustomVariationType(customInput); }
+    });
+    customInput.addEventListener('click', (e) => e.stopPropagation());
+    variationTypeDropdown.appendChild(customRow);
+
     if (!available.length) {
-        variationTypeDropdown.innerHTML = '<div class="smart-select-empty">All variation types added</div>';
+        const empty = document.createElement('div');
+        empty.className = 'smart-select-empty';
+        empty.textContent = 'All preset types added — type a custom name above.';
+        variationTypeDropdown.appendChild(empty);
     } else {
         available.forEach(type => {
             const opt = document.createElement('div');
@@ -1071,6 +1056,7 @@ addVariationTypeBtn.addEventListener('click', () => {
         });
     }
     variationTypeDropdown.hidden = !variationTypeDropdown.hidden;
+    if (!variationTypeDropdown.hidden) customInput.focus();
 });
 document.addEventListener('click', (e) => {
     if (!document.getElementById('variationTypeSelect').contains(e.target)) variationTypeDropdown.hidden = true;
@@ -1114,14 +1100,10 @@ function addVariationValueRow(block, value) {
     const row = document.createElement('tr');
     row.className = 'variation-value-row';
 
-    // The backend only stores one combined stock number per variation
-    // (no per-branch column on product_variation_tbl), so on edit the
-    // existing total is seeded into the first branch's field rather than
-    // split — the branch inputs here are a data-entry convenience that
-    // gets summed into that single field on save, not a real per-branch
-    // breakdown read back from the database.
-    const branchCells = VARIATION_BRANCHES.map((b, i) => {
-        const seed = value && i === 0 ? parseInt(value.stock, 10) || 0 : 0;
+    // value.branch_stock (when present) is the real per-branch breakdown for
+    // this variation, loaded from inventory_batches by the controller.
+    const branchCells = VARIATION_BRANCHES.map(b => {
+        const seed = (value && value.branch_stock) ? (parseInt(value.branch_stock[b.id], 10) || 0) : 0;
         return '<td><input type="number" min="0" class="form-control form-control-sm variation-branch-stock-input" data-branch-id="' + b.id + '" placeholder="Stock" value="' + seed + '"></td>';
     }).join('');
 
@@ -1145,29 +1127,24 @@ function syncVariationsJson() {
         block.querySelectorAll('.variation-value-row').forEach(row => {
             const value = row.querySelector('.variation-value-input').value.trim();
             if (!value) return;
-            const totalStock = Array.from(row.querySelectorAll('.variation-branch-stock-input'))
-                .reduce((sum, inp) => sum + (parseInt(inp.value, 10) || 0), 0);
+            const branchStock = {};
+            let totalStock = 0;
+            row.querySelectorAll('.variation-branch-stock-input').forEach(inp => {
+                const qty = parseInt(inp.value, 10) || 0;
+                branchStock[inp.dataset.branchId] = qty;
+                totalStock += qty;
+            });
             variations.push({
                 type: type,
                 value: value,
                 stock: totalStock,
+                branch_stock: branchStock,
                 price_adjustment: parseFloat(row.querySelector('.variation-price-input').value) || 0,
             });
         });
     });
     document.getElementById('variationsJson').value = JSON.stringify(variations);
-    // Hide branch distribution as soon as a variation type is added — the
-    // admin has committed to per-variation stock even before typing a value.
-    const hasVariationTypes = variationTypesContainer.querySelectorAll('.variation-type-block').length > 0;
-    updateInventoryModeVisibility(hasVariationTypes);
-}
-
-/* ── One source of inventory: branch distribution only makes sense
-   when the product has no variations — once variations exist, stock
-   is tracked per variation value instead. ──────────────────────── */
-function updateInventoryModeVisibility(hasVariations) {
-    document.getElementById('branchStockSection').style.display = hasVariations ? 'none' : '';
-    document.getElementById('variationStockNotice').style.display = hasVariations ? '' : 'none';
+    updateTotalStock();
 }
 
 /* ── Pre-populate existing variations, grouped by type ────── */

@@ -215,6 +215,43 @@ class Settings extends Authenticated_Controller {
     }
 
     /**
+     * PayMongo settings — Checkout Sessions API keys + webhook secret used
+     * by the customer checkout flow (see customer/Checkout.php).
+     */
+    public function paymongo() {
+        $data['page_title'] = 'PayMongo Settings';
+        $data['current_page'] = 'settings';
+        if ($this->input->method() === 'post') {
+            $settings = [
+                'paymongo_enabled' => $this->input->post('paymongo_enabled') ? '1' : '0',
+                'paymongo_public_key' => trim($this->input->post('paymongo_public_key') ?? ''),
+            ];
+
+            // An empty submitted secret means "leave the saved one alone" —
+            // same convention as smtp_password in email() above, so secrets
+            // are never echoed back into the form after save.
+            $secretKey = $this->input->post('paymongo_secret_key');
+            if ($secretKey !== NULL && $secretKey !== '') {
+                $settings['paymongo_secret_key'] = $secretKey;
+            }
+            $webhookSecret = $this->input->post('paymongo_webhook_secret');
+            if ($webhookSecret !== NULL && $webhookSecret !== '') {
+                $settings['paymongo_webhook_secret'] = $webhookSecret;
+            }
+
+            $this->Settings_model->update_multiple($settings);
+            $this->session->set_flashdata('success', 'PayMongo settings updated successfully');
+            redirect('admin/settings/paymongo');
+            return;
+        }
+
+        $data['settings'] = $this->Settings_model->get_settings_array();
+        $this->load->view('admin/layout/header', $data);
+        $this->load->view('admin/settings/paymongo', $data);
+        $this->load->view('admin/layout/footer', $data);
+    }
+
+    /**
      * Pasabay delivery fee per Oriental Mindoro municipality.
      */
     public function shipping() {

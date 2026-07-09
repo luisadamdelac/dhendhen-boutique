@@ -20,7 +20,10 @@ class Reseller extends Authenticated_Controller {
         // The DataTable on the list view now handles search, sorting,
         // pagination, and filtering client-side, so the full reseller set
         // is fetched here in one go rather than one server-paginated slice.
-        $data['resellers'] = $this->db->select('r.*, u.email, u.status')
+        // u.status is aliased to avoid colliding with (and silently
+        // overwriting) r.status — the reseller's own pending/active/rejected
+        // state — since r.* and u.status both produce a 'status' key.
+        $data['resellers'] = $this->db->select('r.*, u.email, u.status as account_status')
             ->from(RESELLER_TABLE . ' r')
             ->join(USER_ACCOUNT_TABLE . ' u', 'r.user_account_id = u.user_account_id')
             ->order_by('r.reseller_id', 'DESC')
@@ -145,7 +148,9 @@ class Reseller extends Authenticated_Controller {
             redirect('admin/reseller');
         }
 
-        $reseller = $this->db->select('r.*, u.email, u.status, u.created_at')
+        // u.status is aliased to avoid colliding with (and silently
+        // overwriting) r.status — see the same fix in index().
+        $reseller = $this->db->select('r.*, u.email, u.status as account_status, u.created_at')
             ->from(RESELLER_TABLE . ' r')
             ->join(USER_ACCOUNT_TABLE . ' u', 'r.user_account_id = u.user_account_id')
             ->where('r.reseller_id', $reseller_id)
@@ -319,12 +324,14 @@ class Reseller extends Authenticated_Controller {
     public function pending_registrations() {
         $data['page_title']    = 'Pending Reseller Registrations';
         $data['current_page']  = 'resellers';
+        $status = $this->input->get('status') ?? 'pending';
+        $data['status'] = $status;
 
         $data['pending'] = $this->db
             ->select('r.*, u.email, u.created_at as registered_at')
             ->from(RESELLER_TABLE . ' r')
             ->join(USER_ACCOUNT_TABLE . ' u', 'r.user_account_id = u.user_account_id')
-            ->where('r.status', 'pending')
+            ->where('r.status', $status)
             ->order_by('r.reseller_id', 'DESC')
             ->get()->result_array();
 
@@ -346,12 +353,14 @@ class Reseller extends Authenticated_Controller {
             ->join(USER_ACCOUNT_TABLE . ' u', 'r.user_account_id = u.user_account_id')
             ->where('r.reseller_id', $reseller_id)
             ->get()->row_array();
-        if (!$reseller || $reseller['status'] !== 'pending') {
-            echo json_encode(['success' => FALSE, 'message' => 'Registration not found or already processed']);
+        // Approving from 'rejected' is allowed (re-approval); only an
+        // already-active reseller is blocked.
+        if (!$reseller || $reseller['status'] === 'active') {
+            echo json_encode(['success' => FALSE, 'message' => 'Registration not found or already active']);
             return;
         }
 
-        $this->db->update(RESELLER_TABLE, ['status' => 'active', 'updated_at' => date('Y-m-d H:i:s')], ['reseller_id' => $reseller_id]);
+        $this->db->update(RESELLER_TABLE, ['status' => 'active', 'admin_remarks' => NULL, 'updated_at' => date('Y-m-d H:i:s')], ['reseller_id' => $reseller_id]);
         $this->Activity_log_model->log_activity(get_user_id(), 'admin', 'approve_reseller_registration', 'Approved reseller registration: ' . $reseller_id, get_client_ip());
 
         EmailQueueService::queueResellerApplicationApproved(
@@ -382,7 +391,7 @@ class Reseller extends Authenticated_Controller {
         }
 
         $admin_remarks = $this->input->post('admin_remarks') ?? '';
-        $this->db->update(RESELLER_TABLE, ['status' => 'rejected', 'updated_at' => date('Y-m-d H:i:s')], ['reseller_id' => $reseller_id]);
+        $this->db->update(RESELLER_TABLE, ['status' => 'rejected', 'admin_remarks' => $admin_remarks, 'updated_at' => date('Y-m-d H:i:s')], ['reseller_id' => $reseller_id]);
         $this->Activity_log_model->log_activity(get_user_id(), 'admin', 'reject_reseller_registration', 'Rejected reseller registration: ' . $reseller_id, get_client_ip());
 
         EmailQueueService::queueResellerApplicationRejected(

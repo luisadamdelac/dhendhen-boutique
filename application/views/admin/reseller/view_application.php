@@ -81,6 +81,12 @@
                             <i class="fas fa-times"></i> Reject
                         </button>
                     </div>
+                    <?php elseif ($aStatus === 'rejected'): ?>
+                    <div class="d-flex gap-2 mt-3">
+                        <button class="btn btn-success flex-fill approve-btn" data-id="<?= $application['application_id']; ?>" data-reapprove="1">
+                            <i class="fas fa-undo"></i> Re-approve
+                        </button>
+                    </div>
                     <?php endif; ?>
                 </div>
             </div>
@@ -128,9 +134,12 @@
 
     document.querySelectorAll('.approve-btn').forEach(function (btn) {
         btn.addEventListener('click', function () {
+            var isReapprove = btn.dataset.reapprove === '1';
             pendingAction = { id: btn.dataset.id, type: 'approve' };
-            document.getElementById('appModalTitle').textContent = 'Approve Application';
-            document.getElementById('appModalBody').textContent = 'Approve this reseller application?';
+            document.getElementById('appModalTitle').textContent = isReapprove ? 'Re-approve Application' : 'Approve Application';
+            document.getElementById('appModalBody').textContent = isReapprove
+                ? 'This application was previously rejected. Re-approve it and create a reseller account?'
+                : 'Approve this reseller application?';
             document.getElementById('appRemarksGroup').style.display = 'none';
             document.getElementById('appModalHeader').style.background = 'linear-gradient(135deg, #28a745 0%, #218838 100%)';
             document.getElementById('appModalHeader').style.color = '#fff';

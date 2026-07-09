@@ -4,7 +4,7 @@
     $approvedCount = $stats['approved_reviews'] ?? 0;
     $avgRating     = $stats['average_rating'] ?? 0;
 ?>
-<link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap5.min.css">
+<link rel="stylesheet" href="<?php echo BASE_URL; ?>public/vendor/datatables/dataTables.bootstrap5.min.css">
 <style>
 .dataTables_wrapper .dataTables_filter input {
     border: 1px solid var(--border); border-radius: var(--radius-md);
@@ -181,8 +181,8 @@ table.dataTable thead th.sorting:hover { color: var(--primary-pink); cursor: poi
 
 </div>
 
-<script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap5.min.js"></script>
+<script src="<?php echo BASE_URL; ?>public/vendor/datatables/jquery.dataTables.min.js"></script>
+<script src="<?php echo BASE_URL; ?>public/vendor/datatables/dataTables.bootstrap5.min.js"></script>
 <script>
 $(function () {
     // Excel/PDF export lives in Reports, not on this operational list page.
