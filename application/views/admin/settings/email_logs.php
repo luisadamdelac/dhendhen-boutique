@@ -1,4 +1,11 @@
 <?php defined('BASEPATH') OR exit('No direct script access allowed'); ?>
+<style>
+@media (max-width: 600px) {
+    .email-log-detail-grid {
+        grid-template-columns: 1fr !important;
+    }
+}
+</style>
 <div class="container-fluid py-4 fade-in">
     <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-4">
         <div>
@@ -113,7 +120,7 @@
             <h5 class="fw-bold mb-0"><i class="fas fa-envelope-open-text me-2 text-primary"></i>Email Log Details</h5>
             <button type="button" onclick="closeEmailLogModal()" style="background:none;border:none;font-size:20px;color:#888;cursor:pointer;">&times;</button>
         </div>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px 20px; font-size:13px; margin-bottom:16px;">
+        <div class="email-log-detail-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:10px 20px; font-size:13px; margin-bottom:16px;">
             <div><span class="text-muted">Recipient:</span> <strong id="logDetailRecipient"></strong></div>
             <div><span class="text-muted">Status:</span> <strong id="logDetailStatus"></strong></div>
             <div><span class="text-muted">Subject:</span> <strong id="logDetailSubject"></strong></div>

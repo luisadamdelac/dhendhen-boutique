@@ -12,8 +12,9 @@
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Custom CSS -->
-    <link rel="stylesheet" href="<?php echo BASE_URL; ?>public/css/style.css">
+    <!-- Custom CSS — cache-busted so CSS fixes here take effect immediately
+         instead of serving a stale cached copy -->
+    <link rel="stylesheet" href="<?php echo BASE_URL; ?>public/css/style.css?v=<?php echo @filemtime(FCPATH . 'public/css/style.css') ?: time(); ?>">
     
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>

@@ -14,8 +14,9 @@
     <!-- Bootstrap 5 (self-hosted; base layer — admin-style.css overrides theme portions) -->
     <link rel="stylesheet" href="<?php echo BASE_URL; ?>public/vendor/bootstrap/bootstrap.min.css">
 
-    <!-- Admin CSS (shared look) -->
-    <link rel="stylesheet" href="<?php echo BASE_URL; ?>public/css/admin-style.css">
+    <!-- Admin CSS (shared look) — cache-busted so CSS fixes here take effect
+         immediately instead of serving a stale cached copy -->
+    <link rel="stylesheet" href="<?php echo BASE_URL; ?>public/css/admin-style.css?v=<?php echo @filemtime(FCPATH . 'public/css/admin-style.css') ?: time(); ?>">
 
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>

@@ -255,6 +255,12 @@
     gap: 20px;
 }
 
+@media (max-width: 600px) {
+    .info-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
 .info-item {
     display: flex;
     flex-direction: column;
