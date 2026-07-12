@@ -85,7 +85,41 @@ class Shop extends CI_Controller {
             ->order_by('variation_type', 'ASC')->order_by('variation_id', 'ASC')
             ->get()->result_array();
 
-        echo json_encode(['success' => TRUE, 'variations' => $variations]);
+        echo json_encode(['success' => TRUE, 'variations' => $variations, 'combinations' => $this->_combinations_for_product($id)]);
+    }
+
+    /**
+     * Generated variant combinations (product_variants) for a product, each
+     * with its own SKU/price adjustment/status, real total stock across
+     * branches, and primary image (if any) — used to resolve the exact
+     * variant once a customer has picked a value for every variation type
+     * (e.g. Shade + Finish), and to filter which values are still pickable
+     * together.
+     */
+    private function _combinations_for_product($product_id) {
+        require_once APPPATH . 'services/StockService.php';
+
+        $combos = $this->db->select('v.*, v1.variation_type as type_1, v1.variation_value as value_1, v2.variation_type as type_2, v2.variation_value as value_2', FALSE)
+            ->from(PRODUCT_VARIANTS_TABLE . ' v')
+            ->join(PRODUCT_VARIATION_TABLE . ' v1', 'v1.variation_id = v.variation_id_1', 'left')
+            ->join(PRODUCT_VARIATION_TABLE . ' v2', 'v2.variation_id = v.variation_id_2', 'left')
+            ->where('v.product_id', $product_id)
+            ->where('v.status', 'active')
+            ->get()->result_array();
+
+        foreach ($combos as &$c) {
+            $variant_id = (int) $c['variant_id'];
+            $c['variant_id'] = $variant_id;
+            $c['price_adjustment'] = (float) $c['price_adjustment'];
+            $c['total_stock'] = array_sum(StockService::getVariantBranchStock($variant_id));
+
+            $image = $this->db->select('image_path')->from(PRODUCT_VARIANT_IMAGES_TABLE)
+                ->where('variant_id', $variant_id)->where('is_primary', 1)->get()->row_array();
+            $c['image_url'] = $image ? base_url($image['image_path']) : NULL;
+        }
+        unset($c);
+
+        return $combos;
     }
 
     public function product($id = null) {
@@ -133,6 +167,7 @@ class Shop extends CI_Controller {
             ->where('product_id', $id)->where('status', 'active')
             ->order_by('variation_type', 'ASC')->order_by('variation_id', 'ASC')
             ->get()->result_array();
+        $data['combinations'] = $this->_combinations_for_product($id);
 
         $data['reviews'] = $this->db->select('pr.*, pr.comment as review, c.first_name, c.last_name')
             ->from('product_reviews pr')

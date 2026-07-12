@@ -142,6 +142,8 @@ if (!function_exists('define_db_table_constants')) {
             'CATEGORY_TABLE'        => 'product_category',
             'PRODUCT_IMAGE_TABLE'  => 'product_image',
             'PRODUCT_VARIATION_TABLE' => 'product_variation_tbl',
+            'PRODUCT_VARIANTS_TABLE' => 'product_variants',
+            'PRODUCT_VARIANT_IMAGES_TABLE' => 'product_variant_images',
             'PRODUCT_REVIEWS_TABLE'=> 'product_reviews',
             'RESELLER_PRODUCTS_TABLE'=> 'reseller_products',
             'RESELLER_APPLICATION_TABLE'=> 'reseller_application_tbl',

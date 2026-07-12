@@ -134,12 +134,12 @@ $current_image_path = !empty($primary_image['image_path']) ? $primary_image['ima
 .smart-select-create-hint:hover { background: var(--primary-pink-light); }
 
 /* ── Product Variations ───────────────────────────────────── */
-.variation-type-block {
-    border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 14px; background: #fafbff;
+.variation-type-group-row td {
+    background: #fafbff; border-top: 2px solid var(--border); padding: 10px 12px; vertical-align: middle;
 }
-.variation-type-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
-.variation-type-header h5 { margin: 0; font-size: .95rem; color: var(--primary-pink-dark); }
-.variation-type-header .remove-type-btn { background: none; border: none; color: var(--danger); cursor: pointer; font-size: .85rem; }
+.variation-type-group-row .variation-type-label { font-weight: 600; font-size: .88rem; color: var(--primary-pink-dark); margin-right: 12px; }
+.variation-type-group-row .add-variation-value-btn { font-size: .78rem; padding: 4px 10px; }
+.variation-type-group-row .remove-type-btn { background: none; border: none; color: var(--danger); cursor: pointer; font-size: .82rem; float: right; }
 .variation-values-table { margin-bottom: 10px; }
 .variation-values-table th {
     font-size: .72rem; color: var(--gray); font-weight: 600; text-transform: uppercase; letter-spacing: .03em;
@@ -148,7 +148,28 @@ $current_image_path = !empty($primary_image['image_path']) ? $primary_image['ima
 .variation-values-table th.text-center, .variation-values-table td.text-center { text-align: center; }
 .variation-values-table td { vertical-align: middle; }
 .variation-value-row input { font-size: .85rem; }
-.add-variation-value-btn { font-size: .78rem; padding: 4px 10px; }
+.variant-combinations-table input, .variant-combinations-table select { font-size: .8rem; min-width: 90px; }
+.variant-combinations-table td { vertical-align: middle; }
+
+@media (max-width: 576px) {
+    /* Generated Variant Combinations: rows become stacked cards instead of
+       a horizontally-scrolled table. */
+    .variant-combinations-table thead { display: none; }
+    .variant-combinations-table, .variant-combinations-table tbody, .variant-combinations-table tr, .variant-combinations-table td {
+        display: block; width: 100%;
+    }
+    .variant-combinations-table tr {
+        border: 1px solid var(--border); border-radius: 10px; margin-bottom: 12px; padding: 10px;
+    }
+    .variant-combinations-table td {
+        display: flex; align-items: center; justify-content: space-between; gap: 10px;
+        border: none; padding: 6px 0;
+    }
+    .variant-combinations-table td[data-label]::before {
+        content: attr(data-label); font-weight: 600; font-size: .72rem; color: var(--gray); text-transform: uppercase; flex-shrink: 0;
+    }
+    .variant-combinations-table td input, .variant-combinations-table td select { max-width: 60%; }
+}
 
 /* ── Shared quick-create modal ───────────────────────────── */
 .ss-modal-overlay {
@@ -468,19 +489,70 @@ $current_image_path = !empty($primary_image['image_path']) ? $primary_image['ima
                             <span class="section-title"><i class="fas fa-layer-group me-2"></i>Product Variations &amp; Branch Stock</span>
                             <hr>
                         </div>
-                        <p class="text-muted" style="margin-top:-6px;font-size:.85rem;">Optional. Each variation value has its own stock per branch and an optional price adjustment on top of the selling price above.</p>
                         <div style="background:#f0f4ff;border:1px solid #c7d2fe;border-radius:10px;padding:8px 14px;margin-bottom:16px;font-size:.82rem;color:var(--text);display:flex;gap:8px;align-items:center;">
                             <i class="fas fa-circle-info" style="color:var(--primary-pink);"></i>
-                            <div>Numbers below are the <strong>current stock</strong> remaining per branch.</div>
+                            <div>Numbers below are the <strong>current stock</strong> remaining per branch. Editing only adjusts the difference — existing stock history is preserved.</div>
                         </div>
 
-                        <div id="variationTypesContainer"></div>
+                        <p class="text-muted" style="margin-top:0;font-size:.85rem;">Add at least one Variation Type (e.g. Shade, Finish — up to 2), give it a Value, then generate the combination(s) below to enter stock per branch.</p>
+
+                        <div class="table-responsive">
+                            <table class="table table-sm variation-values-table" id="variationTypesContainer">
+                                <thead>
+                                    <tr>
+                                        <th>Value</th><th>Default Price Adj.</th><th>Default Status</th><th class="text-center">Smart Apply</th><th class="text-center">Remove</th>
+                                    </tr>
+                                </thead>
+                            </table>
+                        </div>
 
                         <div class="smart-select" id="variationTypeSelect" style="max-width:280px;position:relative;">
                             <button type="button" class="btn btn-outline-secondary btn-sm" id="addVariationTypeBtn">
                                 <i class="fas fa-plus"></i> Add Variation Type
                             </button>
                             <div class="smart-select-dropdown" id="variationTypeDropdown" hidden style="position:absolute;top:calc(100% + 4px);left:0;min-width:240px;"></div>
+                        </div>
+
+                        <div class="field-feedback invalid" id="variationTypeCapError" style="display:none;margin-top:10px;">
+                            <i class="fas fa-exclamation-circle"></i> Only 2 variation types are supported per product (e.g. Shade × Finish).
+                        </div>
+
+                        <div style="margin-top:16px;" id="generateCombinationsWrap" hidden>
+                            <button type="button" class="btn btn-primary btn-sm" id="generateCombinationsBtn"><i class="fas fa-cogs"></i> Generate Variant Combinations</button>
+                            <span class="text-muted" style="font-size:.8rem;margin-left:8px;">Regenerates automatically whenever you add, remove, or edit a value.</span>
+                        </div>
+
+                        <!-- Generated Variant Combinations -->
+                        <div class="card" id="combinationsCard" style="margin-top:20px;box-shadow:none;border:1px solid var(--border);" hidden>
+                            <div class="card-body">
+                                <div class="page-section" style="margin-top:0;">
+                                    <span class="section-title"><i class="fas fa-th-list me-2"></i>Generated Variant Combinations</span>
+                                    <hr>
+                                </div>
+
+                                <div class="d-flex flex-wrap align-items-center gap-2" style="margin-bottom:14px;">
+                                    <div class="form-check" style="margin-right:8px;">
+                                        <input type="checkbox" class="form-check-input" id="selectAllVariants">
+                                        <label class="form-check-label" for="selectAllVariants">Select All</label>
+                                    </div>
+                                    <select class="form-control form-control-sm" id="bulkActionSelect" style="max-width:200px;">
+                                        <option value="">Bulk Action…</option>
+                                        <option value="stock">Apply Stock</option>
+                                        <option value="price">Apply Price Adjustment</option>
+                                        <option value="status">Apply Status</option>
+                                        <option value="image">Apply Image</option>
+                                        <option value="delete">Delete Selected</option>
+                                    </select>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm" id="bulkApplyBtn">Apply</button>
+                                </div>
+
+                                <div class="table-responsive">
+                                    <table class="table table-sm variant-combinations-table" id="combinationsTable">
+                                        <thead><tr id="combinationsHeaderRow"></tr></thead>
+                                        <tbody id="combinationsBody"></tbody>
+                                    </table>
+                                </div>
+                            </div>
                         </div>
 
                         <div style="margin-top:20px;">
@@ -495,10 +567,11 @@ $current_image_path = !empty($primary_image['image_path']) ? $primary_image['ima
                                     <div class="stat-val" id="branchesStockedDisplay">0</div>
                                 </div>
                             </div>
-                            <small style="color: var(--gray); display:block; margin-top:8px;">Changing a variation's branch quantity creates a stock adjustment batch for that branch (FIFO), it does not overwrite history.</small>
+                            <small style="color: var(--gray); display:block; margin-top:8px;">Changing a branch quantity creates a stock adjustment batch for that branch (FIFO) — only the difference is applied, existing history is preserved.</small>
                         </div>
 
                         <input type="hidden" name="variations_json" id="variationsJson" value="">
+                        <input type="hidden" name="combinations_json" id="combinationsJson" value="">
                     </div>
                 </div>
 
@@ -663,11 +736,11 @@ const branchesStockedDisplay = document.getElementById('branchesStockedDisplay')
 const editMinStockInput = document.getElementById('min_stock_alert');
 
 function updateTotalStock() {
-    // Variation rows are added/removed dynamically, so query fresh each time
-    // rather than caching a NodeList at page load.
+    // Combination rows are added/removed dynamically, so query fresh each
+    // time rather than caching a NodeList at page load.
     const branchTotals = {};
     let total = 0;
-    document.querySelectorAll('.variation-branch-stock-input').forEach(inp => {
+    document.querySelectorAll('.combo-branch-stock-input').forEach(inp => {
         const qty = parseInt(inp.value, 10) || 0;
         const branchId = inp.dataset.branchId;
         branchTotals[branchId] = (branchTotals[branchId] || 0) + qty;
@@ -1000,16 +1073,33 @@ initSmartSelect({
     placeholder: 'e.g. Skincare'
 });
 
-/* ── Product Variations ───────────────────────────────────── */
+/* ── Product Variations & Branch Stock ──────────────────────── */
 const VARIATION_TYPES = ['Color', 'Size', 'Shade', 'Volume', 'Material', 'Bundle', 'Scent', 'Hair Type', 'Skin Type', 'Pattern', 'Fabric', 'Weight'];
 const VARIATION_BRANCHES = <?= json_encode(array_map(fn($b) => [
     'id' => (int) $b['branch_id'],
     'label' => explode(' ', trim($b['branch_name']))[0] . ' Stock',
 ], $branches)); ?>;
+const MAX_VARIATION_TYPES = 2;
+
 const variationTypesContainer = document.getElementById('variationTypesContainer');
 const addVariationTypeBtn = document.getElementById('addVariationTypeBtn');
 const variationTypeDropdown = document.getElementById('variationTypeDropdown');
+const generateCombinationsWrap = document.getElementById('generateCombinationsWrap');
+const combinationsCard = document.getElementById('combinationsCard');
+const combinationsBody = document.getElementById('combinationsBody');
+const combinationsHeaderRow = document.getElementById('combinationsHeaderRow');
+const variationTypeCapError = document.getElementById('variationTypeCapError');
 
+let combinationRowSeq = 0;
+// key ("Type:value|Type:value") -> row data, preserved across regenerations
+// so entered SKU/barcode/price/status/stock survive edits to other values.
+let combinationRows = {};
+// Suppressed while pre-populating from server data so intermediate
+// single-axis states (built one type block at a time) don't wipe the
+// already-seeded two-axis combination rows before the second type exists.
+let suppressCombinationRegen = false;
+
+/* ── Section 1 + 2: Variation Types & Values (+ optional defaults) ── */
 function addedVariationTypes() {
     return Array.from(variationTypesContainer.querySelectorAll('.variation-type-block')).map(b => b.dataset.type);
 }
@@ -1022,7 +1112,7 @@ function commitCustomVariationType(input) {
         input.style.borderColor = 'var(--danger, #dc3545)';
         return;
     }
-    addVariationTypeBlock(type);
+    if (!tryAddVariationTypeBlock(type)) return;
     variationTypeDropdown.hidden = true;
 }
 
@@ -1055,7 +1145,7 @@ addVariationTypeBtn.addEventListener('click', () => {
             const opt = document.createElement('div');
             opt.className = 'smart-select-option';
             opt.textContent = type;
-            opt.addEventListener('mousedown', (e) => { e.preventDefault(); addVariationTypeBlock(type); variationTypeDropdown.hidden = true; });
+            opt.addEventListener('mousedown', (e) => { e.preventDefault(); tryAddVariationTypeBlock(type); variationTypeDropdown.hidden = true; });
             variationTypeDropdown.appendChild(opt);
         });
     }
@@ -1066,32 +1156,35 @@ document.addEventListener('click', (e) => {
     if (!document.getElementById('variationTypeSelect').contains(e.target)) variationTypeDropdown.hidden = true;
 });
 
+function tryAddVariationTypeBlock(type, values) {
+    if (addedVariationTypes().length >= MAX_VARIATION_TYPES) {
+        variationTypeCapError.style.display = 'block';
+        return false;
+    }
+    variationTypeCapError.style.display = 'none';
+    addVariationTypeBlock(type, values);
+    return true;
+}
+
 function addVariationTypeBlock(type, values) {
-    const block = document.createElement('div');
+    const block = document.createElement('tbody');
     block.className = 'variation-type-block';
     block.dataset.type = type;
 
-    const branchHeaders = VARIATION_BRANCHES.map(b => '<th>' + escHtml(b.label) + '</th>').join('');
-
     block.innerHTML =
-        '<div class="variation-type-header">' +
-            '<h5><i class="fas fa-tag me-1"></i>' + escHtml(type) + '</h5>' +
-            '<button type="button" class="remove-type-btn"><i class="fas fa-trash"></i> Remove Type</button>' +
-        '</div>' +
-        '<div class="table-responsive">' +
-            '<table class="table table-sm variation-values-table">' +
-                '<thead><tr>' +
-                    '<th>Value</th>' + branchHeaders + '<th>Price Adjustment</th><th class="text-center">Remove</th>' +
-                '</tr></thead>' +
-                '<tbody class="variation-values"></tbody>' +
-            '</table>' +
-        '</div>' +
-        '<button type="button" class="btn btn-outline-secondary add-variation-value-btn"><i class="fas fa-plus"></i> Add ' + escHtml(type) + ' Value</button>';
+        '<tr class="variation-type-group-row">' +
+            '<td colspan="5">' +
+                '<span class="variation-type-label"><i class="fas fa-tag me-1"></i>' + escHtml(type) + '</span>' +
+                '<button type="button" class="btn btn-sm btn-outline-secondary add-variation-value-btn"><i class="fas fa-plus"></i> Add ' + escHtml(type) + ' Value</button>' +
+                '<button type="button" class="remove-type-btn"><i class="fas fa-trash"></i> Remove Type</button>' +
+            '</td>' +
+        '</tr>';
 
-    block.querySelector('.remove-type-btn').addEventListener('click', () => { block.remove(); syncVariationsJson(); });
+    block.querySelector('.remove-type-btn').addEventListener('click', () => { block.remove(); onVariationStructureChanged(); });
     block.querySelector('.add-variation-value-btn').addEventListener('click', () => addVariationValueRow(block));
 
     variationTypesContainer.appendChild(block);
+    updateGenerateButtonVisibility();
 
     if (values && values.length) {
         values.forEach(v => addVariationValueRow(block, v));
@@ -1104,24 +1197,51 @@ function addVariationValueRow(block, value) {
     const row = document.createElement('tr');
     row.className = 'variation-value-row';
 
-    // value.branch_stock (when present) is the real per-branch breakdown for
-    // this variation, loaded from inventory_batches by the controller.
-    const branchCells = VARIATION_BRANCHES.map(b => {
-        const seed = (value && value.branch_stock) ? (parseInt(value.branch_stock[b.id], 10) || 0) : 0;
-        return '<td><input type="number" min="0" class="form-control form-control-sm variation-branch-stock-input" data-branch-id="' + b.id + '" placeholder="Stock" value="' + seed + '"></td>';
-    }).join('');
-
     row.innerHTML =
         '<td><input type="text" class="form-control form-control-sm variation-value-input" placeholder="Value (e.g. Red)" value="' + escHtml(value ? value.variation_value : '') + '"></td>' +
-        branchCells +
-        '<td><input type="number" step="0.01" class="form-control form-control-sm variation-price-input" placeholder="+/- Price" value="' + (value ? parseFloat(value.price_adjustment) : 0) + '"></td>' +
+        '<td><input type="number" step="0.01" class="form-control form-control-sm variation-default-price-input" placeholder="+/- Price" value="' + (value ? parseFloat(value.price_adjustment) : 0) + '"></td>' +
+        '<td><select class="form-control form-control-sm variation-default-status-select">' +
+            '<option value="active"' + (!value || value.status !== 'inactive' ? ' selected' : '') + '>Active</option>' +
+            '<option value="inactive"' + (value && value.status === 'inactive' ? ' selected' : '') + '>Inactive</option>' +
+        '</select></td>' +
+        '<td class="text-center"><button type="button" class="btn btn-sm btn-outline-primary smart-apply-btn" title="Apply Stock/Price/Status to every combination with this value"><i class="fas fa-bolt"></i></button></td>' +
         '<td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger remove-value-btn" title="Remove"><i class="fas fa-trash"></i></button></td>';
 
-    row.querySelectorAll('input').forEach(inp => inp.addEventListener('input', syncVariationsJson));
-    row.querySelector('.remove-value-btn').addEventListener('click', () => { row.remove(); syncVariationsJson(); });
+    row.querySelectorAll('input, select').forEach(inp => inp.addEventListener('input', onVariationStructureChanged));
+    row.querySelector('.remove-value-btn').addEventListener('click', () => {
+        const valueName = row.querySelector('.variation-value-input').value.trim();
+        if (valueName && valueHasStock(block.dataset.type, valueName)) {
+            if (!confirm('This value has stock in one or more generated combinations. Removing it will remove those combinations too. Continue?')) return;
+        }
+        row.remove();
+        onVariationStructureChanged();
+    });
+    row.querySelector('.smart-apply-btn').addEventListener('click', () => {
+        const valueName = row.querySelector('.variation-value-input').value.trim();
+        if (!valueName) { alert('Enter a value name first.'); return; }
+        openApplyModal({ scope: 'value', type: block.dataset.type, value: valueName });
+    });
 
-    block.querySelector('.variation-values').appendChild(row);
+    block.appendChild(row);
+    onVariationStructureChanged();
+}
+
+function valueHasStock(type, value) {
+    return Object.values(combinationRows).some(c => {
+        const matches = (c.type_1 === type && c.value_1 === value) || (c.type_2 === type && c.value_2 === value);
+        if (!matches) return false;
+        return Object.values(c.branch_stock || {}).some(q => (parseInt(q, 10) || 0) > 0);
+    });
+}
+
+function onVariationStructureChanged() {
+    updateGenerateButtonVisibility();
     syncVariationsJson();
+    if (!suppressCombinationRegen) generateCombinations();
+}
+
+function updateGenerateButtonVisibility() {
+    generateCombinationsWrap.hidden = addedVariationTypes().length === 0;
 }
 
 function syncVariationsJson() {
@@ -1131,35 +1251,349 @@ function syncVariationsJson() {
         block.querySelectorAll('.variation-value-row').forEach(row => {
             const value = row.querySelector('.variation-value-input').value.trim();
             if (!value) return;
-            const branchStock = {};
-            let totalStock = 0;
-            row.querySelectorAll('.variation-branch-stock-input').forEach(inp => {
-                const qty = parseInt(inp.value, 10) || 0;
-                branchStock[inp.dataset.branchId] = qty;
-                totalStock += qty;
-            });
             variations.push({
                 type: type,
                 value: value,
-                stock: totalStock,
-                branch_stock: branchStock,
-                price_adjustment: parseFloat(row.querySelector('.variation-price-input').value) || 0,
+                default_price_adjustment: parseFloat(row.querySelector('.variation-default-price-input').value) || 0,
+                default_status: row.querySelector('.variation-default-status-select').value,
             });
         });
     });
     document.getElementById('variationsJson').value = JSON.stringify(variations);
+}
+
+/* ── Section 3: Generate Variant Combinations (Cartesian product) ── */
+document.getElementById('generateCombinationsBtn').addEventListener('click', generateCombinations);
+
+function currentTypeValueLists() {
+    const blocks = Array.from(variationTypesContainer.querySelectorAll('.variation-type-block'));
+    return blocks.map(block => {
+        const type = block.dataset.type;
+        const values = Array.from(block.querySelectorAll('.variation-value-row')).map(row => ({
+            value: row.querySelector('.variation-value-input').value.trim(),
+            price_adjustment: parseFloat(row.querySelector('.variation-default-price-input').value) || 0,
+            status: row.querySelector('.variation-default-status-select').value,
+        })).filter(v => v.value);
+        return { type: type, values: values };
+    }).filter(t => t.values.length);
+}
+
+// Merges a freshly-computed default combination into any existing row at
+// that key. sku/barcode/branch_stock always carry over from the existing
+// row (per-combination data, never derived from a default). price_adjustment
+// and status only carry over from the existing row if the admin has
+// explicitly edited that specific field in the Generated Combinations table
+// (or via bulk/Smart Apply) — otherwise they refresh to the current default
+// sum, so typing into a value's Default Price Adj. actually flows through
+// until the admin manually overrides a specific combination's price/status.
+function mergeCombination(key, base) {
+    const existing = combinationRows[key];
+    const merged = Object.assign({}, base, existing || {});
+    if (!existing || !existing.price_manually_set) merged.price_adjustment = base.price_adjustment;
+    if (!existing || !existing.status_manually_set) merged.status = base.status;
+    merged.price_manually_set = existing ? !!existing.price_manually_set : false;
+    merged.status_manually_set = existing ? !!existing.status_manually_set : false;
+    merged.row_key = existing ? existing.row_key : 'new_' + (++combinationRowSeq);
+    combinationRows[key] = merged;
+}
+
+function generateCombinations() {
+    const axes = currentTypeValueLists();
+    const newKeys = new Set();
+
+    if (axes.length === 1) {
+        axes[0].values.forEach(v1 => {
+            const key = axes[0].type + ':' + v1.value + '|';
+            newKeys.add(key);
+            mergeCombination(key, {
+                type_1: axes[0].type, value_1: v1.value, type_2: '', value_2: '',
+                sku: '', barcode: '', price_adjustment: v1.price_adjustment, status: v1.status,
+                branch_stock: {},
+            });
+        });
+    } else if (axes.length >= 2) {
+        const [a1, a2] = axes;
+        a1.values.forEach(v1 => {
+            a2.values.forEach(v2 => {
+                const key = a1.type + ':' + v1.value + '|' + a2.type + ':' + v2.value;
+                newKeys.add(key);
+                mergeCombination(key, {
+                    type_1: a1.type, value_1: v1.value, type_2: a2.type, value_2: v2.value,
+                    sku: '', barcode: '', price_adjustment: v1.price_adjustment + v2.price_adjustment, status: 'active',
+                    branch_stock: {},
+                });
+            });
+        });
+    }
+
+    // Drop combinations whose value pair no longer exists.
+    Object.keys(combinationRows).forEach(key => {
+        if (!newKeys.has(key)) delete combinationRows[key];
+    });
+
+    renderCombinationsTable();
+}
+
+/* ── Section 4: Generated Variant Combinations table ────────── */
+function renderCombinationsTable() {
+    const keys = Object.keys(combinationRows);
+    combinationsCard.hidden = keys.length === 0;
+    if (!keys.length) {
+        combinationsBody.innerHTML = '';
+        updateTotalStock();
+        return;
+    }
+
+    combinationsHeaderRow.innerHTML =
+        '<th></th><th>Variant Combination</th><th>Image</th>' +
+        VARIATION_BRANCHES.map(b => '<th>' + escHtml(b.label) + '</th>').join('') +
+        '<th>Price Adj.</th><th>Status</th><th class="text-center">Actions</th>';
+
+    combinationsBody.innerHTML = '';
+    keys.forEach(key => {
+        const c = combinationRows[key];
+        const label = c.type_2 ? (c.value_1 + ' / ' + c.value_2) : c.value_1;
+        const branchCells = VARIATION_BRANCHES.map(b =>
+            '<td data-label="' + escHtml(b.label) + '"><input type="number" min="0" class="form-control form-control-sm combo-branch-stock-input" data-branch-id="' + b.id + '" value="' + (parseInt(c.branch_stock[b.id], 10) || 0) + '"></td>'
+        ).join('');
+
+        const tr = document.createElement('tr');
+        tr.className = 'combination-row';
+        tr.dataset.key = key;
+        tr.innerHTML =
+            '<td data-label="Select"><input type="checkbox" class="combo-select-checkbox"></td>' +
+            '<td data-label="Variant Combination"><strong>' + escHtml(label) + '</strong></td>' +
+            '<td data-label="Image">' +
+                (c.image_url ? '<img src="' + escHtml(c.image_url) + '" style="width:36px;height:36px;object-fit:cover;border-radius:6px;display:block;margin-bottom:4px;">' : '') +
+                '<input type="file" accept="image/*" class="form-control form-control-sm combo-image-input" name="variant_image[' + escHtml(c.row_key) + ']">' +
+            '</td>' +
+            branchCells +
+            '<td data-label="Price Adj."><input type="number" step="0.01" class="form-control form-control-sm combo-price-input" value="' + (parseFloat(c.price_adjustment) || 0) + '"></td>' +
+            '<td data-label="Status"><select class="form-control form-control-sm combo-status-select">' +
+                '<option value="active"' + (c.status !== 'inactive' ? ' selected' : '') + '>Active</option>' +
+                '<option value="inactive"' + (c.status === 'inactive' ? ' selected' : '') + '>Inactive</option>' +
+            '</select></td>' +
+            '<td data-label="Actions" class="text-center"><button type="button" class="btn btn-sm btn-outline-danger combo-delete-btn" title="Delete"><i class="fas fa-trash"></i></button></td>';
+
+        tr.querySelectorAll('input, select').forEach(inp => {
+            if (inp.type === 'file') return;
+            const evtName = inp.tagName === 'SELECT' ? 'change' : 'input';
+            inp.addEventListener(evtName, (e) => {
+                if (e.target.classList.contains('combo-price-input')) combinationRows[key].price_manually_set = true;
+                if (e.target.classList.contains('combo-status-select')) combinationRows[key].status_manually_set = true;
+                syncCombinationRowFromDom(tr, key);
+            });
+        });
+        tr.querySelector('.combo-delete-btn').addEventListener('click', () => {
+            const stock = Object.values(c.branch_stock || {}).reduce((s, q) => s + (parseInt(q, 10) || 0), 0);
+            if (stock > 0 && !confirm('This combination still has ' + stock + ' unit(s) of stock. Delete it anyway?')) return;
+            delete combinationRows[key];
+            tr.remove();
+            syncCombinationsJson();
+        });
+
+        combinationsBody.appendChild(tr);
+    });
+
+    syncCombinationsJson();
+}
+
+function syncCombinationRowFromDom(tr, key) {
+    const c = combinationRows[key];
+    if (!c) return;
+    c.price_adjustment = parseFloat(tr.querySelector('.combo-price-input').value) || 0;
+    c.status = tr.querySelector('.combo-status-select').value;
+    const branchStock = {};
+    tr.querySelectorAll('.combo-branch-stock-input').forEach(inp => {
+        branchStock[inp.dataset.branchId] = parseInt(inp.value, 10) || 0;
+    });
+    c.branch_stock = branchStock;
+    syncCombinationsJson();
+}
+
+function syncCombinationsJson() {
+    const combos = Object.values(combinationRows).map(c => ({
+        type_1: c.type_1, value_1: c.value_1, type_2: c.type_2, value_2: c.value_2,
+        sku: c.sku, barcode: c.barcode, price_adjustment: c.price_adjustment, status: c.status,
+        branch_stock: c.branch_stock, row_key: c.row_key,
+    }));
+    document.getElementById('combinationsJson').value = JSON.stringify(combos);
     updateTotalStock();
 }
 
-/* ── Pre-populate existing variations, grouped by type ────── */
+/* ── Section 5 + 6: Bulk actions & per-value Smart Apply ────── */
+document.getElementById('selectAllVariants').addEventListener('change', function() {
+    combinationsBody.querySelectorAll('.combo-select-checkbox').forEach(cb => cb.checked = this.checked);
+});
+
+document.getElementById('bulkApplyBtn').addEventListener('click', function() {
+    const action = document.getElementById('bulkActionSelect').value;
+    if (!action) { alert('Choose a bulk action first.'); return; }
+    const selectedRows = Array.from(combinationsBody.querySelectorAll('.combination-row'))
+        .filter(tr => tr.querySelector('.combo-select-checkbox').checked);
+    if (!selectedRows.length) { alert('Select at least one combination first.'); return; }
+    openApplyModal({ scope: 'bulk', action: action, rows: selectedRows });
+});
+
+function openApplyModal(opts) {
+    const isSmart = opts.scope === 'value';
+    const action = isSmart ? null : opts.action;
+    const branchStockFields = () => VARIATION_BRANCHES.map(b =>
+        '<div class="d-flex align-items-center gap-2" style="margin-bottom:6px;"><span style="min-width:110px;">' + escHtml(b.label) + '</span><input type="number" min="0" class="form-control form-control-sm apply-modal-branch-stock" data-branch-id="' + b.id + '"></div>'
+    ).join('');
+    let title, bodyHtml;
+
+    if (isSmart) {
+        title = 'Smart Apply — ' + opts.value;
+        bodyHtml =
+            '<p class="text-muted" style="font-size:.85rem;">Applies to every combination containing "' + escHtml(opts.value) + '" without affecting other values.</p>' +
+            '<div class="form-group"><label>Price Adjustment (leave blank for no change)</label><input type="number" step="0.01" class="form-control form-control-sm" id="applyModalPrice"></div>' +
+            '<div class="form-group"><label>Status</label><select class="form-control form-control-sm" id="applyModalStatus"><option value="">(no change)</option><option value="active">Active</option><option value="inactive">Inactive</option></select></div>' +
+            '<div class="form-group"><label>Branch Stock (leave blank for no change)</label>' + branchStockFields() + '</div>';
+    } else if (action === 'delete') {
+        title = 'Delete Selected Combinations';
+        bodyHtml = '<p>Delete ' + opts.rows.length + ' selected combination(s)? This cannot be undone once saved.</p>';
+    } else if (action === 'stock') {
+        title = 'Apply Stock';
+        bodyHtml = '<div class="form-group"><label>Branch Stock</label>' + branchStockFields() + '</div>';
+    } else if (action === 'price') {
+        title = 'Apply Price Adjustment';
+        bodyHtml = '<div class="form-group"><label>Price Adjustment</label><input type="number" step="0.01" class="form-control form-control-sm" id="applyModalPrice"></div>';
+    } else if (action === 'status') {
+        title = 'Apply Status';
+        bodyHtml = '<div class="form-group"><label>Status</label><select class="form-control form-control-sm" id="applyModalStatus"><option value="active">Active</option><option value="inactive">Inactive</option></select></div>';
+    } else if (action === 'image') {
+        title = 'Apply Image';
+        bodyHtml = '<p class="text-muted" style="font-size:.85rem;">Browsers don\'t allow reusing one selected file across multiple file inputs — select the image individually in each row\'s Image column instead.</p>';
+    }
+
+    showModal(title, bodyHtml, () => {
+        if (isSmart) {
+            applyToRows(rowsMatchingValue(opts.type, opts.value), {
+                price: document.getElementById('applyModalPrice').value,
+                status: document.getElementById('applyModalStatus').value,
+                branchStock: readModalBranchStock(),
+            });
+        } else if (action === 'delete') {
+            opts.rows.forEach(tr => {
+                const key = tr.dataset.key;
+                const stock = Object.values((combinationRows[key] || {}).branch_stock || {}).reduce((s, q) => s + (parseInt(q, 10) || 0), 0);
+                if (stock > 0 && !confirm('One of the selected combinations still has stock. Delete it anyway?')) return;
+                delete combinationRows[key];
+                tr.remove();
+            });
+            syncCombinationsJson();
+        } else if (action === 'stock') {
+            applyToRows(opts.rows, { branchStock: readModalBranchStock() });
+        } else if (action === 'price') {
+            applyToRows(opts.rows, { price: document.getElementById('applyModalPrice').value });
+        } else if (action === 'status') {
+            applyToRows(opts.rows, { status: document.getElementById('applyModalStatus').value });
+        }
+    });
+}
+
+function rowsMatchingValue(type, value) {
+    return Array.from(combinationsBody.querySelectorAll('.combination-row')).filter(tr => {
+        const c = combinationRows[tr.dataset.key];
+        return c && ((c.type_1 === type && c.value_1 === value) || (c.type_2 === type && c.value_2 === value));
+    });
+}
+
+function readModalBranchStock() {
+    const out = {};
+    document.querySelectorAll('.apply-modal-branch-stock').forEach(inp => {
+        if (inp.value !== '') out[inp.dataset.branchId] = parseInt(inp.value, 10) || 0;
+    });
+    return out;
+}
+
+function applyToRows(rows, changes) {
+    rows.forEach(tr => {
+        const key = tr.dataset.key;
+        const c = combinationRows[key];
+        if (!c) return;
+        if (changes.price !== undefined && changes.price !== '') {
+            c.price_adjustment = parseFloat(changes.price) || 0;
+            c.price_manually_set = true;
+            const inp = tr.querySelector('.combo-price-input');
+            if (inp) inp.value = c.price_adjustment;
+        }
+        if (changes.status) {
+            c.status = changes.status;
+            c.status_manually_set = true;
+            const sel = tr.querySelector('.combo-status-select');
+            if (sel) sel.value = c.status;
+        }
+        if (changes.branchStock) {
+            Object.keys(changes.branchStock).forEach(bId => {
+                c.branch_stock[bId] = changes.branchStock[bId];
+                const inp = tr.querySelector('.combo-branch-stock-input[data-branch-id="' + bId + '"]');
+                if (inp) inp.value = c.branch_stock[bId];
+            });
+        }
+    });
+    syncCombinationsJson();
+}
+
+/* Small reusable modal, matching the wizard's existing modal look (no new design system). */
+function showModal(title, bodyHtml, onConfirm) {
+    let modal = document.getElementById('variantApplyModal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'variantApplyModal';
+        modal.style.cssText = 'display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center;';
+        modal.innerHTML =
+            '<div style="background:#fff;border-radius:12px;max-width:480px;width:92%;padding:24px;box-shadow:0 10px 40px rgba(0,0,0,.2);max-height:85vh;overflow-y:auto;">' +
+                '<h5 style="margin-bottom:14px;" id="variantApplyModalTitle"></h5>' +
+                '<div id="variantApplyModalBody"></div>' +
+                '<div style="display:flex;gap:10px;justify-content:flex-end;margin-top:18px;">' +
+                    '<button type="button" class="btn btn-outline-secondary btn-sm" id="variantApplyModalCancel">Cancel</button>' +
+                    '<button type="button" class="btn btn-primary btn-sm" id="variantApplyModalConfirm">Apply</button>' +
+                '</div>' +
+            '</div>';
+        document.body.appendChild(modal);
+    }
+    modal.querySelector('#variantApplyModalTitle').textContent = title;
+    modal.querySelector('#variantApplyModalBody').innerHTML = bodyHtml;
+    modal.style.display = 'flex';
+
+    const close = () => { modal.style.display = 'none'; };
+    modal.querySelector('#variantApplyModalCancel').onclick = close;
+    modal.querySelector('#variantApplyModalConfirm').onclick = () => { onConfirm(); close(); };
+    modal.onclick = (e) => { if (e.target === modal) close(); };
+}
+
+/* ── Pre-populate existing variation types/values + generated
+     combinations (with their real per-branch stock) from the server ── */
 (function initExistingVariations() {
-    const existing = <?= json_encode($variations ?? [], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
+    const existingCombos = <?= json_encode($combinations ?? [], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
+    existingCombos.forEach(c => {
+        const key = c.type_1 + ':' + c.value_1 + '|' + (c.type_2 ? c.type_2 + ':' + c.value_2 : '');
+        combinationRows[key] = {
+            type_1: c.type_1, value_1: c.value_1, type_2: c.type_2 || '', value_2: c.value_2 || '',
+            sku: c.sku || '', barcode: c.barcode || '', price_adjustment: parseFloat(c.price_adjustment) || 0,
+            status: c.status || 'active', branch_stock: c.branch_stock || {},
+            row_key: 'existing_' + c.variant_id,
+            // Already-saved real values, not freshly-generated defaults — so
+            // editing a value's default price/status later won't silently
+            // overwrite this combination's own price/status.
+            price_manually_set: true, status_manually_set: true,
+        };
+    });
+
+    const existingValues = <?= json_encode($variations ?? [], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
     const byType = {};
-    existing.forEach(v => {
+    existingValues.forEach(v => {
         if (!byType[v.variation_type]) byType[v.variation_type] = [];
         byType[v.variation_type].push(v);
     });
+
+    suppressCombinationRegen = true;
     Object.keys(byType).forEach(type => addVariationTypeBlock(type, byType[type]));
+    suppressCombinationRegen = false;
+
+    generateCombinations();
 })();
 
 /* ── Form submit ─────────────────────────────────────────── */

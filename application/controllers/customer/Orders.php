@@ -78,7 +78,9 @@ class Orders extends CI_Controller {
 
         $items = $this->db->where('order_id', $id)->get(ORDER_DETAILS_TABLE)->result_array();
         foreach ($items as $item) {
-            if (!empty($item['variation_id'])) {
+            if (!empty($item['variant_id'])) {
+                StockService::restoreStock($item['product_id'], $item['quantity'], 'order', $id, NULL, NULL, 'ANY', (int) $item['variant_id']);
+            } elseif (!empty($item['variation_id'])) {
                 StockService::restoreStock($item['product_id'], $item['quantity'], 'order', $id, NULL, NULL, (int) $item['variation_id']);
             } else {
                 StockService::restoreStock($item['product_id'], $item['quantity'], 'order', $id);

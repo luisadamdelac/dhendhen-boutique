@@ -107,9 +107,13 @@ table.dataTable thead th.sorting:hover { color: var(--primary-pink); cursor: poi
                         <tr data-status="<?= $isActive ? 'active' : 'inactive'; ?>">
                             <td class="ps-3">
                                 <div class="d-flex align-items-center gap-2">
-                                    <div class="avatar-placeholder" style="background:linear-gradient(135deg,#4e73df,#224abe);color:#fff;font-weight:700;">
-                                        <?= $initials; ?>
-                                    </div>
+                                    <?php if (!empty($staff['profile_image'])): ?>
+                                        <img src="<?= BASE_URL . htmlspecialchars($staff['profile_image']); ?>" alt="" style="width:38px;height:38px;border-radius:8px;object-fit:cover;flex-shrink:0;">
+                                    <?php else: ?>
+                                        <div class="avatar-placeholder" style="background:linear-gradient(135deg,#4e73df,#224abe);color:#fff;font-weight:700;">
+                                            <?= $initials; ?>
+                                        </div>
+                                    <?php endif; ?>
                                     <div>
                                         <div class="fw-semibold" style="font-size:13px;color:#1a1a2e;">
                                             <?= htmlspecialchars(trim(($staff['first_name'] ?? '') . ' ' . ($staff['last_name'] ?? ''))); ?>

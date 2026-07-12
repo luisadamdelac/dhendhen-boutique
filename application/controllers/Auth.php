@@ -169,7 +169,7 @@ class Auth extends CI_Controller {
 
         // Check role-specific status (e.g., reseller pending approval)
         if ($role === ROLE_RESELLER && $profile['status'] === 'pending') {
-            $this->session->set_flashdata('error', 'Your reseller application is pending approval. You will be notified once approved.');
+            $this->session->set_flashdata('error', 'Your reseller application is pending approval. You will be notified via email once approved.');
             redirect('auth/login');
         }
 

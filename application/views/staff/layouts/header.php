@@ -35,6 +35,10 @@
             </div>
 
             <div class="header-right">
+                <a href="<?php echo BASE_URL; ?>staff/notifications" class="header-icon" id="notificationIcon" title="Notifications" style="position:relative;margin-right:10px;">
+                    <i class="fas fa-bell"></i>
+                    <span class="badge" id="notificationBadge" style="display:none;">0</span>
+                </a>
                 <div class="user-menu" id="userMenuToggle">
                     <?php
                         $avatarImage = get_user_profile_image();
@@ -84,12 +88,21 @@
                         <a href="<?php echo BASE_URL; ?>staff/orders" class="nav-link <?php echo (isset($page_title) && strpos($page_title, 'Order') !== false) ? 'active' : ''; ?>">
                             <i class="fas fa-shopping-cart"></i>
                             <span>Orders</span>
+                            <?php if (!empty($pending_orders_notifications)): ?>
+                                <span class="badge"><?php echo $pending_orders_notifications; ?></span>
+                            <?php endif; ?>
                         </a>
                     </li>
                     <li class="nav-item">
                         <a href="<?php echo BASE_URL; ?>staff/profile" class="nav-link <?php echo (isset($page_title) && strpos($page_title, 'Profile') !== false) ? 'active' : ''; ?>">
                             <i class="fas fa-user"></i>
                             <span>Profile</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="<?php echo BASE_URL; ?>staff/profile/activity_log" class="nav-link <?php echo (isset($page_title) && strpos($page_title, 'Activity Log') !== false) ? 'active' : ''; ?>">
+                            <i class="fas fa-history"></i>
+                            <span>Activity Log</span>
                         </a>
                     </li>
                     <li class="nav-item">

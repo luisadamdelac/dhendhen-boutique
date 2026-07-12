@@ -61,6 +61,31 @@ class Profile extends Authenticated_Controller {
         redirect('reseller/profile');
     }
 
+    /**
+     * Reseller's own activity history — their own logged actions only
+     * (withdrawals, listing changes, profile edits), framed as "history"
+     * rather than a raw admin-style log.
+     */
+    public function activity_history() {
+        $data = $this->set_view_data();
+        $data['page_title'] = 'Activity History';
+
+        $this->load->model('activity_log_model');
+
+        $page = (int) ($this->input->get('page') ?? 1);
+        $limit = 20;
+        $offset = ($page - 1) * $limit;
+
+        $data['logs'] = $this->activity_log_model->get_user_logs('reseller', $this->user_id, $limit, $offset);
+        $data['total'] = $this->activity_log_model->count_user_logs('reseller', $this->user_id);
+        $data['pages'] = (int) ceil($data['total'] / $limit);
+        $data['page'] = $page;
+
+        $this->load->view('reseller/layouts/header', $data);
+        $this->load->view('reseller/profile/activity_history', $data);
+        $this->load->view('reseller/layouts/footer', $data);
+    }
+
     public function change_password() {
         if ($this->input->method() !== 'post') {
             redirect('reseller/profile');

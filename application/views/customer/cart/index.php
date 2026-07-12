@@ -110,9 +110,9 @@
                     </td>
                     <td>
                         <div class="cart-item-name"><?php echo htmlspecialchars($item['product_name']); ?></div>
-                        <?php if (!empty($item['variation_type'])): ?>
+                        <?php if (!empty($item['variation_label'])): ?>
                             <div style="font-size: 13px; color: var(--gray); margin-bottom: 4px;">
-                                <?php echo htmlspecialchars($item['variation_type']); ?>: <strong><?php echo htmlspecialchars($item['variation_value']); ?></strong>
+                                <strong><?php echo htmlspecialchars($item['variation_label']); ?></strong>
                             </div>
                         <?php endif; ?>
                         <div class="cart-item-price">₱<?php echo number_format($item['price'], 2); ?></div>

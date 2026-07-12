@@ -42,8 +42,10 @@
             <div class="header-right">
                 <!-- Search -->
                 <div class="header-search" id="headerSearchBox">
-                    <i class="fas fa-search"></i>
-                    <input type="text" placeholder="Search..." id="globalSearch">
+                    <form action="<?php echo BASE_URL; ?>admin/product" method="GET" style="display:contents;">
+                        <i class="fas fa-search"></i>
+                        <input type="text" name="search" placeholder="Search products…" id="globalSearch" value="<?php echo isset($_GET['search']) ? htmlspecialchars($_GET['search']) : ''; ?>">
+                    </form>
                 </div>
 
                 <!-- Search toggle (small phones only — expands the search box) -->

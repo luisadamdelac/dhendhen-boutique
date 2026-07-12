@@ -359,9 +359,21 @@ class Product extends Authenticated_Controller {
             'created_at'    => $now,
         ]);
 
-        // Initial stock (per branch, per variation) is created here — this
+        // Initial stock (base + per-combination) is created here — this
         // also keeps product_tbl.stock in sync as the total.
-        $this->_save_variations($product_id);
+        try {
+            $this->_save_base_stock($product_id);
+            $valueIdMap = $this->_save_variation_values($product_id);
+            $this->_save_variant_combinations($product_id, $valueIdMap);
+        } catch (Exception $e) {
+            $this->db->trans_complete();
+            if (file_exists(FCPATH . $image_path)) {
+                @unlink(FCPATH . $image_path);
+            }
+            $this->session->set_flashdata('error', $e->getMessage());
+            redirect('admin/product/add');
+            return;
+        }
 
         $this->db->trans_complete();
 
@@ -470,10 +482,31 @@ class Product extends Authenticated_Controller {
             ->where('product_id', $product_id)->where('is_primary', 1)->get()->row_array();
         $data['variations'] = $this->db->select('*')->from(PRODUCT_VARIATION_TABLE)
             ->where('product_id', $product_id)->order_by('variation_id', 'ASC')->get()->result_array();
-        foreach ($data['variations'] as &$variation) {
-            $variation['branch_stock'] = StockService::getBranchStock($product_id, (int) $variation['variation_id']);
+
+        // Generated variant combinations — each carries its own SKU/barcode/
+        // price/status plus a real per-branch stock breakdown (via
+        // inventory_batches.variant_id), used to pre-populate the wizard's
+        // "Generated Variant Combinations" table on load.
+        $data['combinations'] = $this->db->select('*')->from(PRODUCT_VARIANTS_TABLE)
+            ->where('product_id', $product_id)->order_by('variant_id', 'ASC')->get()->result_array();
+        $valueById = [];
+        foreach ($data['variations'] as $v) {
+            $valueById[(int) $v['variation_id']] = $v;
         }
-        unset($variation);
+        foreach ($data['combinations'] as &$combo) {
+            $v1 = $valueById[(int) $combo['variation_id_1']] ?? NULL;
+            $v2 = $combo['variation_id_2'] ? ($valueById[(int) $combo['variation_id_2']] ?? NULL) : NULL;
+            $combo['type_1'] = $v1['variation_type'] ?? '';
+            $combo['value_1'] = $v1['variation_value'] ?? '';
+            $combo['type_2'] = $v2['variation_type'] ?? '';
+            $combo['value_2'] = $v2['variation_value'] ?? '';
+            $combo['branch_stock'] = StockService::getVariantBranchStock((int) $combo['variant_id']);
+        }
+        unset($combo);
+
+        // Base (no-variation) product stock — still supported for products
+        // with zero variation types.
+        $data['base_stock'] = StockService::getBranchStock($product_id, NULL);
 
         $this->load->view('admin/layout/header', $data);
         $this->load->view('admin/product/edit', $data);
@@ -720,9 +753,17 @@ class Product extends Authenticated_Controller {
 
         $this->Product_model->update($product_id, $product_data);
 
-        // Stock (per branch, per variation) is fully replaced here — Product
-        // Variations is the only place stock is entered now.
-        $this->_save_variations($product_id);
+        // Base stock + variation values + generated combinations — Product
+        // Variations & Branch Stock is the only place stock is entered now.
+        try {
+            $this->_save_base_stock($product_id);
+            $valueIdMap = $this->_save_variation_values($product_id);
+            $this->_save_variant_combinations($product_id, $valueIdMap);
+        } catch (Exception $e) {
+            $this->session->set_flashdata('error', $e->getMessage());
+            redirect("admin/product/edit/{$product_id}");
+            return;
+        }
 
         $this->Activity_log_model->log_activity(get_user_id(), 'admin', 'update_product', 'Updated product: ' . $product_data['product_name'], get_client_ip());
         $this->session->set_flashdata('success', 'Product updated successfully');
@@ -730,115 +771,309 @@ class Product extends Authenticated_Controller {
     }
 
     /**
-     * Sum of stock across every variation row posted in variations_json —
-     * used for the initial-stock validation on Add Product. A row's Value is
-     * optional (blank = base/no-variation stock, see _save_variations()),
-     * but its branch_stock still counts toward the total either way.
+     * Sum of stock across base stock + every generated combination — used
+     * for the initial-stock validation on Add Product.
      */
     private function _posted_variation_stock_total() {
-        $json = $this->input->post('variations_json', TRUE);
-        if (empty($json)) {
-            return 0;
-        }
-        $decoded = json_decode($json, TRUE);
-        if (!is_array($decoded)) {
-            return 0;
-        }
         $total = 0;
-        foreach ($decoded as $v) {
-            $branch_stock = is_array($v['branch_stock'] ?? NULL) ? $v['branch_stock'] : [];
-            foreach ($branch_stock as $qty) {
-                $total += max(0, (int) $qty);
+
+        $baseJson = $this->input->post('base_stock_json', TRUE);
+        if (!empty($baseJson)) {
+            $decoded = json_decode($baseJson, TRUE);
+            if (is_array($decoded)) {
+                foreach ($decoded as $qty) {
+                    $total += max(0, (int) $qty);
+                }
             }
         }
+
+        $combosJson = $this->input->post('combinations_json', TRUE);
+        if (!empty($combosJson)) {
+            $decoded = json_decode($combosJson, TRUE);
+            if (is_array($decoded)) {
+                foreach ($decoded as $c) {
+                    $branch_stock = is_array($c['branch_stock'] ?? NULL) ? $c['branch_stock'] : [];
+                    foreach ($branch_stock as $qty) {
+                        $total += max(0, (int) $qty);
+                    }
+                }
+            }
+        }
+
         return $total;
     }
 
     /**
-     * Replace a product's variations (Color, Size, Shade, etc.) from the
-     * wizard's variations_json hidden field. Used by both add and edit —
-     * simplest correct approach is to wipe and re-insert rather than diff
-     * against what's already there.
-     *
-     * Each variation now carries a real per-branch stock breakdown
-     * (branch_stock: {branch_id: qty}) instead of one summed number —
-     * deleting a variation row cascades to delete its inventory_batches
-     * (migration 020), and a fresh batch per branch is opened here. This is
-     * the sole stock-entry mechanism for products now; there is no
-     * separate flat "Branch Distribution" step anymore.
-     *
-     * A row's Value is optional: if left blank, its branch_stock becomes
-     * base (no-variation) stock — batches with variation_id = NULL
-     * (migration 020) — instead of a product_variation_tbl row, since that
-     * table requires both variation_type and variation_value.
+     * Base (no-variation) product stock — the plain per-branch quantities
+     * for a product that has no variation types at all (or stock that sits
+     * outside any combination). Diffed against existing batches so re-saves
+     * only create an adjustment for the delta, never a blind re-add.
      */
-    private function _save_variations($product_id) {
-        $json = $this->input->post('variations_json', TRUE);
-
-        // Cascades (FK) to delete inventory_batches/inventory_movements rows
-        // tied to this product's variations — see migration 020.
-        $this->db->where('product_id', $product_id)->delete(PRODUCT_VARIATION_TABLE);
-
-        $variations = [];
+    private function _save_base_stock($product_id) {
+        // The wizard no longer renders this field at all (base stock is only
+        // ever entered through the Generated Combinations table now) — if it
+        // truly isn't in the request, leave existing branch stock untouched
+        // instead of reading a missing value as "0 everywhere" and deducting
+        // an already-saved product's stock down to zero on its next edit.
+        if ($this->input->post('base_stock_json') === NULL) {
+            return;
+        }
+        $json = $this->input->post('base_stock_json', TRUE);
+        $posted = [];
         if (!empty($json)) {
             $decoded = json_decode($json, TRUE);
             if (is_array($decoded)) {
-                $variations = $decoded;
+                $posted = $decoded;
             }
+        }
+
+        $existingBranchStock = StockService::getBranchStock($product_id, NULL);
+        $allBranchIds = array_unique(array_merge(
+            array_keys($existingBranchStock),
+            array_map('intval', array_keys($posted))
+        ));
+
+        foreach ($allBranchIds as $branch_id) {
+            $current = $existingBranchStock[$branch_id] ?? 0;
+            $target = (int) ($posted[$branch_id] ?? $posted[(string) $branch_id] ?? 0);
+            $delta = $target - $current;
+            if ($delta !== 0) {
+                StockService::adjustStock($product_id, $branch_id, $delta, $this->user_id, 'Base stock edit', NULL);
+            }
+        }
+    }
+
+    /**
+     * Save the product's variation TYPES + VALUES only (Section 1/2 of the
+     * wizard) — no stock, no price/status-per-combination here anymore.
+     * Diffs against what already exists by the natural key
+     * (product_id, variation_type, variation_value) instead of wiping and
+     * recreating every save, so variation_id stays stable across edits
+     * (order_details references, FIFO batch history, and combination FKs
+     * all depend on this id not changing under them).
+     *
+     * Returns [type => [value => variation_id]] so the caller can resolve
+     * combination rows (which are posted by type/value name, not id, since
+     * a brand new value has no id yet on the client).
+     */
+    private function _save_variation_values($product_id) {
+        $json = $this->input->post('variations_json', TRUE);
+        $posted = [];
+        if (!empty($json)) {
+            $decoded = json_decode($json, TRUE);
+            if (is_array($decoded)) {
+                $posted = $decoded;
+            }
+        }
+
+        $postedKeyed = [];
+        foreach ($posted as $v) {
+            $type = trim((string) ($v['type'] ?? ''));
+            $value = trim((string) ($v['value'] ?? ''));
+            if ($type === '' || $value === '') {
+                continue;
+            }
+            $status = $v['default_status'] ?? 'active';
+            $postedKeyed[$type . '|' . $value] = [
+                'type'                     => $type,
+                'value'                    => $value,
+                'default_price_adjustment' => (float) ($v['default_price_adjustment'] ?? 0),
+                'default_status'           => in_array($status, ['active', 'inactive'], TRUE) ? $status : 'active',
+            ];
+        }
+
+        $existing = $this->db->select('*')->from(PRODUCT_VARIATION_TABLE)
+            ->where('product_id', $product_id)->get()->result_array();
+        $existingKeyed = [];
+        foreach ($existing as $row) {
+            $existingKeyed[$row['variation_type'] . '|' . $row['variation_value']] = $row;
         }
 
         $now = date('Y-m-d H:i:s');
-        foreach ($variations as $v) {
-            $type = trim((string) ($v['type'] ?? ''));
-            $value = trim((string) ($v['value'] ?? ''));
-            $branch_stock = is_array($v['branch_stock'] ?? NULL) ? $v['branch_stock'] : [];
+        $valueIdMap = [];
 
-            if ($type === '' || $value === '') {
-                foreach ($branch_stock as $b_id => $qty) {
-                    $qty = (int) $qty;
-                    if ($qty > 0) {
-                        StockService::addBatch($product_id, (int) $b_id, $qty, 0, $this->user_id, NULL);
-                    }
-                }
+        foreach ($postedKeyed as $key => $row) {
+            if (isset($existingKeyed[$key])) {
+                $variation_id = (int) $existingKeyed[$key]['variation_id'];
+                $this->db->where('variation_id', $variation_id)->update(PRODUCT_VARIATION_TABLE, [
+                    'price_adjustment' => $row['default_price_adjustment'],
+                    'status'           => $row['default_status'],
+                    'updated_at'       => $now,
+                ]);
+            } else {
+                $this->db->insert(PRODUCT_VARIATION_TABLE, [
+                    'product_id'       => $product_id,
+                    'variation_type'   => $row['type'],
+                    'variation_value'  => $row['value'],
+                    'price_adjustment' => $row['default_price_adjustment'],
+                    'stock'            => 0,
+                    'status'           => $row['default_status'],
+                    'created_at'       => $now,
+                    'updated_at'       => $now,
+                ]);
+                $variation_id = $this->db->insert_id();
+            }
+            $valueIdMap[$row['type']][$row['value']] = $variation_id;
+        }
+
+        // Remove values no longer posted — but never silently destroy stock
+        // that lives in a combination still using this value.
+        foreach ($existingKeyed as $key => $row) {
+            if (isset($postedKeyed[$key])) {
                 continue;
             }
+            $variation_id = (int) $row['variation_id'];
+            if ($this->_variation_value_has_stock($variation_id)) {
+                throw new Exception('Cannot remove "' . $row['variation_type'] . ': ' . $row['variation_value'] . '" — it still has stock in one or more variant combinations. Reduce that stock to 0 first.');
+            }
+            // Cascades (FK) to delete any product_variants rows (and their
+            // now-empty inventory_batches) still referencing this value.
+            $this->db->where('variation_id', $variation_id)->delete(PRODUCT_VARIATION_TABLE);
+        }
 
-            $this->db->insert(PRODUCT_VARIATION_TABLE, [
-                'product_id'       => $product_id,
-                'variation_type'   => $type,
-                'variation_value'  => $value,
-                'price_adjustment' => (float) ($v['price_adjustment'] ?? 0),
-                'stock'            => 0,
-                'status'           => 'active',
-                'created_at'       => $now,
-                'updated_at'       => $now,
-            ]);
-            $variation_id = $this->db->insert_id();
+        return $valueIdMap;
+    }
 
-            $variation_total = 0;
-            foreach ($branch_stock as $b_id => $qty) {
-                $qty = (int) $qty;
-                if ($qty > 0) {
-                    StockService::addBatch($product_id, (int) $b_id, $qty, 0, $this->user_id, $variation_id);
-                    $variation_total += $qty;
-                }
+    /**
+     * True if any product_variants combination referencing this variation
+     * value still has stock (cached stock column, kept in sync by
+     * StockService::_syncVariantTotal()).
+     */
+    private function _variation_value_has_stock($variation_id) {
+        $count = $this->db
+            ->from(PRODUCT_VARIANTS_TABLE)
+            ->group_start()
+                ->where('variation_id_1', $variation_id)
+                ->or_where('variation_id_2', $variation_id)
+            ->group_end()
+            ->where('stock >', 0)
+            ->count_all_results();
+        return $count > 0;
+    }
+
+    /**
+     * Save the generated variant combinations (Section 3/4/5/6 of the
+     * wizard) — each row is one actual purchasable/inventory item (SKU,
+     * barcode, its own price adjustment/status, per-branch stock). Diffed
+     * against what already exists by natural key
+     * (product_id, variation_id_1, variation_id_2) so variant_id stays
+     * stable across edits, and stock is adjusted by DELTA (not wiped and
+     * re-added), so unchanged rows create zero new batches/movements and
+     * FIFO history survives no-op edits.
+     *
+     * $valueIdMap: [type => [value => variation_id]] from
+     * _save_variation_values(), used to resolve each posted combination's
+     * type/value names into real variation_id_1/variation_id_2.
+     */
+    private function _save_variant_combinations($product_id, array $valueIdMap) {
+        $json = $this->input->post('combinations_json', TRUE);
+        $posted = [];
+        if (!empty($json)) {
+            $decoded = json_decode($json, TRUE);
+            if (is_array($decoded)) {
+                $posted = $decoded;
+            }
+        }
+
+        $postedKeyed = [];
+        foreach ($posted as $c) {
+            $type1 = trim((string) ($c['type_1'] ?? ''));
+            $value1 = trim((string) ($c['value_1'] ?? ''));
+            $type2 = trim((string) ($c['type_2'] ?? ''));
+            $value2 = trim((string) ($c['value_2'] ?? ''));
+
+            if ($type1 === '' || $value1 === '' || !isset($valueIdMap[$type1][$value1])) {
+                continue;
+            }
+            $variation_id_1 = (int) $valueIdMap[$type1][$value1];
+            $variation_id_2 = ($type2 !== '' && $value2 !== '' && isset($valueIdMap[$type2][$value2]))
+                ? (int) $valueIdMap[$type2][$value2]
+                : NULL;
+
+            $status = $c['status'] ?? 'active';
+            $key = $variation_id_1 . '|' . ($variation_id_2 ?? '0');
+            $postedKeyed[$key] = [
+                'variation_id_1'   => $variation_id_1,
+                'variation_id_2'   => $variation_id_2,
+                'sku'              => trim((string) ($c['sku'] ?? '')) ?: NULL,
+                'barcode'          => trim((string) ($c['barcode'] ?? '')) ?: NULL,
+                'price_adjustment' => (float) ($c['price_adjustment'] ?? 0),
+                'status'           => in_array($status, ['active', 'inactive'], TRUE) ? $status : 'active',
+                'branch_stock'     => is_array($c['branch_stock'] ?? NULL) ? $c['branch_stock'] : [],
+            ];
+        }
+
+        $existing = $this->db->select('*')->from(PRODUCT_VARIANTS_TABLE)
+            ->where('product_id', $product_id)->get()->result_array();
+        $existingKeyed = [];
+        foreach ($existing as $row) {
+            $key = $row['variation_id_1'] . '|' . ($row['variation_id_2'] ?? '0');
+            $existingKeyed[$key] = $row;
+        }
+
+        $now = date('Y-m-d H:i:s');
+
+        foreach ($postedKeyed as $key => $row) {
+            if (isset($existingKeyed[$key])) {
+                $variant_id = (int) $existingKeyed[$key]['variant_id'];
+                $this->db->where('variant_id', $variant_id)->update(PRODUCT_VARIANTS_TABLE, [
+                    'sku'              => $row['sku'],
+                    'barcode'          => $row['barcode'],
+                    'price_adjustment' => $row['price_adjustment'],
+                    'status'           => $row['status'],
+                    'updated_at'       => $now,
+                ]);
+            } else {
+                $this->db->insert(PRODUCT_VARIANTS_TABLE, [
+                    'product_id'       => $product_id,
+                    'variation_id_1'   => $row['variation_id_1'],
+                    'variation_id_2'   => $row['variation_id_2'],
+                    'sku'              => $row['sku'],
+                    'barcode'          => $row['barcode'],
+                    'price_adjustment' => $row['price_adjustment'],
+                    'status'           => $row['status'],
+                    'stock'            => 0,
+                    'created_at'       => $now,
+                    'updated_at'       => $now,
+                ]);
+                $variant_id = $this->db->insert_id();
             }
 
-            $this->db->where('variation_id', $variation_id)->update(PRODUCT_VARIATION_TABLE, ['stock' => $variation_total]);
+            // Stock deltas — preserve existing batches, only add/deduct the
+            // difference, so unchanged rows create zero new movements.
+            $existingBranchStock = StockService::getVariantBranchStock($variant_id);
+            $allBranchIds = array_unique(array_merge(
+                array_keys($existingBranchStock),
+                array_map('intval', array_keys($row['branch_stock']))
+            ));
+            foreach ($allBranchIds as $branch_id) {
+                $current = $existingBranchStock[$branch_id] ?? 0;
+                $target = (int) ($row['branch_stock'][$branch_id] ?? $row['branch_stock'][(string) $branch_id] ?? 0);
+                $delta = $target - $current;
+                if ($delta !== 0) {
+                    StockService::adjustStock($product_id, $branch_id, $delta, $this->user_id, 'Variant combination stock edit', NULL, $variant_id);
+                }
+            }
+        }
+
+        // Remove combinations no longer posted — block if they still hold stock.
+        foreach ($existingKeyed as $key => $row) {
+            if (isset($postedKeyed[$key])) {
+                continue;
+            }
+            $variant_id = (int) $row['variant_id'];
+            $stock = array_sum(StockService::getVariantBranchStock($variant_id));
+            if ($stock > 0) {
+                throw new Exception('Cannot remove a variant combination that still has ' . $stock . ' unit(s) of stock. Reduce its stock to 0 first.');
+            }
+            // Cascades (FK) to delete its inventory_batches (empty) and images.
+            $this->db->where('variant_id', $variant_id)->delete(PRODUCT_VARIANTS_TABLE);
         }
 
         // product_tbl.stock is the denormalized total the list/shop/reports
-        // pages read — addBatch() above already keeps it in sync as it goes,
-        // but re-syncing here also correctly zeroes it out when the product
-        // ends up with no variations (or none with any stock) left.
-        //
-        // Resolve the new stock value into a local variable *before*
-        // chaining where()->update() — StockService::getAvailableStock()
-        // runs its own get() on the same shared $this->db query builder,
-        // which resets any pending where() clauses. Passing it inline as
-        // update()'s argument let that reset fire between where() and
-        // update(), silently dropping the WHERE and overwriting every
-        // product's stock with the last-computed value.
+        // pages read — StockService keeps it in sync as it goes, but
+        // re-syncing here also correctly reflects a product that ends up
+        // with no stock anywhere left.
         $new_stock = StockService::getAvailableStock($product_id);
         $this->db->where('product_id', $product_id)
             ->update(PRODUCT_TABLE, ['stock' => $new_stock]);

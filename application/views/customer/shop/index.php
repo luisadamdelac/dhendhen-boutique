@@ -209,13 +209,12 @@
                     <?php else: ?>
                     <div class="product-price">₱<?php echo number_format($product['price'], 2); ?></div>
                     <?php endif; ?>
-                    <?php if (!empty($product['total_sold'])): ?>
-                    <div style="font-size: 12px; color: #e65100; margin-bottom: 5px;"><i class="fas fa-fire"></i> <?php echo $product['total_sold']; ?> sold</div>
-                    <?php endif; ?>
-                    <div class="product-stock">
-                        <i class="fas fa-box"></i>
-                        <?php echo $product['stock'] > 0 ? $product['stock'] . ' in stock' : 'Out of stock'; ?>
+                    <div style="font-size: 12px; color: #e65100; margin-bottom: 5px;"><i class="fas fa-fire"></i> <?php echo (int) ($product['total_sold'] ?? 0); ?> sold</div>
+                    <?php if ($product['stock'] <= 0): ?>
+                    <div class="product-stock" style="color:#c62828;font-weight:600;">
+                        <i class="fas fa-ban"></i> Sold Out
                     </div>
+                    <?php endif; ?>
                     <?php $canBuy = ($product['purchasable'] ?? true) && $product['stock'] > 0; ?>
                     <?php
                         $atcPayload = htmlspecialchars(json_encode([
@@ -284,6 +283,7 @@
                 <div>
                     <div class="atc-modal-name" id="atcName"></div>
                     <div class="atc-modal-price" id="atcPrice"></div>
+                    <div class="atc-modal-stock" id="atcStock" style="font-size:13px;color:var(--gray,#888);margin-top:2px;"><i class="fas fa-box"></i> <span id="atcStockText"></span></div>
                 </div>
             </div>
 
@@ -311,7 +311,7 @@
 </div>
 
 <script>
-let atcState = { id: null, mode: 'cart', hasVariations: false, basePrice: 0, variations: [], selectedVariationId: null, qty: 1, stock: 0 };
+let atcState = { id: null, mode: 'cart', hasVariations: false, basePrice: 0, variations: [], combinations: [], selectedVariationId: null, selectedVariantId: null, selectedAxisValues: {}, qty: 1, stock: 0 };
 
 function openAddToCartModal(product, mode) {
     <?php if (($_SESSION['user_type'] ?? '') !== 'customer'): ?>
@@ -325,7 +325,10 @@ function openAddToCartModal(product, mode) {
         hasVariations: !!product.hasVariations,
         basePrice: product.price,
         variations: [],
+        combinations: [],
         selectedVariationId: null,
+        selectedVariantId: null,
+        selectedAxisValues: {},
         qty: 1,
         stock: product.stock
     };
@@ -336,6 +339,7 @@ function openAddToCartModal(product, mode) {
     document.getElementById('atcQtyValue').textContent = '1';
     document.getElementById('atcConfirmBtn').textContent = mode === 'buy' ? 'Buy Now' : 'Add to Cart';
     document.getElementById('atcVariationError').style.display = 'none';
+    updateAtcStockDisplay();
 
     const variationSection = document.getElementById('atcVariationSection');
     if (atcState.hasVariations) {
@@ -346,6 +350,7 @@ function openAddToCartModal(product, mode) {
             .then(data => {
                 if (data.success) {
                     atcState.variations = data.variations;
+                    atcState.combinations = data.combinations || [];
                     renderAtcVariationGroups();
                 }
             });
@@ -360,6 +365,15 @@ function closeAddToCartModal() {
     closeModal(document.getElementById('addToCartModal'));
 }
 
+function updateAtcStockDisplay() {
+    const stockEl = document.getElementById('atcStock');
+    const textEl = document.getElementById('atcStockText');
+    if (!stockEl || !textEl) return;
+    const stock = atcState.stock || 0;
+    textEl.textContent = stock > 0 ? stock + ' in stock' : 'Out of stock';
+    stockEl.style.color = stock > 0 ? 'var(--gray, #888)' : '#c62828';
+}
+
 function renderAtcVariationGroups() {
     const groups = {};
     atcState.variations.forEach(v => {
@@ -367,14 +381,22 @@ function renderAtcVariationGroups() {
         groups[v.variation_type].push(v);
     });
 
+    const combinationsMode = atcState.combinations.length > 0;
     let html = '';
+    let axisIndex = 0;
     Object.keys(groups).forEach(type => {
-        html += '<div class="atc-variation-group"><div class="atc-variation-label">' + escapeHtml(type) + '</div>';
+        axisIndex++;
+        html += '<div class="atc-variation-group" data-axis="' + axisIndex + '" data-type="' + escapeHtml(type) + '"><div class="atc-variation-label">' + escapeHtml(type) + '</div>';
         groups[type].forEach(v => {
-            const outOfStock = v.stock <= 0;
-            html += '<span class="atc-variation-opt' + (outOfStock ? ' disabled' : '') + '" data-variation-id="' + v.variation_id + '"' +
-                (outOfStock ? '' : ' onclick="atcSelectVariation(' + v.variation_id + ', ' + v.stock + ', ' + v.price_adjustment + ')"') + '">' +
-                escapeHtml(v.variation_value) + (outOfStock ? ' (out of stock)' : '') + '</span>';
+            if (combinationsMode) {
+                html += '<span class="atc-variation-opt" data-value="' + escapeHtml(v.variation_value) + '" onclick="atcSelectAxisValue(' + axisIndex + ', this)">' +
+                    escapeHtml(v.variation_value) + '</span>';
+            } else {
+                const outOfStock = v.stock <= 0;
+                html += '<span class="atc-variation-opt' + (outOfStock ? ' disabled' : '') + '" data-variation-id="' + v.variation_id + '"' +
+                    (outOfStock ? '' : ' onclick="atcSelectVariation(' + v.variation_id + ', ' + v.stock + ', ' + v.price_adjustment + ')"') + '">' +
+                    escapeHtml(v.variation_value) + (outOfStock ? ' (out of stock)' : '') + '</span>';
+            }
         });
         html += '</div>';
     });
@@ -394,6 +416,7 @@ function atcSelectVariation(variationId, stock, priceAdjustment) {
         });
 
         document.getElementById('atcPrice').textContent = '₱' + atcState.basePrice.toFixed(2);
+        updateAtcStockDisplay();
         return;
     }
 
@@ -405,9 +428,97 @@ function atcSelectVariation(variationId, stock, priceAdjustment) {
     });
 
     document.getElementById('atcPrice').textContent = '₱' + (atcState.basePrice + priceAdjustment).toFixed(2);
+    updateAtcStockDisplay();
 
     if (atcState.qty > stock) {
         atcState.qty = Math.max(1, stock);
+        document.getElementById('atcQtyValue').textContent = atcState.qty;
+    }
+}
+
+/* ── Combination mode: cascading per-axis selection, mirrors shop/product.php ── */
+function atcSelectAxisValue(axisIndex, el) {
+    if (el.classList.contains('disabled')) return;
+    document.getElementById('atcVariationError').style.display = 'none';
+
+    const group = el.closest('.atc-variation-group');
+    const type = group.dataset.type;
+    const value = el.dataset.value;
+
+    if (atcState.selectedAxisValues[axisIndex] && atcState.selectedAxisValues[axisIndex].value === value) {
+        delete atcState.selectedAxisValues[axisIndex];
+    } else {
+        atcState.selectedAxisValues[axisIndex] = { type: type, value: value };
+    }
+
+    group.querySelectorAll('.atc-variation-opt').forEach(opt => {
+        const active = atcState.selectedAxisValues[axisIndex] && opt.dataset.value === atcState.selectedAxisValues[axisIndex].value;
+        opt.classList.toggle('selected', !!active);
+    });
+
+    atcFilterOtherAxes(axisIndex);
+    atcResolveVariant();
+}
+
+function atcFilterOtherAxes(changedAxisIndex) {
+    const groups = Array.from(document.querySelectorAll('.atc-variation-group'));
+    if (groups.length < 2) return;
+
+    groups.forEach(group => {
+        const axisIndex = parseInt(group.dataset.axis, 10);
+        if (axisIndex === changedAxisIndex) return;
+
+        const otherSel = atcState.selectedAxisValues[changedAxisIndex];
+        group.querySelectorAll('.atc-variation-opt').forEach(opt => {
+            if (!otherSel) {
+                opt.classList.remove('disabled');
+                return;
+            }
+            const candidateValue = opt.dataset.value;
+            const candidateType = group.dataset.type;
+            const pairable = atcState.combinations.some(c =>
+                (c.type_1 === otherSel.type && c.value_1 === otherSel.value && c.type_2 === candidateType && c.value_2 === candidateValue) ||
+                (c.type_2 === otherSel.type && c.value_2 === otherSel.value && c.type_1 === candidateType && c.value_1 === candidateValue)
+            );
+            opt.classList.toggle('disabled', !pairable);
+        });
+    });
+}
+
+function atcFindMatchingCombination() {
+    const groups = Array.from(document.querySelectorAll('.atc-variation-group'));
+    const picks = groups.map(g => atcState.selectedAxisValues[parseInt(g.dataset.axis, 10)]).filter(Boolean);
+    if (picks.length !== groups.length) return null;
+
+    return atcState.combinations.find(c => {
+        const values = [{ type: c.type_1, value: c.value_1 }];
+        if (c.type_2) values.push({ type: c.type_2, value: c.value_2 });
+        return picks.every(p => values.some(v => v.type === p.type && v.value === p.value))
+            && values.every(v => picks.some(p => p.type === v.type && p.value === v.value));
+    }) || null;
+}
+
+function atcResolveVariant() {
+    const combo = atcFindMatchingCombination();
+    if (!combo) {
+        atcState.selectedVariantId = null;
+        atcState.stock = 0;
+        document.getElementById('atcPrice').textContent = '₱' + atcState.basePrice.toFixed(2);
+        // Nothing resolved yet (still picking options) — don't claim "Out of
+        // stock" prematurely before both axes are chosen.
+        const textEl = document.getElementById('atcStockText');
+        if (textEl) textEl.textContent = '';
+        return;
+    }
+
+    atcState.selectedVariantId = combo.variant_id;
+    atcState.stock = parseInt(combo.total_stock, 10) || 0;
+    document.getElementById('atcPrice').textContent = '₱' + (atcState.basePrice + (parseFloat(combo.price_adjustment) || 0)).toFixed(2);
+    if (combo.image_url) document.getElementById('atcImage').src = combo.image_url;
+    updateAtcStockDisplay();
+
+    if (atcState.qty > atcState.stock) {
+        atcState.qty = Math.max(1, atcState.stock);
         document.getElementById('atcQtyValue').textContent = atcState.qty;
     }
 }
@@ -422,9 +533,24 @@ function atcChangeQty(delta) {
 }
 
 function confirmAddToCart() {
-    if (atcState.hasVariations && !atcState.selectedVariationId) {
-        document.getElementById('atcVariationError').style.display = 'block';
-        return;
+    const combinationsMode = atcState.combinations.length > 0;
+    if (atcState.hasVariations) {
+        if (combinationsMode) {
+            const groups = Array.from(document.querySelectorAll('.atc-variation-group'));
+            const allPicked = groups.every(g => atcState.selectedAxisValues[parseInt(g.dataset.axis, 10)]);
+            if (!allPicked || !atcState.selectedVariantId) {
+                document.getElementById('atcVariationError').style.display = 'block';
+                return;
+            }
+            if (atcState.stock <= 0) {
+                document.getElementById('atcVariationError').textContent = 'This combination is currently out of stock.';
+                document.getElementById('atcVariationError').style.display = 'block';
+                return;
+            }
+        } else if (!atcState.selectedVariationId) {
+            document.getElementById('atcVariationError').style.display = 'block';
+            return;
+        }
     }
 
     const resellerId = <?php echo (int) ($shopResellerId ?? 0); ?>;
@@ -439,7 +565,8 @@ function confirmAddToCart() {
             'X-Requested-With': 'XMLHttpRequest'
         },
         body: 'product_id=' + atcState.id + '&quantity=' + atcState.qty +
-            (atcState.selectedVariationId ? '&variation_id=' + atcState.selectedVariationId : '') +
+            (combinationsMode && atcState.selectedVariantId ? '&variant_id=' + atcState.selectedVariantId : '') +
+            (!combinationsMode && atcState.selectedVariationId ? '&variation_id=' + atcState.selectedVariationId : '') +
             (resellerId ? '&reseller_id=' + resellerId : '')
     })
     .then(res => res.json())

@@ -42,6 +42,7 @@
     .form-group input[type="email"],
     .form-group input[type="tel"],
     .form-group input[type="password"],
+    .form-group select,
     .form-group textarea {
         width: 100%;
         padding: 12px 15px;
@@ -49,13 +50,44 @@
         border-radius: 8px;
         font-size: 14px;
         font-family: inherit;
+        background: #fff;
     }
-    
+
+    .form-group select:disabled {
+        background: #f3f4f6;
+        color: #666;
+    }
+
     .form-group input:focus,
+    .form-group select:focus,
     .form-group textarea:focus {
         outline: none;
         border-color: var(--primary);
     }
+
+    .has-toggle {
+        position: relative;
+    }
+
+    .has-toggle input {
+        padding-right: 46px !important;
+    }
+
+    .toggle-password {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: #999;
+        font-size: 15px;
+        padding: 0;
+        line-height: 1;
+    }
+
+    .toggle-password:hover { color: var(--primary); }
     
     .form-group textarea {
         resize: vertical;
@@ -335,22 +367,26 @@
                         <input type="text" id="business_name" name="business_name" required>
                     </div>
                     <div class="form-group">
-                        <label for="business_street">Street</label>
-                        <input type="text" id="business_street" name="business_street">
+                        <label>Province</label>
+                        <input type="text" value="Oriental Mindoro" readonly>
                     </div>
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
                         <div class="form-group">
-                            <label for="business_barangay">Barangay</label>
-                            <input type="text" id="business_barangay" name="business_barangay">
-                        </div>
-                        <div class="form-group">
                             <label for="business_city">City *</label>
-                            <input type="text" id="business_city" name="business_city" required>
+                            <select id="business_city" name="business_city" required>
+                                <option value="">Select Municipality / City</option>
+                            </select>
                         </div>
                         <div class="form-group">
-                            <label for="business_zip_code">ZIP Code</label>
-                            <input type="text" id="business_zip_code" name="business_zip_code">
+                            <label for="business_barangay">Barangay</label>
+                            <select id="business_barangay" name="business_barangay" disabled>
+                                <option value="">Select Municipality first</option>
+                            </select>
                         </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="business_street">Street</label>
+                        <input type="text" id="business_street" name="business_street">
                     </div>
                     <button type="submit" class="btn btn-primary w-100 mt-2" <?php echo $is_eligible ? '' : 'disabled title="Keep shopping to reach the minimum qualifying spend"'; ?>>
                         <i class="fas fa-paper-plane"></i> <?php echo $is_eligible ? 'Submit Application' : 'Not Eligible Yet'; ?>
@@ -370,17 +406,32 @@
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
                 <div class="form-group">
                     <label for="current_password">Current Password *</label>
-                    <input type="password" id="current_password" name="current_password" required>
+                    <div class="has-toggle">
+                        <input type="password" id="current_password" name="current_password" required>
+                        <button type="button" class="toggle-password" onclick="togglePwd('current_password', this)" tabindex="-1">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
                 </div>
-                
+
                 <div class="form-group">
                     <label for="new_password">New Password *</label>
-                    <input type="password" id="new_password" name="new_password" required minlength="6">
+                    <div class="has-toggle">
+                        <input type="password" id="new_password" name="new_password" required minlength="6">
+                        <button type="button" class="toggle-password" onclick="togglePwd('new_password', this)" tabindex="-1">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
                 </div>
-                
+
                 <div class="form-group">
                     <label for="confirm_password">Confirm Password *</label>
-                    <input type="password" id="confirm_password" name="confirm_password" required minlength="6">
+                    <div class="has-toggle">
+                        <input type="password" id="confirm_password" name="confirm_password" required minlength="6">
+                        <button type="button" class="toggle-password" onclick="togglePwd('confirm_password', this)" tabindex="-1">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
             
@@ -392,6 +443,20 @@
 </div>
 
 <script>
+    function togglePwd(id, btn) {
+        var inp = document.getElementById(id);
+        if (!inp) return;
+
+        var icon = btn ? btn.querySelector('i') : null;
+        if (inp.type === 'password') {
+            inp.type = 'text';
+            if (icon) icon.className = 'fas fa-eye-slash';
+        } else {
+            inp.type = 'password';
+            if (icon) icon.className = 'fas fa-eye';
+        }
+    }
+
     // Form validation for password change
     document.querySelector('form[action*="change_password"]').addEventListener('submit', function(e) {
         const newPassword = document.getElementById('new_password').value;
@@ -451,4 +516,55 @@
             }
         }
     }
+
+    // Become a Reseller: City -> Barangay cascading dropdowns
+    (function() {
+        var citySelect = document.getElementById('business_city');
+        var barangaySelect = document.getElementById('business_barangay');
+        if (!citySelect || !barangaySelect) return;
+
+        var ORIENTAL_MINDORO_BARANGAYS = {
+            "Calapan City": ["Balingayan","Balite","Baruyan","Batino","Bayanan I","Bayanan II","Biga","Bondoc","Bucayao","Buhuan","Bulusan","Calero","Camansihan","Camilmil","Canubing I","Canubing II","Comunal","Guinobatan","Gulod","Gutad","Ibaba East","Ibaba West","Ilaya","Lalud","Lazareto","Libis","Lumangbayan","Mahal na Pangalan","Maidlang","Malad","Malamig","Managpi","Masipit","Nag-iba I","Nag-iba II","Navotas","Pachoca","Palhi","Panggalaan","Parang","Patas","Personas","Putingtubig","Salong","San Antonio","San Vicente Central","San Vicente East","San Vicente North","San Vicente South","San Vicente West","Santa Cruz","Santa Isabel","Santa Maria Village","Santa Rita","Santo Niño","Sapul","Silonay","Suqui","Tawagan","Tawiran","Tibag","Wawa"],
+            "Baco": ["Alag","Bangkatan","Baras","Bayanan","Burbuli","Catwiran I","Catwiran II","Dulangan I","Dulangan II","Lantuyang","Lumangbayan","Malapad","Mangangan I","Mangangan II","Mayabig","Pambisan","Poblacion","Pulang-Tubig","Putican-Cabulo","San Andres","San Ignacio","Santa Cruz","Santa Rosa I","Santa Rosa II","Tabon-tabon","Tagumpay","Water"],
+            "Bansud": ["Alcadesma","Bato","Conrazon","Malo","Manihala","Pag-asa","Poblacion","Proper Bansud","Proper Tiguisan","Rosacara","Salcedo","Sumagui","Villa Pag-asa"],
+            "Bongabong": ["Anilao","Aplaya","Bagumbayan I","Bagumbayan II","Batangan","Bukal","Camantigue","Carmundo","Cawayan","Dayhagan","Formon","Hagan","Hagupit","Ipil","Kaligtasan","Labasan","Labonan","Libertad","Lisap","Luna","Malitbog","Mapang","Masaguisi","Mina de Oro","Morente","Ogbot","Orconuma","Poblacion","Polusahi","Sagana","San Isidro","San Jose","San Juan","Santa Cruz","Sigange","Tawas"],
+            "Bulalacao": ["Bagong Sikat","Balatasan","Benli","Cabugao","Cambunang","Campaasan","Maasin","Maujao","Milagrosa","Nasukob","Poblacion","San Francisco","San Isidro","San Juan","San Roque"],
+            "Gloria": ["Agos","Agsalin","Alma Villa","Andres Bonifacio","Balete","Banus","Banutan","Bulaklakan","Buong Lupa","Gaudencio Antonino","Guimbonan","Kawit","Lucio Laurel","Macario Adriatico","Malamig","Malayong","Maligaya","Malubay","Manguyang","Maragooc","Mirayan","Narra","Papandungin","San Antonio","Santa Maria","Santa Theresa","Tambong"],
+            "Mansalay": ["B. del Mundo","Balugo","Bonbon","Budburan","Cabalwa","Don Pedro","Maliwanag","Manaul","Panaytayan","Poblacion","Roma","Santa Brigida","Santa Maria","Santa Teresita","Villa Celestial","Wasig","Waygan"],
+            "Naujan": ["Adrialuna","Andres Ilagan","Antipolo","Apitong","Arangin","Aurora","Bacungan","Bagong Buhay","Balite","Bancuro","Banuton","Barcenaga","Bayani","Buhangin","Caburo","Concepcion","Dao","Del Pilar","Estrella","Evangelista","Gamao","General Esco","Herrera","Inarawan","Kalinisan","Laguna","Mabini","Magtibay","Mahabang Parang","Malaya","Malinao","Malvar","Masagana","Masaguing","Melgar A","Melgar B","Metolza","Montelago","Montemayor","Motoderazo","Mulawin","Nag-iba I","Nag-iba II","Pagkakaisa","Paitan","Paniquian","Pinagsabangan I","Pinagsabangan II","Piñahan","Poblacion I","Poblacion II","Poblacion III","Sampaguita","San Agustin I","San Agustin II","San Andres","San Antonio","San Carlos","San Isidro","San Jose","San Luis","San Nicolas","San Pedro","Santa Cruz","Santa Isabel","Santa Maria","Santiago","Santo Niño","Tagumpay","Tigkan"],
+            "Pinamalayan": ["Anoling","Bacungan","Bangbang","Banilad","Buli","Cacawan","Calingag","Del Razon","Guinhawa","Inclanay","Lumangbayan","Malaya","Maliangcog","Maningcol","Marayos","Marfrancisco","Nabuslot","Pagalagala","Palayan","Pambisan Malaki","Pambisan Munti","Panggulayan","Papandayan","Pili","Quinabigan","Ranzo","Rosario","Sabang","Santa Isabel","Santa Maria","Santa Rita","Santo Niño","Wawa","Zone I","Zone II","Zone III","Zone IV"],
+            "Pola": ["Bacawan","Bacungan","Batuhan","Bayanan","Biga","Buhay na Tubig","Calima","Calubasanhon","Campamento","Casiligan","Malibago","Maluanluan","Matulatula","Misong","Pahilahan","Panikihan","Pula","Puting Cacao","Tagbakin","Tagumpay","Tiguihan","Zone I","Zone II"],
+            "Puerto Galera": ["Aninuan","Baclayan","Balatero","Dulangan","Palangan","Poblacion","Sabang","San Antonio","San Isidro","Santo Niño","Sinandigan","Tabinay","Villaflor"],
+            "Roxas": ["Bagumbayan","Cantil","Dangay","Happy Valley","Libertad","Libtong","Little Tanauan","Mabuhay","Maraska","Odiong","Paclasan","San Aquilino","San Isidro","San Jose","San Mariano","San Miguel","San Rafael","San Vicente","Uyao","Victoria"],
+            "San Teodoro": ["Bigaan","Caagutayan","Calangatan","Calsapa","Ilag","Lumangbayan","Poblacion","Tacligan"],
+            "Socorro": ["Bagsok","Batong Dalig","Bayuin","Bugtong na Tuog","Calocmoy","Calubayan","Catiningan","Fortuna","Happy Valley","Leuteboro I","Leuteboro II","Ma. Concepcion","Mabuhay I","Mabuhay II","Malugay","Matungao","Monteverde","Pasi I","Pasi II","Santo Domingo","Subaan","Villareal","Zone I","Zone II","Zone III","Zone IV"],
+            "Victoria": ["Alcate","Antonino","Babangonan","Bagong Buhay","Bagong Silang","Bambanin","Bethel","Canaan","Concepcion","Duongan","Jose Leido Jr.","Loyal","Mabini","Macatoc","Malabo","Merit","Ordovilla","Pakyas","Poblacion I","Poblacion II","Poblacion III","Poblacion IV","Sampaguita","San Antonio","San Cristobal","San Gabriel","San Gelacio","San Isidro","San Juan","San Narciso","Urdaneta","Villa Cerveza"]
+        };
+
+        Object.keys(ORIENTAL_MINDORO_BARANGAYS).sort().forEach(function(name) {
+            var opt = document.createElement('option');
+            opt.value = name;
+            opt.textContent = name;
+            citySelect.appendChild(opt);
+        });
+
+        function populateBarangays() {
+            var barangays = ORIENTAL_MINDORO_BARANGAYS[citySelect.value] || [];
+            barangaySelect.innerHTML = '';
+
+            if (!barangays.length) {
+                barangaySelect.appendChild(new Option('Select Municipality first', ''));
+                barangaySelect.disabled = true;
+                return;
+            }
+
+            barangaySelect.disabled = false;
+            barangaySelect.appendChild(new Option('Select Barangay', ''));
+            barangays.forEach(function(b) {
+                barangaySelect.appendChild(new Option(b, b));
+            });
+        }
+
+        citySelect.addEventListener('change', populateBarangays);
+    })();
 </script>

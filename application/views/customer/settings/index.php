@@ -66,6 +66,28 @@
 <h1><i class="fas fa-cog"></i> Settings</h1>
 
 <div class="settings-container">
+    <a href="<?php echo BASE_URL; ?>account" class="settings-item">
+        <div class="settings-icon">
+            <i class="fas fa-user-circle"></i>
+        </div>
+        <div class="settings-text">
+            <h3>My Account</h3>
+            <p>View and edit your profile details</p>
+        </div>
+        <i class="fas fa-chevron-right settings-chevron"></i>
+    </a>
+
+    <a href="<?php echo BASE_URL; ?>orders" class="settings-item">
+        <div class="settings-icon">
+            <i class="fas fa-box"></i>
+        </div>
+        <div class="settings-text">
+            <h3>My Orders</h3>
+            <p>Track and view your order history</p>
+        </div>
+        <i class="fas fa-chevron-right settings-chevron"></i>
+    </a>
+
     <a href="<?php echo BASE_URL; ?>addresses" class="settings-item">
         <div class="settings-icon">
             <i class="fas fa-map-marker-alt"></i>
@@ -73,6 +95,17 @@
         <div class="settings-text">
             <h3>My Addresses</h3>
             <p>Manage your default and saved delivery addresses</p>
+        </div>
+        <i class="fas fa-chevron-right settings-chevron"></i>
+    </a>
+
+    <a href="<?php echo BASE_URL; ?>settings/activity_history" class="settings-item">
+        <div class="settings-icon">
+            <i class="fas fa-history"></i>
+        </div>
+        <div class="settings-text">
+            <h3>Activity History</h3>
+            <p>View your recent orders and account changes</p>
         </div>
         <i class="fas fa-chevron-right settings-chevron"></i>
     </a>

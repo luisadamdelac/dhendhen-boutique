@@ -41,6 +41,7 @@ class Inventory extends Authenticated_Controller {
         foreach ($products as &$p) {
             $p['branch_name'] = $this->staff_branch_name;
             $p['stock'] = $stock_by_product[(int) $p['product_id']] ?? 0;
+            $p['variants'] = $this->_variants_for_branch((int) $p['product_id']);
         }
         unset($p);
         $data['products'] = $products;
@@ -81,9 +82,36 @@ class Inventory extends Authenticated_Controller {
     }
 
     /**
-     * Set a product's branch stock to an exact quantity (used by the Edit
-     * Stock action) — computes the delta and reuses adjustStock() so the
-     * same batch/movement bookkeeping as update_stock() applies.
+     * This product's generated variant combinations, each with its current
+     * stock at this staff member's own branch — lets the Edit Stock modal
+     * offer a specific combination instead of only the base product.
+     */
+    private function _variants_for_branch($product_id) {
+        $variants = $this->db->select('v.*, v1.variation_type as type_1, v1.variation_value as value_1, v2.variation_type as type_2, v2.variation_value as value_2', FALSE)
+            ->from(PRODUCT_VARIANTS_TABLE . ' v')
+            ->join(PRODUCT_VARIATION_TABLE . ' v1', 'v1.variation_id = v.variation_id_1', 'left')
+            ->join(PRODUCT_VARIATION_TABLE . ' v2', 'v2.variation_id = v.variation_id_2', 'left')
+            ->where('v.product_id', $product_id)
+            ->get()->result_array();
+
+        $out = [];
+        foreach ($variants as $v) {
+            $label = $v['type_2'] ? ($v['value_1'] . ' / ' . $v['value_2']) : $v['value_1'];
+            $branch_stock = $this->staff_branch_id ? StockService::getVariantBranchStock((int) $v['variant_id']) : [];
+            $out[] = [
+                'variant_id' => (int) $v['variant_id'],
+                'label'      => $label,
+                'stock'      => $branch_stock[$this->staff_branch_id] ?? 0,
+            ];
+        }
+        return $out;
+    }
+
+    /**
+     * Set a product's (or one of its variant combination's) branch stock to
+     * an exact quantity (used by the Edit Stock action) — computes the delta
+     * and reuses adjustStock() so the same batch/movement bookkeeping as
+     * update_stock() applies.
      */
     public function set_stock() {
         if ($this->input->method() !== 'post') {
@@ -96,6 +124,7 @@ class Inventory extends Authenticated_Controller {
         }
 
         $product_id = (int) $this->input->post('product_id');
+        $variant_id = (int) $this->input->post('variant_id') ?: NULL;
         $target_quantity = (int) $this->input->post('quantity');
 
         if ($target_quantity < 0) {
@@ -109,10 +138,12 @@ class Inventory extends Authenticated_Controller {
             return;
         }
 
-        $current_stock = StockService::getAvailableStock($product_id, $this->staff_branch_id);
+        $current_stock = $variant_id
+            ? (StockService::getVariantBranchStock($variant_id)[$this->staff_branch_id] ?? 0)
+            : StockService::getAvailableStock($product_id, $this->staff_branch_id);
         $delta = $target_quantity - $current_stock;
 
-        $ok = StockService::adjustStock($product_id, $this->staff_branch_id, $delta, $this->user_id, 'Staff stock edit');
+        $ok = StockService::adjustStock($product_id, $this->staff_branch_id, $delta, $this->user_id, 'Staff stock edit', NULL, $variant_id);
         if (!$ok) {
             echo json_encode(['success' => FALSE, 'message' => 'Failed to update stock (insufficient stock at your branch?)']);
             return;
@@ -126,7 +157,7 @@ class Inventory extends Authenticated_Controller {
             'action'      => 'set_stock',
             'entity_type' => 'product',
             'entity_id'   => $product_id,
-            'details'     => 'Set stock at branch ' . $this->staff_branch_id . ' to ' . $new_stock,
+            'details'     => 'Set stock at branch ' . $this->staff_branch_id . ' to ' . $new_stock . ($variant_id ? ' (variant ' . $variant_id . ')' : ''),
             'ip_address'  => $this->input->ip_address(),
         ]);
 
@@ -144,6 +175,7 @@ class Inventory extends Authenticated_Controller {
         }
 
         $product_id = (int) $this->input->post('product_id');
+        $variant_id = (int) $this->input->post('variant_id') ?: NULL;
         $delta = (int) $this->input->post('delta');
 
         $product = $this->product_model->get_by_id($product_id);
@@ -152,7 +184,7 @@ class Inventory extends Authenticated_Controller {
             return;
         }
 
-        $ok = StockService::adjustStock($product_id, $this->staff_branch_id, $delta, $this->user_id, 'Staff stock adjustment');
+        $ok = StockService::adjustStock($product_id, $this->staff_branch_id, $delta, $this->user_id, 'Staff stock adjustment', NULL, $variant_id);
         if (!$ok) {
             echo json_encode(['success' => FALSE, 'message' => 'Failed to update stock (insufficient stock at your branch?)']);
             return;
@@ -166,7 +198,7 @@ class Inventory extends Authenticated_Controller {
             'action'      => 'update_stock',
             'entity_type' => 'product',
             'entity_id'   => $product_id,
-            'details'     => 'Adjusted stock at branch ' . $this->staff_branch_id . ' to ' . $new_stock,
+            'details'     => 'Adjusted stock at branch ' . $this->staff_branch_id . ' to ' . $new_stock . ($variant_id ? ' (variant ' . $variant_id . ')' : ''),
             'ip_address'  => $this->input->ip_address(),
         ]);
 

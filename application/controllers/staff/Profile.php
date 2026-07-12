@@ -26,8 +26,35 @@ class Profile extends Authenticated_Controller {
             'updated_at' => date('Y-m-d H:i:s'),
         ]);
 
+        $this->log_activity('profile_updated', 'staff', $this->user_id);
+
         $this->session->set_flashdata('success', 'Profile updated successfully');
         redirect('staff/profile');
+    }
+
+    /**
+     * Staff's own activity log — limited to actions this staff member took
+     * (order status updates, stock adjustments, profile changes), not the
+     * full system-wide log admins see.
+     */
+    public function activity_log() {
+        $data = $this->set_view_data();
+        $data['page_title'] = 'Activity Log';
+
+        $this->load->model('activity_log_model');
+
+        $page = (int) ($this->input->get('page') ?? 1);
+        $limit = 20;
+        $offset = ($page - 1) * $limit;
+
+        $data['logs'] = $this->activity_log_model->get_user_logs('staff', $this->user_id, $limit, $offset);
+        $data['total'] = $this->activity_log_model->count_user_logs('staff', $this->user_id);
+        $data['pages'] = (int) ceil($data['total'] / $limit);
+        $data['page'] = $page;
+
+        $this->load->view('staff/layouts/header', $data);
+        $this->load->view('staff/profile/activity_log', $data);
+        $this->load->view('staff/layouts/footer', $data);
     }
 
     public function change_password() {

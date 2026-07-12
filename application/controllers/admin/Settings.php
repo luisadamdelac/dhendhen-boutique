@@ -33,6 +33,7 @@ class Settings extends Authenticated_Controller {
             'company_name' => $this->input->post('company_name') ?? 'DropSell',
             'company_email' => $this->input->post('company_email') ?? 'support@dropsell.com',
             'company_phone' => $this->input->post('company_phone') ?? '',
+            'company_address' => $this->input->post('company_address') ?? 'Calapan City, Oriental Mindoro',
             'commission_rate' => $this->input->post('commission_rate') ?? '10',
             'minimum_withdrawal' => $this->input->post('minimum_withdrawal') ?? '100',
             'minimum_spend' => $this->input->post('minimum_spend') ?? '3000',
@@ -263,6 +264,50 @@ class Settings extends Authenticated_Controller {
         $data['settings'] = $this->Settings_model->get_settings_array();
         $this->load->view('admin/layout/header', $data);
         $this->load->view('admin/settings/social', $data);
+        $this->load->view('admin/layout/footer', $data);
+    }
+
+    /**
+     * Activity log — admin-facing view of activity_logs, so admins no longer
+     * need to open the database directly to see what happened.
+     */
+    public function activity_log() {
+        $data['page_title'] = 'Activity Log';
+        $data['current_page'] = 'settings';
+
+        $this->load->model('Activity_log_model');
+
+        $page = (int) ($this->input->get('page') ?? 1);
+        $search = trim((string) ($this->input->get('search') ?? ''));
+        $user_type = $this->input->get('user_type') ?? '';
+        $limit = (int) ($this->Settings_model->get('items_per_page') ?: 50);
+        $offset = ($page - 1) * $limit;
+
+        $apply_filters = function ($q) use ($search, $user_type) {
+            if ($search !== '') {
+                $q->group_start()
+                    ->like('action', $search)
+                    ->or_like('details', $search)
+                    ->group_end();
+            }
+            if (!empty($user_type)) {
+                $q->where('user_type', $user_type);
+            }
+            return $q;
+        };
+
+        $count_query = $apply_filters($this->db->select('COUNT(*) as count')->from(ACTIVITY_LOGS_TABLE));
+        $data['total'] = (int) ($count_query->get()->row()->count ?? 0);
+
+        $query = $apply_filters($this->db->select('*')->from(ACTIVITY_LOGS_TABLE));
+        $data['logs'] = $query->order_by('created_at', 'DESC')->limit($limit, $offset)->get()->result_array();
+        $data['pages'] = (int) ceil($data['total'] / $limit);
+        $data['page'] = $page;
+        $data['search'] = $search;
+        $data['user_type'] = $user_type;
+
+        $this->load->view('admin/layout/header', $data);
+        $this->load->view('admin/settings/activity_log', $data);
         $this->load->view('admin/layout/footer', $data);
     }
 }

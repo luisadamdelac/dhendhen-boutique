@@ -83,6 +83,25 @@
                 }
             });
         }
+
+        // Notification badge — polls this staff member's own unread count
+        // (admin-scripts.js's checkNotifications() is hardcoded to scope=admin
+        // and would read the wrong session here, so this is a separate,
+        // staff-scoped poll instead of reusing that function).
+        function checkStaffNotifications() {
+            fetch(BASE_URL + 'index.php/api/notifications?scope=staff')
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    if (!data || !data.success) return;
+                    const badge = document.getElementById('notificationBadge');
+                    if (!badge) return;
+                    badge.textContent = data.count;
+                    badge.style.display = data.count > 0 ? 'block' : 'none';
+                })
+                .catch(function() { /* fail silently */ });
+        }
+        checkStaffNotifications();
+        setInterval(checkStaffNotifications, 30000);
     </script>
 </body>
 </html>

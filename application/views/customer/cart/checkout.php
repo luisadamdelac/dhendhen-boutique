@@ -459,8 +459,8 @@
                                 <?php endif; ?>
                                 <div class="cart-summary-details">
                                     <div class="cart-summary-name"><?php echo htmlspecialchars($item['product_name']); ?></div>
-                                    <?php if (!empty($item['variation_type'])): ?>
-                                        <div class="cart-summary-qty"><?php echo htmlspecialchars($item['variation_type']); ?>: <strong><?php echo htmlspecialchars($item['variation_value']); ?></strong></div>
+                                    <?php if (!empty($item['variation_label'])): ?>
+                                        <div class="cart-summary-qty"><strong><?php echo htmlspecialchars($item['variation_label']); ?></strong></div>
                                     <?php endif; ?>
                                     <div class="cart-summary-qty">Qty: <?php echo $item['quantity']; ?></div>
                                 </div>

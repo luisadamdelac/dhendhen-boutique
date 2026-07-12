@@ -132,7 +132,9 @@
         <?php $productImage = $product['product_image'] ?? $product['image'] ?? ''; ?>
         <?php if (!empty($productImage)): ?>
             <img src="<?php echo BASE_URL . $productImage; ?>"
-                 alt="<?php echo htmlspecialchars($product['product_name']); ?>" 
+                 alt="<?php echo htmlspecialchars($product['product_name']); ?>"
+                 id="productMainImage"
+                 data-default-src="<?php echo BASE_URL . $productImage; ?>"
                  class="product-image-main">
         <?php else: ?>
             <div class="product-image-main" style="height: 500px; display: flex; align-items: center; justify-content: center; background: #f0f0f0;">
@@ -164,7 +166,7 @@
 
         <?php if (!empty($product['avg_rating'])): ?>
         <div style="display: flex; align-items: center; gap: 10px; margin: 10px 0;">
-            <div style="color: #f5a623;">
+            <div style="color: #ffc107;">
                 <?php for ($i = 1; $i <= 5; $i++): ?>
                     <i class="fas fa-star<?php echo $i <= round($product['avg_rating']) ? '' : ($i - 0.5 <= $product['avg_rating'] ? '-half-alt' : ''); ?>" style="<?php echo $i > round($product['avg_rating']) ? 'color: #ddd;' : ''; ?>"></i>
                 <?php endfor; ?>
@@ -174,11 +176,9 @@
         </div>
         <?php endif; ?>
 
-        <?php if (!empty($product['total_sold'])): ?>
         <div style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; background: #fff3e0; color: #e65100; border-radius: 20px; font-size: 13px; font-weight: 600; margin-bottom: 10px;">
-            <i class="fas fa-fire"></i> <?php echo $product['total_sold']; ?> sold
+            <i class="fas fa-fire"></i> <?php echo (int) ($product['total_sold'] ?? 0); ?> sold
         </div>
-        <?php endif; ?>
 
         <div class="stock-info">
             <i class="fas fa-box"></i>
@@ -224,7 +224,33 @@
                 <input type="hidden" name="reseller_id" value="<?php echo (int) $selected_reseller_id; ?>">
                 <input type="hidden" name="variation_id" id="selected_variation_id" value="">
 
-                <?php if (!empty($variations)): ?>
+                <?php if (!empty($combinations)): ?>
+                    <!-- Generated variant combinations exist for this product — cascading
+                         per-axis selection (e.g. pick Shade, then only valid Finish options
+                         show), resolving to one exact product_variants row. -->
+                    <?php $variationsByType = []; foreach ($variations as $v) { $variationsByType[$v['variation_type']][] = $v; } ?>
+                    <div class="variation-selector" data-mode="combinations" style="margin-bottom: 20px;">
+                        <?php $axisIndex = 0; foreach ($variationsByType as $type => $values): $axisIndex++; ?>
+                            <div style="margin-bottom: 14px;">
+                                <label style="font-weight: 600; display: block; margin-bottom: 8px;"><?php echo htmlspecialchars($type); ?></label>
+                                <div class="variation-axis-group" data-axis="<?php echo $axisIndex; ?>" data-type="<?php echo htmlspecialchars($type); ?>" style="display: flex; flex-wrap: wrap; gap: 8px;">
+                                    <?php foreach ($values as $v): ?>
+                                        <button type="button"
+                                                class="variation-axis-btn"
+                                                data-value="<?php echo htmlspecialchars($v['variation_value']); ?>"
+                                                onclick="selectAxisValue(<?php echo $axisIndex; ?>, this)"
+                                                style="padding: 8px 16px; border-radius: 20px; border: 2px solid #ddd; background: #fff; cursor: pointer; font-size: 14px;">
+                                            <?php echo htmlspecialchars($v['variation_value']); ?>
+                                        </button>
+                                    <?php endforeach; ?>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                        <div id="variation-required-msg" style="display:none; color:#c62828; font-size:13px; margin-top:-6px;">Please select an option for every variation before continuing.</div>
+                        <div id="variation-oos-msg" style="display:none; color:#c62828; font-size:13px; margin-top:-6px;">This combination is currently out of stock.</div>
+                    </div>
+                    <input type="hidden" name="variant_id" id="selected_variant_id" value="">
+                <?php elseif (!empty($variations)): ?>
                     <?php $variationsByType = []; foreach ($variations as $v) { $variationsByType[$v['variation_type']][] = $v; } ?>
                     <div class="variation-selector" style="margin-bottom: 20px;">
                         <?php foreach ($variationsByType as $type => $values): ?>
@@ -335,9 +361,9 @@
 
             <div style="margin-bottom: 15px;">
                 <label style="font-weight: 600;">Rating</label>
-                <div style="display:flex; gap:6px; margin-top: 8px;" id="rating-stars">
+                <div style="display:flex; gap:6px; margin-top: 8px; font-size: 22px;" id="rating-stars">
                     <?php for ($i=1; $i<=5; $i++): ?>
-                        <button type="button" class="btn" style="padding: 6px 10px;" data-rating="<?php echo $i; ?>" onclick="setRating(<?php echo $i; ?>)">★</button>
+                        <i class="fas fa-star" style="color:#ddd; cursor:pointer;" data-rating="<?php echo $i; ?>" onclick="setRating(<?php echo $i; ?>)"></i>
                     <?php endfor; ?>
                 </div>
                 <input type="hidden" name="rating" id="rating" value="">
@@ -374,7 +400,7 @@
             <?php endif; ?>
             <div>
                 <strong><?php echo htmlspecialchars($review['customer_name'] ?? 'Customer'); ?></strong>
-                <div style="color: #f5a623; font-size: 13px;">
+                <div style="color: #ffc107; font-size: 13px;">
                     <?php for ($i = 1; $i <= 5; $i++): ?>
                         <i class="fas fa-star" style="<?php echo $i > $review['rating'] ? 'color: #ddd;' : ''; ?>"></i>
                     <?php endfor; ?>
@@ -426,9 +452,9 @@ function setRating(val) {
     if (!ratingInput) return;
     ratingInput.value = val;
 
-    document.querySelectorAll('#rating-stars button').forEach((btn) => {
-        const btnRating = parseInt(btn.getAttribute('data-rating'), 10);
-        btn.style.opacity = btnRating <= val ? '1' : '0.4';
+    document.querySelectorAll('#rating-stars i').forEach((star) => {
+        const starRating = parseInt(star.getAttribute('data-rating'), 10);
+        star.style.color = starRating <= val ? '#ffc107' : '#ddd';
     });
 }
 
@@ -480,7 +506,7 @@ document.getElementById('review-form')?.addEventListener('submit', async functio
         this.reset();
         const ratingInput = document.getElementById('rating');
         if (ratingInput) ratingInput.value = '';
-        document.querySelectorAll('#rating-stars button').forEach((btn) => (btn.style.opacity = '0.4'));
+        document.querySelectorAll('#rating-stars i').forEach((star) => (star.style.color = '#ddd'));
 
         setTimeout(() => window.location.reload(), 800);
     } catch (err) {
@@ -495,6 +521,9 @@ document.getElementById('review-form')?.addEventListener('submit', async functio
 <?php endif; ?>
 
 const hasVariations = document.querySelector('.variation-selector') !== null;
+const combinationsMode = document.querySelector('.variation-selector[data-mode="combinations"]') !== null;
+const COMBINATIONS = <?php echo !empty($combinations) ? json_encode($combinations, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) : '[]'; ?>;
+let selectedAxisValues = {}; // axisIndex -> { type, value }
 
 function updatePriceDisplay(adjustment) {
     const el = document.getElementById('current-price-display');
@@ -542,8 +571,130 @@ function selectVariation(btn) {
     }
 }
 
+/* ── Combination mode: cascading per-axis selection (e.g. Shade → Finish) ── */
+function axisGroups() {
+    return Array.from(document.querySelectorAll('.variation-axis-group'));
+}
+
+function selectAxisValue(axisIndex, btn) {
+    if (btn.disabled) return;
+    const group = btn.closest('.variation-axis-group');
+    const type = group.dataset.type;
+    const value = btn.dataset.value;
+
+    // Clicking the already-selected option toggles it off.
+    if (selectedAxisValues[axisIndex] && selectedAxisValues[axisIndex].value === value) {
+        delete selectedAxisValues[axisIndex];
+    } else {
+        selectedAxisValues[axisIndex] = { type: type, value: value };
+    }
+
+    group.querySelectorAll('.variation-axis-btn').forEach(b => {
+        const active = selectedAxisValues[axisIndex] && b.dataset.value === selectedAxisValues[axisIndex].value;
+        b.style.borderColor = active ? 'var(--primary)' : '#ddd';
+        b.style.background = active ? 'var(--light-gray)' : '#fff';
+        b.style.fontWeight = active ? '600' : 'normal';
+    });
+
+    document.getElementById('variation-required-msg').style.display = 'none';
+    document.getElementById('variation-oos-msg').style.display = 'none';
+    filterOtherAxes(axisIndex);
+    resolveVariant();
+}
+
+// Grey out options on the OTHER axis that can't pair with the currently
+// selected axis's value, based on the real generated combinations — this is
+// the "select Shade, Finish filters to valid options" behavior.
+function filterOtherAxes(changedAxisIndex) {
+    const groups = axisGroups();
+    if (groups.length < 2) return;
+
+    groups.forEach(group => {
+        const axisIndex = parseInt(group.dataset.axis, 10);
+        if (axisIndex === changedAxisIndex) return;
+
+        const otherSel = selectedAxisValues[changedAxisIndex];
+        group.querySelectorAll('.variation-axis-btn').forEach(btn => {
+            if (!otherSel) {
+                btn.disabled = false;
+                btn.style.opacity = '1';
+                btn.style.cursor = 'pointer';
+                return;
+            }
+            const candidateValue = btn.dataset.value;
+            const candidateType = group.dataset.type;
+            const pairable = COMBINATIONS.some(c =>
+                (c.type_1 === otherSel.type && c.value_1 === otherSel.value && c.type_2 === candidateType && c.value_2 === candidateValue) ||
+                (c.type_2 === otherSel.type && c.value_2 === otherSel.value && c.type_1 === candidateType && c.value_1 === candidateValue)
+            );
+            btn.disabled = !pairable;
+            btn.style.opacity = pairable ? '1' : '0.35';
+            btn.style.cursor = pairable ? 'pointer' : 'not-allowed';
+        });
+    });
+}
+
+function findMatchingCombination() {
+    const groups = axisGroups();
+    const picks = groups.map(g => selectedAxisValues[parseInt(g.dataset.axis, 10)]).filter(Boolean);
+    if (picks.length !== groups.length) return null;
+
+    return COMBINATIONS.find(c => {
+        const values = [{ type: c.type_1, value: c.value_1 }];
+        if (c.type_2) values.push({ type: c.type_2, value: c.value_2 });
+        return picks.every(p => values.some(v => v.type === p.type && v.value === p.value))
+            && values.every(v => picks.some(p => p.type === v.type && p.value === v.value));
+    }) || null;
+}
+
+function resolveVariant() {
+    const combo = findMatchingCombination();
+    const oosMsg = document.getElementById('variation-oos-msg');
+    const qtyInput = document.getElementById('quantity');
+
+    if (!combo) {
+        document.getElementById('selected_variant_id').value = '';
+        updatePriceDisplay(0);
+        if (oosMsg) oosMsg.style.display = 'none';
+        return;
+    }
+
+    document.getElementById('selected_variant_id').value = combo.variant_id;
+    updatePriceDisplay(parseFloat(combo.price_adjustment) || 0);
+
+    if (combo.image_url) {
+        const img = document.getElementById('productMainImage');
+        if (img) img.src = combo.image_url;
+    }
+
+    const stock = parseInt(combo.total_stock, 10) || 0;
+    if (qtyInput) {
+        qtyInput.max = stock;
+        if (parseInt(qtyInput.value, 10) > stock) qtyInput.value = Math.max(stock, 0);
+    }
+    if (oosMsg) oosMsg.style.display = stock <= 0 ? 'block' : 'none';
+}
+
 function validateVariationSelected() {
     if (!hasVariations) return true;
+
+    if (combinationsMode) {
+        const groups = axisGroups();
+        const allPicked = groups.every(g => selectedAxisValues[parseInt(g.dataset.axis, 10)]);
+        const variantId = document.getElementById('selected_variant_id').value;
+        if (!allPicked || !variantId) {
+            document.getElementById('variation-required-msg').style.display = 'block';
+            document.querySelector('.variation-selector').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return false;
+        }
+        const combo = COMBINATIONS.find(c => String(c.variant_id) === String(variantId));
+        if (combo && (parseInt(combo.total_stock, 10) || 0) <= 0) {
+            document.getElementById('variation-oos-msg').style.display = 'block';
+            return false;
+        }
+        return true;
+    }
+
     if (!document.getElementById('selected_variation_id').value) {
         document.getElementById('variation-required-msg').style.display = 'block';
         document.querySelector('.variation-selector').scrollIntoView({ behavior: 'smooth', block: 'center' });

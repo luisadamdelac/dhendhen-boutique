@@ -53,11 +53,14 @@ if (!function_exists('apply_order_status_side_effects')) {
         } elseif (in_array($new_status, ['cancelled', 'return_refund'], TRUE) && !in_array($old_status, ['cancelled', 'return_refund'], TRUE)) {
             $items = $CI->db->where('order_id', $order_id)->get(ORDER_DETAILS_TABLE)->result_array();
             foreach ($items as $item) {
-                // Variant lines are deducted from the branch/batch ledger
-                // scoped to their variation (see Checkout.php), so restoring
-                // them goes through the same ledger, scoped the same way —
-                // otherwise this would restore into the wrong pool.
-                if (!empty($item['variation_id'])) {
+                // Variant/variation lines are deducted from the branch/batch
+                // ledger scoped to their combination or value (see
+                // Checkout.php), so restoring them goes through the same
+                // ledger, scoped the same way — otherwise this would restore
+                // into the wrong pool.
+                if (!empty($item['variant_id'])) {
+                    StockService::restoreStock($item['product_id'], $item['quantity'], 'order', $order_id, NULL, NULL, 'ANY', (int) $item['variant_id']);
+                } elseif (!empty($item['variation_id'])) {
                     StockService::restoreStock($item['product_id'], $item['quantity'], 'order', $order_id, NULL, NULL, (int) $item['variation_id']);
                 } else {
                     StockService::restoreStock($item['product_id'], $item['quantity'], 'order', $order_id);

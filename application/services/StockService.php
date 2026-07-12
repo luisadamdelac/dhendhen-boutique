@@ -63,6 +63,29 @@ class StockService {
     }
 
     /**
+     * Per-branch stock breakdown for one product_variants combination row:
+     * [branch_id => qty, ...]. Mirrors getBranchStock() but scoped by
+     * variant_id (a two-axis combination) instead of variation_id (a single
+     * value) — the two are independent dimensions on inventory_batches.
+     */
+    public static function getVariantBranchStock($variantId) {
+        $CI =& get_instance();
+        $CI->load->database();
+
+        $rows = $CI->db->select('branch_id, COALESCE(SUM(remaining_quantity), 0) as qty')
+            ->where('variant_id', $variantId)
+            ->where('status', 'active')
+            ->group_by('branch_id')
+            ->get(INVENTORY_BATCH_TABLE)->result_array();
+
+        $out = [];
+        foreach ($rows as $row) {
+            $out[(int) $row['branch_id']] = (int) $row['qty'];
+        }
+        return $out;
+    }
+
+    /**
      * Batched version of getBranchStock() for a whole product list — one
      * query instead of one-per-product. Returns [product_id => [branch_id
      * => qty, ...], ...]; a product with no batches simply has no key (same
@@ -119,8 +142,11 @@ class StockService {
     /**
      * Receive a new batch of stock into a branch (product creation or restock).
      * $variationId: NULL (default) = stock belongs to the base product.
+     * $variantId: NULL (default) = not scoped to a two-axis combination row;
+     * pass a product_variants.variant_id to tag this batch to that combination
+     * (independent of $variationId — a batch may carry either, both, or neither).
      */
-    public static function addBatch($productId, $branchId, $quantity, $unitCost = 0, $receivedBy = NULL, $variationId = NULL) {
+    public static function addBatch($productId, $branchId, $quantity, $unitCost = 0, $receivedBy = NULL, $variationId = NULL, $variantId = NULL) {
         $CI =& get_instance();
         $CI->load->database();
 
@@ -135,6 +161,7 @@ class StockService {
             'branch_id'          => $branchId,
             'product_id'         => $productId,
             'variation_id'       => $variationId,
+            'variant_id'         => $variantId,
             'batch_quantity'     => $quantity,
             'remaining_quantity' => $quantity,
             'unit_cost'          => $unitCost,
@@ -150,6 +177,7 @@ class StockService {
             'branch_id'          => $branchId,
             'product_id'         => $productId,
             'variation_id'       => $variationId,
+            'variant_id'         => $variantId,
             'inventory_batch_id' => $batchId,
             'previous_quantity'  => 0,
             'quantity_changed'   => $quantity,
@@ -160,6 +188,9 @@ class StockService {
         ]);
 
         self::_syncProductTotal($productId);
+        if ($variantId !== NULL) {
+            self::_syncVariantTotal($variantId);
+        }
 
         $CI->db->trans_complete();
         return $CI->db->trans_status() !== FALSE ? $batchId : FALSE;
@@ -178,10 +209,14 @@ class StockService {
      * batches, matching today's checkout behavior, which is not variation-aware).
      * Admin-side callers (e.g. adjustStock) may pass an explicit variation id
      * or NULL to scope the deduction correctly.
+     *
+     * $variantId works the same way but scopes to a product_variants
+     * combination row instead — pass 'ANY' (default, no filter), an explicit
+     * variant_id, or NULL (base/non-combination batches only).
      */
     public static function deductStock($productId, $quantity, $movementType = 'sale', $referenceType = NULL,
                                        $referenceId = NULL, $performedById = NULL, $notes = NULL, $branchId = NULL,
-                                       $variationId = 'ANY') {
+                                       $variationId = 'ANY', $variantId = 'ANY') {
         $CI =& get_instance();
         $CI->load->database();
 
@@ -203,6 +238,12 @@ class StockService {
                 $sql .= $variationId === NULL ? ' AND variation_id IS NULL' : ' AND variation_id = ?';
                 if ($variationId !== NULL) {
                     $params[] = $variationId;
+                }
+            }
+            if ($variantId !== 'ANY') {
+                $sql .= $variantId === NULL ? ' AND variant_id IS NULL' : ' AND variant_id = ?';
+                if ($variantId !== NULL) {
+                    $params[] = $variantId;
                 }
             }
             $sql .= ' ORDER BY received_date ASC, inventory_batch_id ASC FOR UPDATE';
@@ -231,6 +272,8 @@ class StockService {
                 $CI->db->insert(INVENTORY_MOVEMENTS_TABLE, [
                     'branch_id'          => $batch['branch_id'],
                     'product_id'         => $productId,
+                    'variation_id'       => $batch['variation_id'],
+                    'variant_id'         => $batch['variant_id'],
                     'inventory_batch_id' => $batch['inventory_batch_id'],
                     'previous_quantity'  => (int) $batch['remaining_quantity'],
                     'quantity_changed'   => -$take,
@@ -248,6 +291,9 @@ class StockService {
             self::_syncProductTotal($productId);
             if ($variationId !== 'ANY' && $variationId !== NULL) {
                 self::_syncVariationTotal($variationId);
+            }
+            if ($variantId !== 'ANY' && $variantId !== NULL) {
+                self::_syncVariantTotal($variantId);
             }
 
             $CI->db->trans_complete();
@@ -277,8 +323,10 @@ class StockService {
      * default) — pass an explicit variation id (or NULL for base-product-only)
      * when restoring a variant line, so the restore lands back in a batch
      * for that same variation rather than a different one's.
+     *
+     * $variantId works the same way for a product_variants combination row.
      */
-    public static function restoreStock($productId, $quantity, $referenceType = NULL, $referenceId = NULL, $notes = NULL, $branchId = NULL, $variationId = 'ANY') {
+    public static function restoreStock($productId, $quantity, $referenceType = NULL, $referenceId = NULL, $notes = NULL, $branchId = NULL, $variationId = 'ANY', $variantId = 'ANY') {
         $CI =& get_instance();
         $CI->load->database();
 
@@ -296,16 +344,22 @@ class StockService {
             if ($variationId !== 'ANY') {
                 $variationId === NULL ? $query->where('variation_id IS NULL', NULL, FALSE) : $query->where('variation_id', $variationId);
             }
+            if ($variantId !== 'ANY') {
+                $variantId === NULL ? $query->where('variant_id IS NULL', NULL, FALSE) : $query->where('variant_id', $variantId);
+            }
             $batch = $query->order_by('updated_at', 'DESC')->get(INVENTORY_BATCH_TABLE)->row_array();
 
             $now = date('Y-m-d H:i:s');
 
             if (!$batch) {
                 $fallbackBranch = $branchId ?: self::_defaultBranchId();
-                self::addBatch($productId, $fallbackBranch, $quantity, 0, NULL, $variationId === 'ANY' ? NULL : $variationId);
+                self::addBatch($productId, $fallbackBranch, $quantity, 0, NULL, $variationId === 'ANY' ? NULL : $variationId, $variantId === 'ANY' ? NULL : $variantId);
                 self::_syncProductTotal($productId);
                 if ($variationId !== 'ANY' && $variationId !== NULL) {
                     self::_syncVariationTotal($variationId);
+                }
+                if ($variantId !== 'ANY' && $variantId !== NULL) {
+                    self::_syncVariantTotal($variantId);
                 }
                 $CI->db->trans_complete();
                 return $CI->db->trans_status() !== FALSE;
@@ -318,6 +372,8 @@ class StockService {
             $CI->db->insert(INVENTORY_MOVEMENTS_TABLE, [
                 'branch_id'          => $batch['branch_id'],
                 'product_id'         => $productId,
+                'variation_id'       => $batch['variation_id'],
+                'variant_id'         => $batch['variant_id'],
                 'inventory_batch_id' => $batch['inventory_batch_id'],
                 'previous_quantity'  => (int) $batch['remaining_quantity'],
                 'quantity_changed'   => $quantity,
@@ -331,6 +387,9 @@ class StockService {
             self::_syncProductTotal($productId);
             if ($variationId !== 'ANY' && $variationId !== NULL) {
                 self::_syncVariationTotal($variationId);
+            }
+            if ($variantId !== 'ANY' && $variantId !== NULL) {
+                self::_syncVariantTotal($variantId);
             }
 
             $CI->db->trans_complete();
@@ -348,14 +407,14 @@ class StockService {
      * quantity delta. Positive = add a small adjustment batch, negative =
      * deduct via the normal FIFO path.
      */
-    public static function adjustStock($productId, $branchId, $delta, $performedById = NULL, $notes = NULL, $variationId = NULL) {
+    public static function adjustStock($productId, $branchId, $delta, $performedById = NULL, $notes = NULL, $variationId = NULL, $variantId = NULL) {
         if ($delta === 0) {
             return TRUE;
         }
         if ($delta > 0) {
-            return self::addBatch($productId, $branchId, $delta, 0, $performedById, $variationId) !== FALSE;
+            return self::addBatch($productId, $branchId, $delta, 0, $performedById, $variationId, $variantId) !== FALSE;
         }
-        return self::deductStock($productId, abs($delta), 'adjustment', 'manual', NULL, $performedById, $notes, $branchId, $variationId);
+        return self::deductStock($productId, abs($delta), 'adjustment', 'manual', NULL, $performedById, $notes, $branchId, $variationId, $variantId);
     }
 
     /**
@@ -453,6 +512,22 @@ class StockService {
             ->where('status', 'active')
             ->get(INVENTORY_BATCH_TABLE)->row_array()['total'] ?? 0);
         $CI->db->where('variation_id', $variationId)->update(PRODUCT_VARIATION_TABLE, ['stock' => $total]);
+    }
+
+    /**
+     * Recompute and cache product_variants.stock (a display-only convenience
+     * column — inventory_batches is the real ledger) as the sum across all
+     * branches for that one combination row. Mirrors _syncVariationTotal().
+     */
+    private static function _syncVariantTotal($variantId) {
+        $CI =& get_instance();
+        $CI->load->database();
+
+        $total = (int) ($CI->db->select('COALESCE(SUM(remaining_quantity), 0) as total')
+            ->where('variant_id', $variantId)
+            ->where('status', 'active')
+            ->get(INVENTORY_BATCH_TABLE)->row_array()['total'] ?? 0);
+        $CI->db->where('variant_id', $variantId)->update(PRODUCT_VARIANTS_TABLE, ['stock' => $total]);
     }
 
     private static function _defaultBranchId() {

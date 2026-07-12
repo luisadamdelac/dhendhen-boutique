@@ -67,6 +67,7 @@ $route['orders/(:any)'] = 'customer/Orders/$1';
 $route['account'] = 'customer/Account';
 $route['account/(:any)'] = 'customer/Account/$1';
 $route['settings'] = 'customer/Settings';
+$route['settings/(:any)'] = 'customer/Settings/$1';
 $route['addresses'] = 'customer/Addresses';
 $route['addresses/(:any)/(:any)'] = 'customer/Addresses/$1/$2';
 $route['addresses/(:any)'] = 'customer/Addresses/$1';
@@ -139,6 +140,8 @@ $route['staff/inventory'] = 'staff/Inventory';
 $route['staff/inventory/(:any)'] = 'staff/Inventory/$1';
 $route['staff/orders'] = 'staff/Orders';
 $route['staff/orders/(:any)'] = 'staff/Orders/$1';
+$route['staff/notifications'] = 'staff/Notifications';
+$route['staff/notifications/(:any)'] = 'staff/Notifications/$1';
 
 // Reseller Routes
 $route['reseller/dashboard'] = 'reseller/Dashboard';

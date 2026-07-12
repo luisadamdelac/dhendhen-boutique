@@ -138,6 +138,13 @@ class Settings_model extends CI_Model {
     }
 
     /**
+     * Get company address
+     */
+    public function get_company_address() {
+        return $this->get('company_address') ?? 'Calapan City, Oriental Mindoro';
+    }
+
+    /**
      * Get minimum withdrawal
      */
     public function get_minimum_withdrawal() {

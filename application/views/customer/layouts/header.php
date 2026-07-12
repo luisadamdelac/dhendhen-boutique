@@ -50,14 +50,6 @@
                         <i class="fas fa-user"></i>
                         <span><?php echo $_SESSION['full_name'] ?? $_SESSION['email'] ?? 'Account'; ?></span>
                     </a>
-                    <a href="<?php echo BASE_URL; ?>orders" class="header-btn">
-                        <i class="fas fa-box"></i>
-                        <span>Orders</span>
-                    </a>
-                    <a href="<?php echo BASE_URL; ?>refund" class="header-btn">
-                        <i class="fas fa-undo"></i>
-                        <span>Refunds</span>
-                    </a>
                     <a href="<?php echo BASE_URL; ?>cart" class="header-btn">
                         <i class="fas fa-shopping-cart"></i>
                         <span>Cart</span>
@@ -92,15 +84,6 @@
                 <i class="fas fa-th"></i> All Products
             </a>
             <?php if (isset($_SESSION['user_account_id']) && (($_SESSION['user_type'] ?? '') === 'customer')): ?>
-                <a href="<?php echo BASE_URL; ?>orders" class="nav-link">
-                    <i class="fas fa-box"></i> My Orders
-                </a>
-                <a href="<?php echo BASE_URL; ?>refund" class="nav-link">
-                    <i class="fas fa-undo"></i> Refunds
-                </a>
-                <a href="<?php echo BASE_URL; ?>account" class="nav-link">
-                    <i class="fas fa-user-circle"></i> My Account
-                </a>
                 <a href="<?php echo BASE_URL; ?>settings" class="nav-link">
                     <i class="fas fa-cog"></i> Settings
                 </a>

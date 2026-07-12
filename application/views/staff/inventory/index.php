@@ -40,10 +40,10 @@ table.dataTable thead th.sorting:hover { color: var(--primary-pink); cursor: poi
         <h4 class="fw-bold mb-0" style="color:#1a1a2e;">Inventory</h4>
         <small class="text-muted">Welcome back, <strong><?php echo htmlspecialchars($user_full_name ?? 'Staff'); ?></strong> — stock levels across branches.</small>
     </div>
-    <a href="<?php echo site_url('staff/inventory/low_stock'); ?>" class="btn btn-outline btn-sm" style="position:relative;">
+    <a href="<?php echo site_url('staff/inventory/low_stock'); ?>" class="btn btn-outline-warning btn-sm" style="position:relative;">
         <i class="fas fa-exclamation-triangle me-1"></i> Low Stock
         <?php if (!empty($product_stats['low_stock_products'])): ?>
-            <span class="badge" style="background:#dc3545;color:#fff;margin-left:6px;"><?php echo (int) $product_stats['low_stock_products']; ?></span>
+            <span class="badge bg-danger ms-1"><?php echo (int) $product_stats['low_stock_products']; ?></span>
         <?php endif; ?>
     </a>
 </div>
@@ -60,10 +60,10 @@ table.dataTable thead th.sorting:hover { color: var(--primary-pink); cursor: poi
     </div>
     <div class="col-6 col-md-4">
         <div class="stat-card">
-            <div class="stat-icon" style="background:#fff3e0;color:#e65100;"><i class="fas fa-exclamation-triangle"></i></div>
+            <div class="stat-icon" style="background:#fff8e1;color:#f57f17;"><i class="fas fa-exclamation-triangle"></i></div>
             <div>
                 <div class="stat-label">Low Stock</div>
-                <div class="stat-value"><?php echo number_format($product_stats['low_stock_products'] ?? 0); ?></div>
+                <div class="stat-value" style="<?php echo !empty($product_stats['low_stock_products']) ? 'color:#f57f17;' : ''; ?>"><?php echo number_format($product_stats['low_stock_products'] ?? 0); ?></div>
             </div>
         </div>
     </div>
@@ -88,7 +88,7 @@ table.dataTable thead th.sorting:hover { color: var(--primary-pink); cursor: poi
                 <div class="table-responsive">
                     <table class="table table-striped" id="staffInventoryTable">
                         <thead>
-                            <tr><th>Product</th><th>SKU</th><th>Branch</th><th>Category</th><th>Stock</th><th>Status</th><th>Actions</th></tr>
+                            <tr><th></th><th>Product</th><th>SKU</th><th>Branch</th><th>Category</th><th>Stock</th><th>Status</th><th>Actions</th></tr>
                         </thead>
                         <tbody>
                             <?php foreach ($products as $product): ?>
@@ -102,9 +102,19 @@ table.dataTable thead th.sorting:hover { color: var(--primary-pink); cursor: poi
                                         'price' => (float) ($product['price'] ?? 0),
                                         'stock' => (int) $product['stock'],
                                         'status' => $product['status'],
+                                        'variants' => $product['variants'] ?? [],
                                     ]), ENT_QUOTES);
                                 ?>
                                 <tr id="product-row-<?php echo $product['product_id']; ?>">
+                                    <td>
+                                        <?php if (!empty($product['product_image'])): ?>
+                                            <img src="<?php echo BASE_URL . htmlspecialchars($product['product_image']); ?>" alt="" style="width:36px;height:36px;object-fit:cover;border-radius:6px;">
+                                        <?php else: ?>
+                                            <div style="width:36px;height:36px;border-radius:6px;background:#f0f2f8;display:flex;align-items:center;justify-content:center;color:#b0b8d4;">
+                                                <i class="fas fa-image"></i>
+                                            </div>
+                                        <?php endif; ?>
+                                    </td>
                                     <td><?php echo htmlspecialchars($product['product_name']); ?></td>
                                     <td><code><?php echo htmlspecialchars($product['sku']); ?></code></td>
                                     <td><?php echo htmlspecialchars($product['branch_name'] ?? '-'); ?></td>
@@ -157,6 +167,10 @@ table.dataTable thead th.sorting:hover { color: var(--primary-pink); cursor: poi
     <div class="staff-modal-box">
         <h3><i class="fas fa-edit"></i> Edit Stock</h3>
         <p class="text-muted" style="font-size:13px;margin-bottom:12px;" id="esProductLabel"></p>
+        <div class="form-group" id="esVariantGroup" style="display:none;">
+            <label for="esVariant">Combination</label>
+            <select class="form-control" id="esVariant"></select>
+        </div>
         <div class="form-group">
             <label for="esQuantity">New Stock Quantity</label>
             <input type="number" class="form-control" id="esQuantity" min="0" required>
@@ -176,7 +190,7 @@ table.dataTable thead th.sorting:hover { color: var(--primary-pink); cursor: poi
 <script>
 $(function () {
     $('#staffInventoryTable').DataTable({
-        columnDefs: [{ orderable: false, targets: [6] }],
+        columnDefs: [{ orderable: false, targets: [0, 7] }],
         language: { search: '_INPUT_', searchPlaceholder: 'Search product or SKU…', emptyTable: 'No products found' }
     });
 });
@@ -201,12 +215,36 @@ function openEditStockModal(btn) {
     const p = JSON.parse(btn.dataset.product);
     document.getElementById('esProductId').value = p.id;
     document.getElementById('esProductLabel').textContent = p.name + ' (' + p.sku + ') — ' + p.branch;
-    document.getElementById('esQuantity').value = p.stock;
+
+    const variantGroup = document.getElementById('esVariantGroup');
+    const variantSelect = document.getElementById('esVariant');
+    variantSelect.innerHTML = '';
+
+    if (p.variants && p.variants.length) {
+        variantGroup.style.display = 'block';
+        const baseOpt = new Option('Base product (no combination)', '');
+        baseOpt.dataset.stock = p.stock;
+        variantSelect.appendChild(baseOpt);
+        p.variants.forEach(v => {
+            const opt = new Option(v.label, v.variant_id);
+            opt.dataset.stock = v.stock;
+            variantSelect.appendChild(opt);
+        });
+        variantSelect.onchange = function() {
+            document.getElementById('esQuantity').value = this.selectedOptions[0].dataset.stock;
+        };
+        document.getElementById('esQuantity').value = p.stock;
+    } else {
+        variantGroup.style.display = 'none';
+        document.getElementById('esQuantity').value = p.stock;
+    }
+
     document.getElementById('editStockModal').style.display = 'flex';
 }
 
 function submitEditStock() {
     const productId = document.getElementById('esProductId').value;
+    const variantId = document.getElementById('esVariant').value;
     const quantity = document.getElementById('esQuantity').value;
     const btn = document.getElementById('esSaveBtn');
     btn.disabled = true;
@@ -215,7 +253,7 @@ function submitEditStock() {
     fetch('<?php echo site_url("staff/inventory/set_stock"); ?>', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: 'product_id=' + encodeURIComponent(productId) + '&quantity=' + encodeURIComponent(quantity)
+        body: 'product_id=' + encodeURIComponent(productId) + '&quantity=' + encodeURIComponent(quantity) + '&variant_id=' + encodeURIComponent(variantId)
     })
         .then(r => r.json())
         .then(data => {

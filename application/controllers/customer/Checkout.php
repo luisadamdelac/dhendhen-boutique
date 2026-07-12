@@ -135,6 +135,10 @@ class Checkout extends CI_Controller {
         $delivery_fee_total = $delivery_method === 'pasabay'
             ? $this->settings_model->get_shipping_fee_for_municipality($address['municipality'])
             : 0.00;
+        // Deduct from the branch nearest the customer first, so stock for a
+        // nearby order actually comes out of the branch that can fulfill it
+        // fastest — falls back to any branch with stock if that one can't.
+        $preferred_branch_id = $this->_preferred_branch_id($address['municipality']);
         $gcash_reference = $this->input->post('gcash_reference', TRUE);
         $commission_rate = (float) $this->settings_model->get_commission_rate();
 
@@ -173,8 +177,10 @@ class Checkout extends CI_Controller {
                     $this->db->insert(ORDER_DETAILS_TABLE, [
                         'order_id' => $order_id,
                         'product_id' => $item['product_id'],
-                        'variation_id' => $item['variation_id'] ?? NULL,
-                        'variation_label' => !empty($item['variation_type']) ? ($item['variation_type'] . ': ' . $item['variation_value']) : NULL,
+                        'variation_id' => empty($item['variant_id']) ? ($item['variation_id'] ?? NULL) : NULL,
+                        'variation_label' => empty($item['variant_id']) && !empty($item['variation_type']) ? ($item['variation_type'] . ': ' . $item['variation_value']) : NULL,
+                        'variant_id' => $item['variant_id'] ?? NULL,
+                        'variant_label' => !empty($item['variant_id']) ? $item['variation_label'] : NULL,
                         'quantity' => $item['quantity'],
                         'unit_price' => $item['price'],
                         'total_price' => $item['item_total'],
@@ -182,13 +188,17 @@ class Checkout extends CI_Controller {
                         'created_at' => date('Y-m-d H:i:s'),
                     ]);
 
-                    // Variant lines deduct from the same branch/batch ledger,
-                    // scoped to this specific variation — so the sale is
-                    // correctly reflected everywhere that reads the ledger
-                    // (admin/staff/reseller inventory, customer shop stock),
-                    // not just in product_variation_tbl.stock's own cache.
-                    if (!empty($item['variation_id'])) {
-                        if (!StockService::deductStock($item['product_id'], $item['quantity'], 'sale', 'order', $order_id, NULL, NULL, NULL, (int) $item['variation_id'])) {
+                    // Variant/variation lines deduct from the same branch/batch
+                    // ledger, scoped to this specific combination or value — so
+                    // the sale is correctly reflected everywhere that reads the
+                    // ledger (admin/staff/reseller inventory, customer shop
+                    // stock), not just in the cached stock columns.
+                    if (!empty($item['variant_id'])) {
+                        if (!$this->_deduct_preferring_branch($preferred_branch_id, $item['product_id'], $item['quantity'], $order_id, 'ANY', (int) $item['variant_id'])) {
+                            throw new Exception('Insufficient stock for one or more selected combinations. Please review your cart.');
+                        }
+                    } elseif (!empty($item['variation_id'])) {
+                        if (!$this->_deduct_preferring_branch($preferred_branch_id, $item['product_id'], $item['quantity'], $order_id, (int) $item['variation_id'])) {
                             throw new Exception('Insufficient stock for one or more selected variations. Please review your cart.');
                         }
                     } else {
@@ -197,7 +207,7 @@ class Checkout extends CI_Controller {
                         // returns FALSE rather than throwing, so its result must be
                         // checked or the order/payment/commission below would be
                         // created without any stock actually backing them.
-                        if (!StockService::deductStock($item['product_id'], $item['quantity'], 'sale', 'order', $order_id)) {
+                        if (!$this->_deduct_preferring_branch($preferred_branch_id, $item['product_id'], $item['quantity'], $order_id)) {
                             throw new Exception('Insufficient stock for one or more items. Please review your cart.');
                         }
                     }
@@ -245,6 +255,41 @@ class Checkout extends CI_Controller {
             'order_id' => $created_order_ids[0],
             'redirect_url' => site_url('customer/orders/view/' . $created_order_ids[0]),
         ]);
+    }
+
+    /**
+     * The active branch whose city best matches the delivery municipality —
+     * matched loosely (substring, case-insensitive) since branch names carry
+     * suffixes like "City"/"Branch" that a plain address field won't. NULL
+     * when nothing matches, meaning the caller should just deduct from
+     * whichever branch has stock.
+     */
+    private function _preferred_branch_id($municipality) {
+        if (empty($municipality)) {
+            return NULL;
+        }
+        $needle = strtolower(trim($municipality));
+        $branches = $this->db->where('status', 'active')->get(BRANCHES_TABLE)->result_array();
+        foreach ($branches as $branch) {
+            $city = strtolower(trim($branch['city']));
+            if ($city !== '' && (strpos($city, $needle) !== FALSE || strpos($needle, $city) !== FALSE)) {
+                return (int) $branch['branch_id'];
+            }
+        }
+        return NULL;
+    }
+
+    /**
+     * Try the preferred (nearest) branch first; if it doesn't have enough
+     * stock (or there's no preferred branch), fall back to deducting from
+     * any branch — same as the previous location-agnostic behavior.
+     */
+    private function _deduct_preferring_branch($preferred_branch_id, $product_id, $quantity, $order_id, $variationId = 'ANY', $variantId = 'ANY') {
+        if ($preferred_branch_id
+            && StockService::deductStock($product_id, $quantity, 'sale', 'order', $order_id, NULL, NULL, $preferred_branch_id, $variationId, $variantId)) {
+            return TRUE;
+        }
+        return StockService::deductStock($product_id, $quantity, 'sale', 'order', $order_id, NULL, NULL, NULL, $variationId, $variantId);
     }
 
     /**

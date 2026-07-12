@@ -309,7 +309,6 @@ table.dataTable thead th.sorting:hover { color: var(--primary-pink); cursor: poi
                                                 'status'       => $ptStatus,
                                                 'method'       => $hasPayment ? $order['payment_method'] : null,
                                                 'reference'    => $order['payment_reference'] ?? null,
-                                                'senderNumber' => $order['gcash_sender_number'] ?? null,
                                                 'receiptImage' => !empty($order['receipt_image']) ? BASE_URL . $order['receipt_image'] : null,
                                                 'amount'       => $order['payment_amount'] ?? ($order['total_amount'] ?? 0),
                                                 'paidAt'       => $order['paid_at'] ?? null,
@@ -351,10 +350,6 @@ table.dataTable thead th.sorting:hover { color: var(--primary-pink); cursor: poi
                             <div class="col-6">
                                 <label class="text-muted mb-1" style="font-size:12px;">Reference Number</label>
                                 <div class="fw-semibold" id="paymentInfoReference">—</div>
-                            </div>
-                            <div class="col-6">
-                                <label class="text-muted mb-1" style="font-size:12px;">GCash Number Used</label>
-                                <div class="fw-semibold" id="paymentInfoSenderNumber">—</div>
                             </div>
                             <div class="col-6">
                                 <label class="text-muted mb-1" style="font-size:12px;">Amount</label>
@@ -444,7 +439,6 @@ function openPaymentModal(btn) {
 
     document.getElementById('paymentInfoMethod').textContent = info.method || '—';
     document.getElementById('paymentInfoReference').textContent = info.reference || '—';
-    document.getElementById('paymentInfoSenderNumber').textContent = info.senderNumber || '—';
     document.getElementById('paymentInfoAmount').textContent = info.amount
         ? ('₱' + Number(info.amount).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }))
         : '—';

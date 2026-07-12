@@ -114,9 +114,13 @@ table.dataTable thead th.sorting:hover { color: var(--primary-pink); cursor: poi
                     <tr data-status="<?= htmlspecialchars($rStatus); ?>">
                         <td class="ps-3">
                             <div class="d-flex align-items-center gap-2">
-                                <div style="width:40px;height:40px;border-radius:50%;background:var(--gradient-primary);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0;">
-                                    <?= $initials; ?>
-                                </div>
+                                <?php if (!empty($r['profile_image'])): ?>
+                                    <img src="<?= BASE_URL . htmlspecialchars($r['profile_image']); ?>" alt="<?= $fullName; ?>" style="width:40px;height:40px;border-radius:50%;object-fit:cover;flex-shrink:0;">
+                                <?php else: ?>
+                                    <div style="width:40px;height:40px;border-radius:50%;background:var(--gradient-primary);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0;">
+                                        <?= $initials; ?>
+                                    </div>
+                                <?php endif; ?>
                                 <div>
                                     <div class="fw-semibold" style="font-size:13px;color:#1a1a2e;"><?= $fullName; ?></div>
                                     <?php if (!empty($r['business_name'])): ?>

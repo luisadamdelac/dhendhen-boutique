@@ -27,16 +27,18 @@
                 <?php endif; ?>
             </div>
             
-            <div class="footer-section">
-                <h4>Contact Us</h4>
-                <p><i class="fas fa-phone"></i> +63 123 456 7890</p>
-                <p><i class="fas fa-envelope"></i> info@dhendhen.com</p>
-                <p><i class="fas fa-map-marker-alt"></i> Manila, Philippines</p>
-            </div>
-            
             <?php
                 $CI =& get_instance();
                 $CI->load->model('Settings_model');
+            ?>
+            <div class="footer-section">
+                <h4>Contact Us</h4>
+                <p><i class="fas fa-phone"></i> <?php echo htmlspecialchars($CI->Settings_model->get_company_phone() ?: '+63 123 456 7890'); ?></p>
+                <p><i class="fas fa-envelope"></i> <?php echo htmlspecialchars($CI->Settings_model->get_company_email()); ?></p>
+                <p><i class="fas fa-map-marker-alt"></i> <?php echo htmlspecialchars($CI->Settings_model->get_company_address()); ?></p>
+            </div>
+
+            <?php
                 $socialLinks = [
                     'facebook-f' => $CI->Settings_model->get('social_facebook'),
                     'instagram' => $CI->Settings_model->get('social_instagram'),

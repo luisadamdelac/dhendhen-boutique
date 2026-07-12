@@ -12,6 +12,7 @@ class Account extends CI_Controller {
         if ($this->session->userdata('user_type') !== ROLE_CUSTOMER) {
             deny_role_access();
         }
+        $this->load->model('Activity_log_model');
     }
 
     public function index() {
@@ -90,6 +91,8 @@ class Account extends CI_Controller {
             'full_name' => $full_name,
         ]);
 
+        $this->Activity_log_model->log_activity($customer_id, 'customer', 'profile_updated', NULL, $this->input->ip_address());
+
         $this->session->set_flashdata('success', 'Profile updated successfully');
         redirect('account');
     }
@@ -125,6 +128,8 @@ class Account extends CI_Controller {
             'password' => password_hash($new, PASSWORD_BCRYPT, ['cost' => 12]),
             'updated_at' => date('Y-m-d H:i:s'),
         ], ['user_account_id' => $user_account_id]);
+
+        $this->Activity_log_model->log_activity($this->session->userdata('user_id'), 'customer', 'password_changed', NULL, $this->input->ip_address());
 
         $this->session->set_flashdata('success', 'Password changed successfully');
         redirect('account');
@@ -225,6 +230,8 @@ class Account extends CI_Controller {
             'created_at' => date('Y-m-d H:i:s'),
             'updated_at' => date('Y-m-d H:i:s'),
         ]);
+
+        $this->Activity_log_model->log_activity($customer_id, 'customer', 'reseller_application_submitted', 'Business: ' . $this->input->post('business_name', true), $this->input->ip_address());
 
         $this->session->set_flashdata('success', 'Your reseller application has been submitted for review. You will be notified through email once your application is approved or rejected.');
         redirect('account');

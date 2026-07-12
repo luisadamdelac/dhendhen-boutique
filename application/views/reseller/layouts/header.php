@@ -92,6 +92,9 @@
                         <a href="<?php echo BASE_URL; ?>reseller/orders" class="nav-link <?php echo (isset($page_title) && strpos($page_title, 'Order') !== false) ? 'active' : ''; ?>">
                             <i class="fas fa-clipboard-list"></i>
                             <span>Orders</span>
+                            <?php if (!empty($pending_orders_notifications)): ?>
+                                <span class="badge"><?php echo $pending_orders_notifications; ?></span>
+                            <?php endif; ?>
                         </a>
                     </li>
                     <li class="nav-item">
@@ -116,6 +119,12 @@
                         <a href="<?php echo BASE_URL; ?>reseller/profile" class="nav-link <?php echo (isset($page_title) && strpos($page_title, 'Profile') !== false) ? 'active' : ''; ?>">
                             <i class="fas fa-user"></i>
                             <span>Profile</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="<?php echo BASE_URL; ?>reseller/profile/activity_history" class="nav-link <?php echo (isset($page_title) && strpos($page_title, 'Activity History') !== false) ? 'active' : ''; ?>">
+                            <i class="fas fa-history"></i>
+                            <span>Activity History</span>
                         </a>
                     </li>
                     <li class="nav-item">

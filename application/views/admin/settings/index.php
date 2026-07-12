@@ -42,6 +42,13 @@
                             </div>
                             <div class="col col-6">
                                 <div class="form-group">
+                                    <label for="company_address">Contact Address</label>
+                                    <input type="text" class="form-control" id="company_address" name="company_address"
+                                           value="<?php echo htmlspecialchars($settings['company_address'] ?? 'Calapan City, Oriental Mindoro'); ?>">
+                                </div>
+                            </div>
+                            <div class="col col-6">
+                                <div class="form-group">
                                     <label for="currency">Currency</label>
                                     <input type="text" class="form-control" id="currency" name="currency"
                                            value="<?php echo htmlspecialchars($settings['currency'] ?? 'PHP'); ?>">

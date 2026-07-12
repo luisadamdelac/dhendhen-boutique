@@ -12,6 +12,7 @@ class Addresses extends CI_Controller {
         if ($this->session->userdata('user_type') !== ROLE_CUSTOMER) {
             deny_role_access();
         }
+        $this->load->model('Activity_log_model');
     }
 
     /**
@@ -145,6 +146,8 @@ class Addresses extends CI_Controller {
 
         $this->db->trans_complete();
 
+        $this->Activity_log_model->log_activity($customer_id, 'customer', 'address_deleted', trim(implode(', ', array_filter([$address['municipality'] ?? '', $address['barangay'] ?? '']))), $this->input->ip_address());
+
         $this->session->set_flashdata('success', 'Address deleted successfully');
         redirect('addresses');
     }
@@ -201,6 +204,7 @@ class Addresses extends CI_Controller {
                 ->where('customer_id', $customer_id)
                 ->update(CUSTOMER_ADDRESS_TABLE, $address_data);
             $message = 'Address updated successfully';
+            $this->Activity_log_model->log_activity($customer_id, 'customer', 'address_updated', $municipality . ', ' . $barangay, $this->input->ip_address());
         } else {
             $address_data['customer_id'] = $customer_id;
             $address_data['created_at'] = date('Y-m-d H:i:s');
@@ -212,6 +216,7 @@ class Addresses extends CI_Controller {
             $this->db->insert(CUSTOMER_ADDRESS_TABLE, $address_data);
             $address_id = $this->db->insert_id();
             $message = 'Address added successfully';
+            $this->Activity_log_model->log_activity($customer_id, 'customer', 'address_added', $municipality . ', ' . $barangay, $this->input->ip_address());
         }
 
         if ($is_ajax) {

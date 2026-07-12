@@ -83,6 +83,25 @@ class CartService {
             }
         }
 
+        // Two-axis combination rows (product_variants) — joined to both
+        // variation values so a display label ("Shade: X, Finish: Y") can be
+        // built the same way the legacy single-axis path builds one.
+        $variantIds = array_filter(array_column($cart, 'variant_id'));
+        $variantsById = [];
+        if (!empty($variantIds)) {
+            require_once APPPATH . 'services/StockService.php';
+            $variantRows = $CI->db->select('v.*, v1.variation_type as type_1, v1.variation_value as value_1, v2.variation_type as type_2, v2.variation_value as value_2', FALSE)
+                ->from(PRODUCT_VARIANTS_TABLE . ' v')
+                ->join(PRODUCT_VARIATION_TABLE . ' v1', 'v1.variation_id = v.variation_id_1', 'left')
+                ->join(PRODUCT_VARIATION_TABLE . ' v2', 'v2.variation_id = v.variation_id_2', 'left')
+                ->where_in('v.variant_id', array_unique($variantIds))
+                ->where('v.status', 'active')
+                ->get()->result_array();
+            foreach ($variantRows as $v) {
+                $variantsById[$v['variant_id']] = $v;
+            }
+        }
+
         $items = [];
         $subtotal = 0;
         $validCart = [];
@@ -90,6 +109,7 @@ class CartService {
         foreach ($cart as $cartKey => $entry) {
             $productId = (int) $entry['product_id'];
             $variationId = !empty($entry['variation_id']) ? (int) $entry['variation_id'] : NULL;
+            $variantId = !empty($entry['variant_id']) ? (int) $entry['variant_id'] : NULL;
             $resellerId = $entry['reseller_id'] ?? NULL;
             $row = $byKey[$productId . ':' . $resellerId] ?? NULL;
 
@@ -98,13 +118,27 @@ class CartService {
             }
 
             $variation = NULL;
+            $variant = NULL;
+            $priceAdjustment = 0;
+            $variationLabel = NULL;
             $availableStock = (int) $row['stock'];
-            if ($variationId) {
+
+            if ($variantId) {
+                $variant = $variantsById[$variantId] ?? NULL;
+                if (!$variant || (int) $variant['product_id'] !== $productId) {
+                    continue; // combination removed/deactivated or no longer belongs to this product
+                }
+                $priceAdjustment = (float) $variant['price_adjustment'];
+                $availableStock = array_sum(StockService::getVariantBranchStock($variantId));
+                $variationLabel = $variant['type_1'] . ': ' . $variant['value_1'] . ($variant['type_2'] ? ', ' . $variant['type_2'] . ': ' . $variant['value_2'] : '');
+            } elseif ($variationId) {
                 $variation = $variationsById[$variationId] ?? NULL;
                 if (!$variation || (int) $variation['product_id'] !== $productId) {
                     continue; // variation removed/deactivated or no longer belongs to this product
                 }
+                $priceAdjustment = (float) $variation['price_adjustment'];
                 $availableStock = (int) $variation['stock'];
+                $variationLabel = $variation['variation_type'] . ': ' . $variation['variation_value'];
             }
 
             $qty = min((int) $entry['qty'], $availableStock);
@@ -112,7 +146,7 @@ class CartService {
                 continue;
             }
 
-            $price = (float) $row['commission_price'] + ($variation ? (float) $variation['price_adjustment'] : 0);
+            $price = (float) $row['commission_price'] + $priceAdjustment;
             $itemTotal = $price * $qty;
             $subtotal += $itemTotal;
 
@@ -120,8 +154,10 @@ class CartService {
                 'cart_key'            => $cartKey,
                 'product_id'          => $productId,
                 'variation_id'        => $variationId,
+                'variant_id'          => $variantId,
                 'variation_type'      => $variation['variation_type'] ?? NULL,
                 'variation_value'     => $variation['variation_value'] ?? NULL,
+                'variation_label'     => $variationLabel,
                 'reseller_id'         => (int) $resellerId,
                 'reseller_product_id' => (int) $row['reseller_product_id'],
                 'product_name'        => $row['product_name'],

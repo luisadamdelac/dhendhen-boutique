@@ -82,7 +82,11 @@ class Staff extends Authenticated_Controller {
             return;
         }
 
-        $data['staff'] = $staff;
+        // On a failed validation bounce-back, _validate_and_save_staff() flashes
+        // the submitted values as 'old_input' — merge them over the DB row so
+        // the admin's in-progress edits aren't wiped by this fresh reload.
+        $old_input = $this->session->flashdata('old_input');
+        $data['staff'] = $old_input ? array_merge($staff, $old_input) : $staff;
         $data['branches'] = $this->db->select('*')->from(BRANCHES_TABLE)->get()->result_array();
         $this->load->view('admin/layout/header', $data);
         $this->load->view('admin/staff/edit', $data);
@@ -188,9 +192,10 @@ class Staff extends Authenticated_Controller {
         $this->form_validation->set_rules('last_name', 'Last Name', 'required|trim');
         $this->form_validation->set_rules('middle_name', 'Middle Name', 'trim');
         $this->form_validation->set_rules('contact_number', 'Contact Number', 'required|trim|max_length[11]');
-        $this->form_validation->set_rules('street', 'Street', 'trim');
+        $this->form_validation->set_rules('street', 'Street', 'required|trim');
         $this->form_validation->set_rules('city', 'City', 'trim');
         $this->form_validation->set_rules('barangay', 'Barangay', 'trim');
+        $this->form_validation->set_rules('branch_id', 'Assigned Branch', 'required|trim');
         if (!$staff_id) {
             $this->form_validation->set_rules('email', 'Email', 'required|valid_email|trim|is_unique[user_account_tbl.email]');
             $this->form_validation->set_rules('password', 'Password', 'trim');

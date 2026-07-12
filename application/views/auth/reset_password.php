@@ -119,6 +119,23 @@
             box-shadow: 0 0 0 3px rgba(255, 105, 180, 0.14);
         }
 
+        input[type="password"] {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+        }
+
+        input[type="password"]::-ms-reveal,
+        input[type="password"]::-ms-clear,
+        input[type="password"]::-webkit-textfield-decoration-button,
+        input[type="password"]::-webkit-textfield-decoration-container,
+        input[type="password"]::-webkit-password-preview-button,
+        input[type="password"]::-webkit-clear-button {
+            display: none !important;
+            width: 0;
+            height: 0;
+        }
+
         .password-toggle {
             position: absolute;
             right: 13px;

@@ -23,6 +23,40 @@
     border: 5px solid #f9e5ff;
     box-shadow: 0 4px 15px rgba(0,0,0,0.08);
 }
+
+.has-toggle { position: relative; }
+.has-toggle input { padding-right: 42px !important; }
+
+.toggle-password {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #999;
+    font-size: 15px;
+    padding: 0;
+    line-height: 1;
+}
+.toggle-password:hover { color: var(--ds-pink, #ff69b4); }
+
+input[type="password"] {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+}
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear,
+input[type="password"]::-webkit-textfield-decoration-button,
+input[type="password"]::-webkit-textfield-decoration-container,
+input[type="password"]::-webkit-password-preview-button,
+input[type="password"]::-webkit-clear-button {
+    display: none !important;
+    width: 0;
+    height: 0;
+}
 </style>
 <div class="container-fluid py-4 fade-in">
     <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-4">
@@ -141,19 +175,34 @@
                             <div class="col col-12 col-md-4">
                                 <div class="form-group">
                                     <label for="current_password"><i class="fas fa-key"></i> Current Password</label>
-                                    <input type="password" id="current_password" name="current_password" class="form-control" required>
+                                    <div class="has-toggle">
+                                        <input type="password" id="current_password" name="current_password" class="form-control" required>
+                                        <button type="button" class="toggle-password" onclick="togglePwd('current_password', this)" tabindex="-1">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                             <div class="col col-12 col-md-4">
                                 <div class="form-group">
                                     <label for="new_password"><i class="fas fa-lock"></i> New Password</label>
-                                    <input type="password" id="new_password" name="new_password" class="form-control" required minlength="6">
+                                    <div class="has-toggle">
+                                        <input type="password" id="new_password" name="new_password" class="form-control" required minlength="6">
+                                        <button type="button" class="toggle-password" onclick="togglePwd('new_password', this)" tabindex="-1">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                             <div class="col col-12 col-md-4">
                                 <div class="form-group">
                                     <label for="confirm_password"><i class="fas fa-lock"></i> Confirm New Password</label>
-                                    <input type="password" id="confirm_password" name="confirm_password" class="form-control" required minlength="6">
+                                    <div class="has-toggle">
+                                        <input type="password" id="confirm_password" name="confirm_password" class="form-control" required minlength="6">
+                                        <button type="button" class="toggle-password" onclick="togglePwd('confirm_password', this)" tabindex="-1">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -170,6 +219,20 @@
 </div>
 
 <script>
+function togglePwd(id, btn) {
+    var inp = document.getElementById(id);
+    if (!inp) return;
+
+    var icon = btn ? btn.querySelector('i') : null;
+    if (inp.type === 'password') {
+        inp.type = 'text';
+        if (icon) icon.className = 'fas fa-eye-slash';
+    } else {
+        inp.type = 'password';
+        if (icon) icon.className = 'fas fa-eye';
+    }
+}
+
 function previewAndUpload(input) {
     if (input.files && input.files[0]) {
         const file = input.files[0];

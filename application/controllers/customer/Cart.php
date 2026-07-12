@@ -38,6 +38,7 @@ class Cart extends CI_Controller {
     public function add() {
         $product_id = (int) $this->input->post('product_id');
         $variation_id = (int) $this->input->post('variation_id') ?: NULL;
+        $variant_id = (int) $this->input->post('variant_id') ?: NULL;
         $quantity = max(1, (int) $this->input->post('quantity'));
         $reseller_id = (int) $this->input->post('reseller_id') ?: NULL;
 
@@ -47,7 +48,16 @@ class Cart extends CI_Controller {
             return;
         }
 
-        if ($variation_id) {
+        if ($variant_id) {
+            $variant = $this->db->where('variant_id', $variant_id)
+                ->where('product_id', $product_id)
+                ->where('status', 'active')
+                ->get(PRODUCT_VARIANTS_TABLE)->row_array();
+            if (!$variant) {
+                $this->_respond(FALSE, 'The selected combination is no longer available.');
+                return;
+            }
+        } elseif ($variation_id) {
             $variation = $this->db->where('variation_id', $variation_id)
                 ->where('product_id', $product_id)
                 ->where('status', 'active')
@@ -58,12 +68,13 @@ class Cart extends CI_Controller {
             }
         }
 
-        $cart_key = $variation_id ? $product_id . '_v' . $variation_id : (string) $product_id;
+        $cart_key = $variant_id ? $product_id . '_c' . $variant_id : ($variation_id ? $product_id . '_v' . $variation_id : (string) $product_id);
         $cart = $this->session->userdata('cart') ?: [];
         $existing_qty = $cart[$cart_key]['qty'] ?? 0;
         $cart[$cart_key] = [
             'product_id'   => $product_id,
-            'variation_id' => $variation_id,
+            'variation_id' => $variant_id ? NULL : $variation_id,
+            'variant_id'   => $variant_id,
             'qty'          => $existing_qty + $quantity,
             'reseller_id'  => (int) $listing['reseller_id'],
         ];

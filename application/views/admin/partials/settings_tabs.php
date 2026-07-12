@@ -11,6 +11,8 @@
             $activeTab = 'shipping';
         } elseif (strpos($page_title, 'Social') !== false) {
             $activeTab = 'social';
+        } elseif (strpos($page_title, 'Activity Log') !== false) {
+            $activeTab = 'activity_log';
         }
     }
 ?>
@@ -32,5 +34,8 @@
     </a>
     <a href="<?php echo site_url('admin/settings/social'); ?>" class="page-tab <?php echo $activeTab === 'social' ? 'active' : ''; ?>">
         <i class="fas fa-share-alt"></i> Social Media
+    </a>
+    <a href="<?php echo site_url('admin/settings/activity_log'); ?>" class="page-tab <?php echo $activeTab === 'activity_log' ? 'active' : ''; ?>">
+        <i class="fas fa-history"></i> Activity Log
     </a>
 </div>
