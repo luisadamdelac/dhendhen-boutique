@@ -1,8 +1,10 @@
         </main>
     </div>
     
-    <!-- User Dropdown Menu (Hidden by default) -->
-    <div id="userDropdown" style="display: none; position: absolute; top: 60px; right: 20px; background: white; border-radius: 12px; box-shadow: var(--shadow-lg); padding: 10px; min-width: 200px; z-index: 9999;">
+    <!-- User Dropdown Menu (Hidden by default) — position: fixed (not
+         absolute) so it stays anchored to the fixed header instead of
+         scrolling away with the page content underneath it. -->
+    <div id="userDropdown" style="display: none; position: fixed; top: var(--header-height); right: 20px; background: white; border-radius: 12px; box-shadow: var(--shadow-lg); padding: 10px; min-width: 200px; z-index: 9999;">
         <a href="<?php echo site_url('profile'); ?>" style="display: block; padding: 10px 15px; color: var(--dark-gray); text-decoration: none; border-radius: 8px; transition: var(--transition-base);">
             <i class="fas fa-user"></i> Profile
         </a>
@@ -119,6 +121,6 @@
     <!-- Bootstrap 5 JS Bundle (self-hosted — modals, dropdowns, alerts) -->
     <script src="<?php echo BASE_URL; ?>public/vendor/bootstrap/bootstrap.bundle.min.js"></script>
 
-    <script src="<?php echo BASE_URL; ?>public/js/admin-scripts.js?v=<?php echo time(); ?>"></script>
+    <script src="<?php echo BASE_URL; ?>public/js/admin-scripts.js?v=<?php echo @filemtime(FCPATH . 'public/js/admin-scripts.js') ?: time(); ?>"></script>
 </body>
 </html>

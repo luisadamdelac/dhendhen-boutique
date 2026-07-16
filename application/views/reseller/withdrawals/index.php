@@ -62,7 +62,7 @@
     <div class="card-body">
         <?php if (!empty($withdrawals)): ?>
             <div class="table-responsive">
-                <table class="table table-striped">
+                <table class="table table-striped table-stack">
                     <thead>
                         <tr>
                             <th>Withdrawal #</th>

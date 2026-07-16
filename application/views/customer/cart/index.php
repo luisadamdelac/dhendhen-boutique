@@ -96,7 +96,7 @@
         <table class="cart-table">
             <?php foreach ($cartItems as $item): ?>
                 <tr class="cart-item">
-                    <td style="width: 120px;">
+                    <td class="cart-td-image">
                         <?php $itemImage = $item['product_image'] ?? $item['image'] ?? ''; ?>
                         <?php if (!empty($itemImage)): ?>
                             <img src="<?php echo BASE_URL . $itemImage; ?>"
@@ -108,7 +108,7 @@
                             </div>
                         <?php endif; ?>
                     </td>
-                    <td>
+                    <td class="cart-td-info">
                         <div class="cart-item-name"><?php echo htmlspecialchars($item['product_name']); ?></div>
                         <?php if (!empty($item['variation_label'])): ?>
                             <div style="font-size: 13px; color: var(--gray); margin-bottom: 4px;">
@@ -117,7 +117,7 @@
                         <?php endif; ?>
                         <div class="cart-item-price">₱<?php echo number_format($item['price'], 2); ?></div>
                     </td>
-                    <td style="width: 200px;">
+                    <td class="cart-td-qty">
                         <form method="POST" action="<?php echo BASE_URL; ?>cart/update" class="cart-qty-controls">
                             <input type="hidden" name="product_id" value="<?php echo htmlspecialchars($item['cart_key']); ?>">
                             <input type="number" name="quantity" value="<?php echo $item['quantity']; ?>"
@@ -127,12 +127,12 @@
                             <span style="font-size: 14px; color: var(--gray);">max: <?php echo $item['stock_quantity']; ?></span>
                         </form>
                     </td>
-                    <td style="width: 150px; text-align: right;">
+                    <td class="cart-td-total">
                         <div style="font-size: 20px; font-weight: bold; color: var(--dark);">
                             ₱<?php echo number_format($item['item_total'], 2); ?>
                         </div>
                     </td>
-                    <td style="width: 60px; text-align: center;">
+                    <td class="cart-td-remove">
                         <a href="<?php echo BASE_URL; ?>cart/remove/<?php echo htmlspecialchars($item['cart_key']); ?>"
                            class="btn btn-secondary"
                            style="padding: 10px; border-radius: 50%; width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center;"

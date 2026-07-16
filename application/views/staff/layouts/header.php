@@ -35,9 +35,14 @@
             </div>
 
             <div class="header-right">
+                <?php
+                    $CI = &get_instance();
+                    $CI->load->model('Notification_model');
+                    $unreadCount = $CI->Notification_model->get_unread_count(get_user_id(), 'staff');
+                ?>
                 <a href="<?php echo BASE_URL; ?>staff/notifications" class="header-icon" id="notificationIcon" title="Notifications" style="position:relative;margin-right:10px;">
                     <i class="fas fa-bell"></i>
-                    <span class="badge" id="notificationBadge" style="display:none;">0</span>
+                    <span class="badge" id="notificationBadge" style="display: <?php echo $unreadCount > 0 ? 'block' : 'none'; ?>;"><?php echo $unreadCount; ?></span>
                 </a>
                 <div class="user-menu" id="userMenuToggle">
                     <?php

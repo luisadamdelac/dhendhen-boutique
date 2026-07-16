@@ -24,6 +24,31 @@
     </div>
 
     <div class="row">
+    <div class="col col-4">
+        <!-- Profile Photo Card -->
+        <div class="card mb-3">
+            <div class="card-body text-center">
+                <?php
+                    $avatarImage = $staff['profile_image'] ?? '';
+                    $avatarSrc = !empty($avatarImage) ? BASE_URL . $avatarImage : BASE_URL . default_avatar_url();
+                ?>
+                <img src="<?php echo $avatarSrc; ?>" alt="Staff Photo" style="width:120px;height:120px;border-radius:50%;object-fit:cover;margin-bottom:15px;">
+                <form method="POST" action="<?php echo site_url('admin/staff/upload_photo/' . $staff['staff_id']); ?>" enctype="multipart/form-data" id="staffPhotoForm">
+                    <input type="file" id="staffPhotoInput" name="photo" accept="image/*" style="display:none;" onchange="document.getElementById('staffPhotoForm').submit();">
+                    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+                        <button type="button" class="btn btn-primary btn-sm" onclick="document.getElementById('staffPhotoInput').click();">
+                            <i class="fas fa-upload"></i> Change Photo
+                        </button>
+                        <?php if (!empty($avatarImage)): ?>
+                        <button type="button" class="btn btn-outline btn-sm" onclick="removeStaffPhoto(<?php echo $staff['staff_id']; ?>)">
+                            <i class="fas fa-trash"></i> Remove
+                        </button>
+                        <?php endif; ?>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
     <div class="col col-8">
         <!-- Staff Information Card -->
         <div class="card mb-3">
@@ -86,10 +111,21 @@
 
 <script>
 function setStaffStatus(staffId, action) {
-    if (!confirm(action === 'activate' ? 'Activate this staff account?' : 'Deactivate this staff account?')) return;
-    fetch('<?php echo site_url('admin/staff/'); ?>' + action + '/' + staffId, { method: 'POST' })
-        .then(r => r.json())
-        .then(data => { alert(data.message || ''); if (data.success) location.reload(); })
-        .catch(() => alert('Request failed'));
+    customConfirm(action === 'activate' ? 'Activate this staff account?' : 'Deactivate this staff account?', function() {
+        fetch('<?php echo site_url('admin/staff/'); ?>' + action + '/' + staffId, { method: 'POST' })
+            .then(r => r.json())
+            .then(data => { alert(data.message || ''); if (data.success) location.reload(); })
+            .catch(() => alert('Request failed'));
+    }, { title: action === 'activate' ? 'Activate Staff' : 'Deactivate Staff' });
+}
+
+function removeStaffPhoto(staffId) {
+    customConfirm('Remove this staff member\'s photo?', function() {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '<?php echo site_url('admin/staff/remove_photo/'); ?>' + staffId;
+        document.body.appendChild(form);
+        form.submit();
+    }, { title: 'Remove Photo' });
 }
 </script>

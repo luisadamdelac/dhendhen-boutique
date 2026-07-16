@@ -106,10 +106,11 @@ class Dashboard extends Authenticated_Controller {
     }
 
     private function _get_top_products() {
-        return $this->db->select('product_name, total_sold, price')
-            ->from(PRODUCT_TABLE)
-            ->where('total_sold >', 0)
-            ->order_by('total_sold', 'DESC')
+        return $this->db->select('p.product_name, p.total_sold, p.price, pi.image_path as product_image', FALSE)
+            ->from(PRODUCT_TABLE . ' p')
+            ->join(PRODUCT_IMAGE_TABLE . ' pi', 'pi.product_id = p.product_id AND pi.is_primary = 1', 'left')
+            ->where('p.total_sold >', 0)
+            ->order_by('p.total_sold', 'DESC')
             ->limit(5)
             ->get()->result_array();
     }

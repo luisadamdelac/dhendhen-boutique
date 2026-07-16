@@ -24,7 +24,7 @@ table.dataTable thead th.sorting:hover { color: var(--primary-pink); cursor: poi
             </div>
             <div class="card-body">
                 <div class="table-responsive">
-                    <table class="table table-striped" id="staffOrdersTable">
+                    <table class="table table-striped table-stack" id="staffOrdersTable">
                         <thead>
                             <tr>
                                 <th>Order #</th><th>Customer</th><th>Total</th><th>Delivery</th><th>Status</th><th>Date</th><th>Action</th>
@@ -101,7 +101,8 @@ $(function () {
     $('#staffOrdersTable').DataTable({
         order: [[5, 'desc']],
         columnDefs: [{ orderable: false, targets: [4, 6] }],
-        language: { search: '_INPUT_', searchPlaceholder: 'Search order or customer…', emptyTable: 'No orders yet' }
+        language: { search: '_INPUT_', searchPlaceholder: 'Search order or customer…', emptyTable: 'No orders yet' },
+        drawCallback: function() { if (typeof initResponsiveTableStacking === 'function') initResponsiveTableStacking(); }
     });
 });
 

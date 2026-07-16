@@ -21,43 +21,20 @@
                         <span>DropSell Dropshipping System</span>
                     </div>
 
-                    <h1 class="hero-title">Beauty Products. Simple Fulfillment. Fast Growth.</h1>
+                    <h1 class="hero-title">Run Your Dropshipping Business, Simplified</h1>
                     <p class="hero-subtitle">
-                        Shop quality items online—or manage inventory and orders through dedicated portals.
-                        One platform for customers, resellers, admin, and staff.
+                        One platform for Admins, Staff, Resellers, and Customers. DropSell brings inventory,
+                        orders, commissions, and multi-branch management together in a single, easy-to-use
+                        dashboard — so every role on your team knows exactly what to do next.
                     </p>
 
                     <div class="hero-actions">
-                        <a class="btn btn-primary btn-lg" href="<?php echo BASE_URL; ?>shop">
-                            <i class="fas fa-store"></i> Shop Now
+                        <a class="btn btn-primary btn-lg" href="<?php echo BASE_URL; ?>auth/register">
+                            <i class="fas fa-rocket"></i> Create Free Account
                         </a>
                         <a class="btn btn-outline btn-lg" href="<?php echo BASE_URL; ?>auth/login">
-                            <i class="fas fa-sign-in-alt"></i> Login
+                            <i class="fas fa-sign-in-alt"></i> Log In
                         </a>
-                    </div>
-
-                    <div class="hero-highlights">
-                        <div class="highlight">
-                            <i class="fas fa-truck"></i>
-                            <div>
-                                <div class="highlight-title">Fast Delivery</div>
-                                <div class="highlight-sub">Streamlined fulfillment process</div>
-                            </div>
-                        </div>
-                        <div class="highlight">
-                            <i class="fas fa-shield-alt"></i>
-                            <div>
-                                <div class="highlight-title">Secure Access</div>
-                                <div class="highlight-sub">Permission-based portals</div>
-                            </div>
-                        </div>
-                        <div class="highlight">
-                            <i class="fas fa-recycle"></i>
-                            <div>
-                                <div class="highlight-title">Easy Refunds</div>
-                                <div class="highlight-sub">Request & track status</div>
-                            </div>
-                        </div>
                     </div>
                 </div>
 
@@ -68,34 +45,18 @@
                                 <i class="fas fa-gem"></i>
                             </div>
                             <div>
-                                <div class="hero-card-name">Start Your Journey</div>
-                                <div class="hero-card-email">Choose your role & continue</div>
+                                <div class="hero-card-name">For Everyone</div>
+                                <div class="hero-card-email">Pick your role to continue</div>
                             </div>
                         </div>
 
                         <div class="role-grid">
                             <a class="role-tile" href="<?php echo BASE_URL; ?>auth/login">
-                                <div class="role-icon" style="background: rgba(255,105,180,0.12); color:#ff69b4;">
-                                    <i class="fas fa-user"></i>
-                                </div>
-                                <div class="role-title">Customer</div>
-                                <div class="role-desc">Shop, pay, and track orders</div>
-                            </a>
-
-                            <a class="role-tile" href="<?php echo BASE_URL; ?>auth/login">
                                 <div class="role-icon" style="background: rgba(147,112,219,0.12); color:#9370db;">
                                     <i class="fas fa-user-shield"></i>
                                 </div>
                                 <div class="role-title">Admin</div>
-                                <div class="role-desc">Manage system operations</div>
-                            </a>
-
-                            <a class="role-tile" href="<?php echo BASE_URL; ?>auth/login">
-                                <div class="role-icon" style="background: rgba(40,167,69,0.12); color:#28a745;">
-                                    <i class="fas fa-store-alt"></i>
-                                </div>
-                                <div class="role-title">Reseller</div>
-                                <div class="role-desc">Offer products via your store</div>
+                                <div class="role-desc">Full control over branches, products, and orders</div>
                             </a>
 
                             <a class="role-tile" href="<?php echo BASE_URL; ?>auth/login">
@@ -103,15 +64,24 @@
                                     <i class="fas fa-user-tie"></i>
                                 </div>
                                 <div class="role-title">Staff</div>
-                                <div class="role-desc">Handle inventory & orders</div>
+                                <div class="role-desc">Manage inventory and process orders</div>
                             </a>
-                        </div>
 
-                        <div class="hero-card-footer">
-                            <div class="footer-note">
-                                <i class="fas fa-info-circle"></i>
-                                <span>Use the Shop button to explore products instantly.</span>
-                            </div>
+                            <a class="role-tile" href="<?php echo BASE_URL; ?>auth/register_reseller">
+                                <div class="role-icon" style="background: rgba(40,167,69,0.12); color:#28a745;">
+                                    <i class="fas fa-hand-holding-usd"></i>
+                                </div>
+                                <div class="role-title">Reseller</div>
+                                <div class="role-desc">Sell products and track your commissions</div>
+                            </a>
+
+                            <a class="role-tile" href="<?php echo BASE_URL; ?>auth/register">
+                                <div class="role-icon" style="background: rgba(236,72,153,0.12); color:#EC4899;">
+                                    <i class="fas fa-shopping-bag"></i>
+                                </div>
+                                <div class="role-title">Customer</div>
+                                <div class="role-desc">Shop products and track your orders</div>
+                            </a>
                         </div>
                     </div>
 
@@ -128,35 +98,52 @@
     <section class="landing-section">
         <div class="landing-container">
             <div class="section-title">
-                <h2><i class="fas fa-bolt"></i> Why DropSell?</h2>
-                <p>Designed to look consistent across portals while keeping the user experience clean.</p>
+                <h2><i class="fas fa-layer-group"></i> Everything you need, in one place</h2>
+                <p>Built to keep every part of your dropshipping operation in sync.</p>
             </div>
 
             <div class="cards-grid">
                 <div class="card">
-                    <h3><i class="fas fa-bullseye"></i> One Platform</h3>
+                    <h3><i class="fas fa-boxes-stacked"></i> Inventory &amp; Branches</h3>
                     <div class="card-body">
-                        Customer shopping experience, and internal portals for admin/staff/resellers.
+                        Track stock across multiple branches in real time and avoid overselling.
                     </div>
                 </div>
 
                 <div class="card">
-                    <h3><i class="fas fa-bolt"></i> Fast Navigation</h3>
+                    <h3><i class="fas fa-cart-shopping"></i> Orders &amp; Refunds</h3>
                     <div class="card-body">
-                        Clear entry points and quick access to the right section.
+                        From checkout to delivery, manage the full order lifecycle with ease.
                     </div>
                 </div>
 
                 <div class="card">
-                    <h3><i class="fas fa-lock"></i> Role-Based</h3>
+                    <h3><i class="fas fa-chart-line"></i> Reseller Commissions</h3>
                     <div class="card-body">
-                        Each portal shows only relevant actions based on permissions.
+                        Automatically calculate and track reseller earnings and withdrawals.
                     </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="landing-section">
+        <div class="landing-container">
+            <div class="hero-card" style="text-align:center;">
+                <h2 style="margin:0 0 8px;">Ready to grow your business?</h2>
+                <p style="color:#64748b;font-weight:600;margin:0 0 18px;">Join DropSell today and manage your entire dropshipping operation from one dashboard.</p>
+                <div class="hero-actions" style="justify-content:center;">
+                    <a href="<?php echo BASE_URL; ?>auth/register" class="btn btn-primary btn-lg">
+                        <i class="fas fa-user-plus"></i> Sign Up Free
+                    </a>
+                    <a href="<?php echo BASE_URL; ?>auth/login" class="btn btn-outline btn-lg">
+                        <i class="fas fa-sign-in-alt"></i> Log In
+                    </a>
                 </div>
             </div>
         </div>
     </section>
 </div>
 
-<link rel="stylesheet" href="<?php echo BASE_URL; ?>public/css/landing.css">
+<link rel="stylesheet" href="<?php echo BASE_URL; ?>public/css/landing.css?v=<?php echo @filemtime(FCPATH . 'public/css/landing.css') ?: time(); ?>">
 

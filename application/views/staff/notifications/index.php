@@ -84,9 +84,10 @@ function markAsRead(id) {
 }
 
 function deleteNotification(id) {
-    if (!confirm('Delete this notification?')) return;
-    fetch('<?php echo site_url('staff/notifications/delete/'); ?>' + id, { method: 'POST' })
-        .then(r => r.json())
-        .then(data => { if (data.success) location.reload(); });
+    customConfirm('Delete this notification?', function() {
+        fetch('<?php echo site_url('staff/notifications/delete/'); ?>' + id, { method: 'POST' })
+            .then(r => r.json())
+            .then(data => { if (data.success) location.reload(); });
+    }, { title: 'Delete Notification' });
 }
 </script>

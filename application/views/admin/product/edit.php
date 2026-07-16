@@ -497,10 +497,10 @@ $current_image_path = !empty($primary_image['image_path']) ? $primary_image['ima
                         <p class="text-muted" style="margin-top:0;font-size:.85rem;">Add at least one Variation Type (e.g. Shade, Finish — up to 2), give it a Value, then generate the combination(s) below to enter stock per branch.</p>
 
                         <div class="table-responsive">
-                            <table class="table table-sm variation-values-table" id="variationTypesContainer">
+                            <table class="table table-sm variation-values-table table-stack" id="variationTypesContainer">
                                 <thead>
                                     <tr>
-                                        <th>Value</th><th>Default Price Adj.</th><th>Default Status</th><th class="text-center">Smart Apply</th><th class="text-center">Remove</th>
+                                        <th>Value</th><th>Default Price Adj.</th><th>Default Status</th><th class="text-center">Image</th><th class="text-center">Smart Apply</th><th class="text-center">Remove</th>
                                     </tr>
                                 </thead>
                             </table>
@@ -1089,6 +1089,8 @@ const combinationsCard = document.getElementById('combinationsCard');
 const combinationsBody = document.getElementById('combinationsBody');
 const combinationsHeaderRow = document.getElementById('combinationsHeaderRow');
 const variationTypeCapError = document.getElementById('variationTypeCapError');
+const APP_BASE_URL = '<?php echo base_url(); ?>';
+let variationRowIdSeq = 0;
 
 let combinationRowSeq = 0;
 // key ("Type:value|Type:value") -> row data, preserved across regenerations
@@ -1173,7 +1175,7 @@ function addVariationTypeBlock(type, values) {
 
     block.innerHTML =
         '<tr class="variation-type-group-row">' +
-            '<td colspan="5">' +
+            '<td colspan="6">' +
                 '<span class="variation-type-label"><i class="fas fa-tag me-1"></i>' + escHtml(type) + '</span>' +
                 '<button type="button" class="btn btn-sm btn-outline-secondary add-variation-value-btn"><i class="fas fa-plus"></i> Add ' + escHtml(type) + ' Value</button>' +
                 '<button type="button" class="remove-type-btn"><i class="fas fa-trash"></i> Remove Type</button>' +
@@ -1196,6 +1198,9 @@ function addVariationTypeBlock(type, values) {
 function addVariationValueRow(block, value) {
     const row = document.createElement('tr');
     row.className = 'variation-value-row';
+    row.dataset.rowId = String(variationRowIdSeq++);
+
+    const thumbSrc = value && value.image_path ? APP_BASE_URL + value.image_path : '';
 
     row.innerHTML =
         '<td><input type="text" class="form-control form-control-sm variation-value-input" placeholder="Value (e.g. Red)" value="' + escHtml(value ? value.variation_value : '') + '"></td>' +
@@ -1204,6 +1209,11 @@ function addVariationValueRow(block, value) {
             '<option value="active"' + (!value || value.status !== 'inactive' ? ' selected' : '') + '>Active</option>' +
             '<option value="inactive"' + (value && value.status === 'inactive' ? ' selected' : '') + '>Inactive</option>' +
         '</select></td>' +
+        '<td class="text-center">' +
+            '<img class="variation-image-thumb" src="' + escHtml(thumbSrc) + '" style="width:34px;height:34px;object-fit:cover;border-radius:6px;border:1px solid #ddd;cursor:pointer;' + (thumbSrc ? '' : 'display:none;') + '" title="Click to change image">' +
+            '<button type="button" class="btn btn-sm btn-outline-secondary variation-image-btn"' + (thumbSrc ? ' style="display:none;"' : '') + ' title="Upload image for this value"><i class="fas fa-camera"></i></button>' +
+            '<input type="file" accept="image/*" class="variation-image-input" name="variation_images[' + row.dataset.rowId + ']" style="display:none">' +
+        '</td>' +
         '<td class="text-center"><button type="button" class="btn btn-sm btn-outline-primary smart-apply-btn" title="Apply Stock/Price/Status to every combination with this value"><i class="fas fa-bolt"></i></button></td>' +
         '<td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger remove-value-btn" title="Remove"><i class="fas fa-trash"></i></button></td>';
 
@@ -1211,7 +1221,11 @@ function addVariationValueRow(block, value) {
     row.querySelector('.remove-value-btn').addEventListener('click', () => {
         const valueName = row.querySelector('.variation-value-input').value.trim();
         if (valueName && valueHasStock(block.dataset.type, valueName)) {
-            if (!confirm('This value has stock in one or more generated combinations. Removing it will remove those combinations too. Continue?')) return;
+            customConfirm('This value has stock in one or more generated combinations. Removing it will remove those combinations too. Continue?', function() {
+                row.remove();
+                onVariationStructureChanged();
+            }, { title: 'Remove Value' });
+            return;
         }
         row.remove();
         onVariationStructureChanged();
@@ -1220,6 +1234,18 @@ function addVariationValueRow(block, value) {
         const valueName = row.querySelector('.variation-value-input').value.trim();
         if (!valueName) { alert('Enter a value name first.'); return; }
         openApplyModal({ scope: 'value', type: block.dataset.type, value: valueName });
+    });
+
+    const imageInput = row.querySelector('.variation-image-input');
+    const imageThumb = row.querySelector('.variation-image-thumb');
+    const imageBtn = row.querySelector('.variation-image-btn');
+    imageThumb.addEventListener('click', () => imageInput.click());
+    imageBtn.addEventListener('click', () => imageInput.click());
+    imageInput.addEventListener('change', () => {
+        if (!imageInput.files || !imageInput.files[0]) return;
+        imageThumb.src = URL.createObjectURL(imageInput.files[0]);
+        imageThumb.style.display = '';
+        imageBtn.style.display = 'none';
     });
 
     block.appendChild(row);
@@ -1238,6 +1264,7 @@ function onVariationStructureChanged() {
     updateGenerateButtonVisibility();
     syncVariationsJson();
     if (!suppressCombinationRegen) generateCombinations();
+    if (typeof initResponsiveTableStacking === 'function') initResponsiveTableStacking();
 }
 
 function updateGenerateButtonVisibility() {
@@ -1256,6 +1283,7 @@ function syncVariationsJson() {
                 value: value,
                 default_price_adjustment: parseFloat(row.querySelector('.variation-default-price-input').value) || 0,
                 default_status: row.querySelector('.variation-default-status-select').value,
+                client_row_id: row.dataset.rowId,
             });
         });
     });
@@ -1386,10 +1414,12 @@ function renderCombinationsTable() {
         });
         tr.querySelector('.combo-delete-btn').addEventListener('click', () => {
             const stock = Object.values(c.branch_stock || {}).reduce((s, q) => s + (parseInt(q, 10) || 0), 0);
-            if (stock > 0 && !confirm('This combination still has ' + stock + ' unit(s) of stock. Delete it anyway?')) return;
-            delete combinationRows[key];
-            tr.remove();
-            syncCombinationsJson();
+            const doDelete = () => { delete combinationRows[key]; tr.remove(); syncCombinationsJson(); };
+            if (stock > 0) {
+                customConfirm('This combination still has ' + stock + ' unit(s) of stock. Delete it anyway?', doDelete, { title: 'Delete Combination' });
+                return;
+            }
+            doDelete();
         });
 
         combinationsBody.appendChild(tr);
@@ -1451,8 +1481,13 @@ function openApplyModal(opts) {
             '<div class="form-group"><label>Status</label><select class="form-control form-control-sm" id="applyModalStatus"><option value="">(no change)</option><option value="active">Active</option><option value="inactive">Inactive</option></select></div>' +
             '<div class="form-group"><label>Branch Stock (leave blank for no change)</label>' + branchStockFields() + '</div>';
     } else if (action === 'delete') {
+        const hasStock = opts.rows.some(tr => {
+            const key = tr.dataset.key;
+            return Object.values((combinationRows[key] || {}).branch_stock || {}).reduce((s, q) => s + (parseInt(q, 10) || 0), 0) > 0;
+        });
         title = 'Delete Selected Combinations';
-        bodyHtml = '<p>Delete ' + opts.rows.length + ' selected combination(s)? This cannot be undone once saved.</p>';
+        bodyHtml = '<p>Delete ' + opts.rows.length + ' selected combination(s)? This cannot be undone once saved.' +
+            (hasStock ? ' <strong>Some of these still have stock.</strong>' : '') + '</p>';
     } else if (action === 'stock') {
         title = 'Apply Stock';
         bodyHtml = '<div class="form-group"><label>Branch Stock</label>' + branchStockFields() + '</div>';
@@ -1475,11 +1510,10 @@ function openApplyModal(opts) {
                 branchStock: readModalBranchStock(),
             });
         } else if (action === 'delete') {
+            // The confirm above already warns if any selected row still has
+            // stock — no need to ask again per row here.
             opts.rows.forEach(tr => {
-                const key = tr.dataset.key;
-                const stock = Object.values((combinationRows[key] || {}).branch_stock || {}).reduce((s, q) => s + (parseInt(q, 10) || 0), 0);
-                if (stock > 0 && !confirm('One of the selected combinations still has stock. Delete it anyway?')) return;
-                delete combinationRows[key];
+                delete combinationRows[tr.dataset.key];
                 tr.remove();
             });
             syncCombinationsJson();

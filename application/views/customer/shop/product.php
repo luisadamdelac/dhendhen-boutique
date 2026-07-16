@@ -264,6 +264,7 @@
                                                 data-variation-id="<?php echo $v['variation_id']; ?>"
                                                 data-price-adjustment="<?php echo (float) $v['price_adjustment']; ?>"
                                                 data-stock="<?php echo (int) $v['stock']; ?>"
+                                                data-image="<?php echo !empty($v['image_url']) ? htmlspecialchars($v['image_url']) : ''; ?>"
                                                 onclick="<?php echo $outOfStock ? '' : 'selectVariation(this)'; ?>"
                                                 <?php echo $outOfStock ? 'disabled' : ''; ?>
                                                 style="padding: 8px 16px; border-radius: 20px; border: 2px solid <?php echo $outOfStock ? '#eee' : '#ddd'; ?>; background: #fff; cursor: <?php echo $outOfStock ? 'not-allowed' : 'pointer'; ?>; font-size: 14px; color: <?php echo $outOfStock ? '#bbb' : 'inherit'; ?>;">
@@ -541,6 +542,9 @@ function clearVariationSelection() {
     document.getElementById('selected_variation_id').value = '';
     updatePriceDisplay(0);
 
+    const img = document.getElementById('productMainImage');
+    if (img && img.dataset.defaultSrc) img.src = img.dataset.defaultSrc;
+
     const qtyInput = document.getElementById('quantity');
     if (qtyInput) qtyInput.max = <?php echo (int) $product['stock']; ?>;
 }
@@ -562,6 +566,11 @@ function selectVariation(btn) {
     document.getElementById('selected_variation_id').value = btn.dataset.variationId;
     document.getElementById('variation-required-msg').style.display = 'none';
     updatePriceDisplay(parseFloat(btn.dataset.priceAdjustment || '0'));
+
+    if (btn.dataset.image) {
+        const img = document.getElementById('productMainImage');
+        if (img) img.src = btn.dataset.image;
+    }
 
     const stock = parseInt(btn.dataset.stock, 10);
     const qtyInput = document.getElementById('quantity');

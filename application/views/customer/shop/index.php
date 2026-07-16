@@ -1,72 +1,8 @@
 <style>
     /* .products-grid/.product-card/.product-image/.product-info/.product-name/
-       .product-price/.empty-state now come from the shared public/css/style.css
-       component library instead of being redeclared per page. */
-    .product-stock {
-        font-size: 13px;
-        color: var(--gray);
-        margin-bottom: 15px;
-    }
-    
-    .filter-section {
-        background: white;
-        padding: 20px;
-        border-radius: 12px;
-        margin-bottom: 25px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-    
-    .category-filter {
-        display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
-    }
-    
-    .category-btn {
-        padding: 8px 20px;
-        background: white;
-        border: 2px solid #ddd;
-        border-radius: 25px;
-        color: var(--dark);
-        text-decoration: none;
-        transition: all 0.3s;
-        font-size: 14px;
-    }
-    
-    .category-btn:hover, .category-btn.active {
-        background: var(--primary);
-        color: white;
-        border-color: var(--primary);
-    }
-    
-    .pagination {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 10px;
-        margin-top: 40px;
-    }
-    
-    .page-btn {
-        padding: 8px 15px;
-        background: white;
-        border: 2px solid #ddd;
-        border-radius: 8px;
-        color: var(--dark);
-        text-decoration: none;
-        transition: all 0.3s;
-    }
-    
-    .page-btn:hover, .page-btn.active {
-        background: var(--primary);
-        color: white;
-        border-color: var(--primary);
-    }
-    
-    .page-btn:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-    }
+       .product-price/.empty-state/.filter-section/.category-filter/.category-btn/
+       .pagination/.page-btn/.product-stock now come from the shared
+       public/css/style.css component library instead of being redeclared per page. */
 
     /* ── Add to Cart modal (structural .modal/.modal-content/etc come from
        the shared component in customer/layouts/footer.php) ──────────── */
@@ -126,8 +62,175 @@
     .atc-modal-actions .btn { flex: 1; }
 </style>
 
+<?php if (empty($isResellerShop) && empty($searchQuery) && empty($currentCategory) && (int) $currentPage <= 1): ?>
+<section class="shop-hero">
+    <div class="shop-hero-content">
+        <span class="shop-hero-eyebrow"><i class="fas fa-heart"></i> Welcome to DropSell</span>
+        <h1 class="shop-hero-title">Discover Your<br><span class="accent">Beauty Essentials</span></h1>
+        <p class="shop-hero-subtitle">Browse thousands of skincare and cosmetic products.</p>
+        <a href="#shop-products" class="btn btn-primary btn-lg shop-hero-cta">
+            Browse Products
+        </a>
+    </div>
+    <div class="shop-hero-decor" aria-hidden="true">
+        <span class="decor-circle c1"></span>
+        <span class="decor-circle c2"></span>
+        <span class="decor-circle c3"></span>
+        <span class="decor-circle c4"></span>
+        <span class="decor-circle c5"></span>
+        <i class="fas fa-star decor-star s1"></i>
+        <i class="fas fa-star decor-star s2"></i>
+        <i class="fas fa-star decor-star s3"></i>
+        <i class="fas fa-star decor-star s4"></i>
+        <i class="fas fa-star decor-star s5"></i>
+    </div>
+    <div class="shop-hero-art" aria-hidden="true">
+        <svg viewBox="0 0 460 300" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <filter id="softBlur" x="-50%" y="-50%" width="200%" height="200%">
+                    <feGaussianBlur stdDeviation="7"/>
+                </filter>
+                <filter id="dropShadow" x="-60%" y="-60%" width="220%" height="220%">
+                    <feDropShadow dx="0" dy="7" stdDeviation="5" flood-color="#9D174D" flood-opacity="0.22"/>
+                </filter>
+                <radialGradient id="heroGlow" cx="50%" cy="52%" r="55%">
+                    <stop offset="0%" stop-color="#EC4899" stop-opacity="0.18"/>
+                    <stop offset="100%" stop-color="#EC4899" stop-opacity="0"/>
+                </radialGradient>
+                <linearGradient id="ringGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#FFFFFF"/>
+                    <stop offset="100%" stop-color="#FBCFE8"/>
+                </linearGradient>
+                <linearGradient id="podiumLight" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#FFFFFF"/>
+                    <stop offset="100%" stop-color="#FCE7F3"/>
+                </linearGradient>
+                <linearGradient id="podiumDark" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#F9A8D4"/>
+                    <stop offset="100%" stop-color="#EC4899"/>
+                </linearGradient>
+                <linearGradient id="glassPink" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stop-color="#FDF2F8"/>
+                    <stop offset="55%" stop-color="#FCE7F3"/>
+                    <stop offset="100%" stop-color="#F9A8D4"/>
+                </linearGradient>
+                <linearGradient id="serumLiquid" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#F9A8D4"/>
+                    <stop offset="100%" stop-color="#EC4899"/>
+                </linearGradient>
+                <linearGradient id="goldCap" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stop-color="#C98A3E"/>
+                    <stop offset="45%" stop-color="#FDE9C7"/>
+                    <stop offset="100%" stop-color="#C98A3E"/>
+                </linearGradient>
+                <linearGradient id="tubePink" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stop-color="#F9CEE3"/>
+                    <stop offset="50%" stop-color="#FDF2F8"/>
+                    <stop offset="100%" stop-color="#F9CEE3"/>
+                </linearGradient>
+                <linearGradient id="jarPink" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stop-color="#F472B6"/>
+                    <stop offset="50%" stop-color="#FDF2F8"/>
+                    <stop offset="100%" stop-color="#F472B6"/>
+                </linearGradient>
+                <symbol id="leafShape" viewBox="-12 -22 24 44">
+                    <path d="M0,-20 C11,-14 11,14 0,20 C-11,14 -11,-14 0,-20 Z" fill="currentColor"/>
+                    <path d="M0,-16 L0,16" stroke="rgba(157,23,77,0.30)" stroke-width="1"/>
+                </symbol>
+            </defs>
+
+            <ellipse cx="235" cy="165" rx="200" ry="125" fill="url(#heroGlow)"/>
+            <ellipse cx="235" cy="286" rx="130" ry="12" fill="#9D174D" opacity="0.15" filter="url(#softBlur)"/>
+
+            <!-- leaf branches -->
+            <g>
+                <path d="M85,272 C68,210 102,168 76,108" stroke="#F472B6" stroke-width="2" fill="none" opacity="0.4"/>
+                <use href="#leafShape" width="24" height="44" x="-12" y="-22" transform="translate(78,246) rotate(-38)" color="#F9A8D4" opacity="0.9"/>
+                <use href="#leafShape" width="22" height="40" x="-11" y="-20" transform="translate(70,208) rotate(-8)" color="#F472B6" opacity="0.85"/>
+                <use href="#leafShape" width="22" height="40" x="-11" y="-20" transform="translate(80,172) rotate(24)" color="#F9A8D4" opacity="0.8"/>
+                <use href="#leafShape" width="18" height="32" x="-9" y="-16" transform="translate(72,132) rotate(-18)" color="#F472B6" opacity="0.7"/>
+
+                <path d="M390,272 C407,210 373,168 399,108" stroke="#F472B6" stroke-width="2" fill="none" opacity="0.4"/>
+                <use href="#leafShape" width="24" height="44" x="-12" y="-22" transform="translate(397,246) rotate(38)" color="#F9A8D4" opacity="0.9"/>
+                <use href="#leafShape" width="22" height="40" x="-11" y="-20" transform="translate(405,208) rotate(8)" color="#F472B6" opacity="0.85"/>
+                <use href="#leafShape" width="22" height="40" x="-11" y="-20" transform="translate(395,172) rotate(-24)" color="#F9A8D4" opacity="0.8"/>
+                <use href="#leafShape" width="18" height="32" x="-9" y="-16" transform="translate(403,132) rotate(18)" color="#F472B6" opacity="0.7"/>
+            </g>
+
+            <!-- glow ring -->
+            <circle cx="235" cy="150" r="118" fill="none" stroke="#F472B6" stroke-width="18" opacity="0.28" filter="url(#softBlur)"/>
+            <circle cx="235" cy="150" r="110" fill="none" stroke="url(#ringGrad)" stroke-width="4" opacity="0.95"/>
+
+            <!-- podium -->
+            <ellipse cx="235" cy="270" rx="150" ry="22" fill="url(#podiumDark)"/>
+            <rect x="85" y="252" width="300" height="18" fill="url(#podiumDark)"/>
+            <ellipse cx="235" cy="252" rx="150" ry="22" fill="url(#podiumLight)"/>
+
+            <!-- serum dropper bottle -->
+            <g filter="url(#dropShadow)">
+                <rect x="118" y="150" width="48" height="88" rx="10" fill="url(#glassPink)"/>
+                <rect x="123" y="176" width="38" height="58" rx="6" fill="url(#serumLiquid)" opacity="0.85"/>
+                <rect x="126" y="156" width="7" height="72" rx="3.5" fill="#ffffff" opacity="0.45"/>
+                <rect x="133" y="130" width="18" height="22" fill="url(#glassPink)"/>
+                <rect x="127" y="106" width="30" height="26" rx="6" fill="url(#goldCap)"/>
+                <path d="M136,92 Q142,84 148,92 L148,108 Q142,112 136,108 Z" fill="#F8FAFC"/>
+                <text x="142" y="200" text-anchor="middle" font-family="'Poppins', Arial, sans-serif" font-size="7" font-weight="700" fill="#9D174D" letter-spacing="0.5">GLOW</text>
+                <text x="142" y="211" text-anchor="middle" font-family="'Poppins', Arial, sans-serif" font-size="6" fill="#9D174D" letter-spacing="0.5">SERUM</text>
+            </g>
+
+            <!-- cleanser tube -->
+            <g filter="url(#dropShadow)">
+                <rect x="184" y="112" width="64" height="126" rx="14" fill="url(#tubePink)"/>
+                <path d="M199,112 L233,112 L229,92 Q216,84 203,92 Z" fill="#F5B8D6"/>
+                <rect x="205" y="93" width="22" height="4" rx="2" fill="#EC4899" opacity="0.4"/>
+                <text x="216" y="145" text-anchor="middle" font-family="'Poppins', Arial, sans-serif" font-size="7" font-weight="700" fill="#831843" letter-spacing="0.5">LUMINOUS</text>
+                <text x="216" y="157" text-anchor="middle" font-family="'Poppins', Arial, sans-serif" font-size="5.5" fill="#831843" letter-spacing="0.3">FACIAL</text>
+                <text x="216" y="167" text-anchor="middle" font-family="'Poppins', Arial, sans-serif" font-size="5.5" fill="#831843" letter-spacing="0.3">CLEANSER</text>
+            </g>
+
+            <!-- sunscreen jar (front, overlapping) -->
+            <g filter="url(#dropShadow)">
+                <rect x="184" y="200" width="84" height="64" rx="18" fill="url(#jarPink)"/>
+                <rect x="187" y="176" width="78" height="30" rx="13" fill="url(#goldCap)"/>
+                <ellipse cx="226" cy="176" rx="35" ry="6" fill="#9D5A26" opacity="0.35"/>
+                <rect x="187" y="188" width="78" height="4" fill="#9D174D" opacity="0.15"/>
+                <rect x="187" y="192" width="6" height="66" rx="3" fill="#9D174D" opacity="0.18"/>
+                <rect x="259" y="192" width="6" height="66" rx="3" fill="#ffffff" opacity="0.35"/>
+                <text x="226" y="230" text-anchor="middle" font-family="'Poppins', Arial, sans-serif" font-size="6.5" font-weight="700" fill="#9D174D" letter-spacing="0.4">SUNSCREEN</text>
+                <text x="226" y="243" text-anchor="middle" font-family="'Poppins', Arial, sans-serif" font-size="5.5" fill="#9D174D" letter-spacing="0.4">SPF 50</text>
+            </g>
+
+            <!-- lipstick -->
+            <g transform="rotate(9 305 220)" filter="url(#dropShadow)">
+                <rect x="291" y="190" width="28" height="58" rx="6" fill="#1F2937"/>
+                <rect x="295" y="194" width="5" height="48" rx="2.5" fill="#ffffff" opacity="0.12"/>
+                <rect x="291" y="185" width="28" height="10" rx="3" fill="url(#goldCap)"/>
+                <path d="M291,185 L319,185 L313,160 Q305,148 297,160 Z" fill="#DB2777"/>
+                <path d="M297,160 Q305,150 313,160 L311,166 Q305,158 299,166 Z" fill="#F472B6" opacity="0.6"/>
+            </g>
+
+            <!-- sparkles -->
+            <g fill="#F472B6" opacity="0.85">
+                <path d="M110 70 l3 9 9 3 -9 3 -3 9 -3 -9 -9 -3 9 -3 z"/>
+                <path d="M370 100 l2.5 7 7 2.5 -7 2.5 -2.5 7 -2.5 -7 -7 -2.5 7 -2.5 z"/>
+            </g>
+            <g fill="#ffffff" opacity="0.9">
+                <circle cx="235" cy="45" r="3"/>
+                <circle cx="360" cy="140" r="2.5"/>
+                <circle cx="100" cy="130" r="2.5"/>
+            </g>
+        </svg>
+        <div class="hero-dots">
+            <span class="hero-dot active"></span>
+            <span class="hero-dot"></span>
+            <span class="hero-dot"></span>
+        </div>
+    </div>
+</section>
+<?php endif; ?>
+
 <?php if (!empty($isResellerShop) && !empty($reseller)): ?>
-    <div style="background: linear-gradient(135deg, #ff69b4 0%, #9370db 100%); color: white; padding: 20px 25px; border-radius: 12px; margin-bottom: 20px; display: flex; align-items: center; gap: 15px;">
+    <div style="background: var(--gradient-primary); color: white; padding: 20px 25px; border-radius: 16px; margin-bottom: 20px; display: flex; align-items: center; gap: 15px;">
         <i class="fas fa-store" style="font-size: 32px;"></i>
         <div>
             <h2 style="margin: 0; font-size: 20px;">
@@ -138,7 +241,7 @@
     </div>
 <?php endif; ?>
 
-<div class="filter-section">
+<div class="filter-section" id="shop-products">
     <h3 style="margin-bottom: 15px;">
         <i class="fas fa-filter"></i> Filter by Category
     </h3>
@@ -147,9 +250,27 @@
             All Products
         </a>
         <?php foreach ($categories as $category): ?>
-            <a href="<?php echo BASE_URL; ?>shop?category=<?php echo $category['category_id']; ?>" 
+            <?php
+                // Cosmetic-only icon guess from the category name — purely
+                // decorative, falls back to a generic tag for anything else.
+                $catNameLower = strtolower($category['category_name']);
+                if (strpos($catNameLower, 'lip') !== false) {
+                    $catIcon = 'fa-kiss-wink-heart';
+                } elseif (strpos($catNameLower, 'nail') !== false) {
+                    $catIcon = 'fa-hand-sparkles';
+                } elseif (strpos($catNameLower, 'skin') !== false) {
+                    $catIcon = 'fa-pump-soap';
+                } elseif (strpos($catNameLower, 'makeup') !== false || strpos($catNameLower, 'make up') !== false) {
+                    $catIcon = 'fa-paintbrush';
+                } elseif (strpos($catNameLower, 'perfume') !== false || strpos($catNameLower, 'fragrance') !== false) {
+                    $catIcon = 'fa-spray-can-sparkles';
+                } else {
+                    $catIcon = 'fa-tag';
+                }
+            ?>
+            <a href="<?php echo BASE_URL; ?>shop?category=<?php echo $category['category_id']; ?>"
                class="category-btn <?php echo (isset($_GET['category']) && $_GET['category'] == $category['category_id']) ? 'active' : ''; ?>">
-                <?php echo htmlspecialchars($category['category_name']); ?>
+                <i class="fas <?php echo $catIcon; ?>"></i> <?php echo htmlspecialchars($category['category_name']); ?>
             </a>
         <?php endforeach; ?>
     </div>
@@ -188,39 +309,65 @@
         <?php foreach ($products as $product): ?>
             <div class="product-card" onclick="location.href='<?php echo BASE_URL; ?>shop/product/<?php echo $product['product_id']; ?>'">
                 <?php $productImage = $product['product_image'] ?? $product['image'] ?? ''; ?>
-                <?php if (!empty($productImage)): ?>
-                    <img src="<?php echo BASE_URL . $productImage; ?>"
-                         alt="<?php echo htmlspecialchars($product['product_name']); ?>"
-                         class="product-image"
-                         onerror="this.onerror=null; this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22%3E%3Crect width=%22100%22 height=%22100%22 fill=%22%23f0f0f0%22/%3E%3C/svg%3E';">
-                <?php else: ?>
-                    <div class="product-image" style="display: flex; align-items: center; justify-content: center; background: #f0f0f0;">
-                        <i class="fas fa-image" style="font-size: 60px; color: #ccc;"></i>
-                    </div>
-                <?php endif; ?>
-                
+                <div class="product-image-wrapper">
+                    <?php if (!empty($product['category_name'])): ?>
+                        <?php $catColors = ['cat-pink', 'cat-purple', 'cat-orange']; ?>
+                        <span class="badge-category <?php echo $catColors[((int) ($product['category_id'] ?? 0)) % 3]; ?>"><?php echo htmlspecialchars($product['category_name']); ?></span>
+                    <?php endif; ?>
+                    <span class="product-wishlist"><i class="far fa-heart"></i></span>
+                    <?php if (!empty($productImage)): ?>
+                        <img src="<?php echo BASE_URL . $productImage; ?>"
+                             alt="<?php echo htmlspecialchars($product['product_name']); ?>"
+                             class="product-image"
+                             onerror="this.onerror=null; this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22%3E%3Crect width=%22100%22 height=%22100%22 fill=%22%23f0f0f0%22/%3E%3C/svg%3E';">
+                    <?php else: ?>
+                        <div class="product-image" style="display: flex; align-items: center; justify-content: center; background: #f0f0f0;">
+                            <i class="fas fa-image" style="font-size: 60px; color: #ccc;"></i>
+                        </div>
+                    <?php endif; ?>
+                </div>
+
                 <div class="product-info">
                     <div class="product-name"><?php echo htmlspecialchars($product['product_name']); ?></div>
-                    <?php if (!empty($product['has_discount']) && !empty($product['discounted_price'])): ?>
-                    <div class="product-price">
-                        <span class="original-price">₱<?php echo number_format($product['price'], 2); ?></span>
-                        ₱<?php echo number_format($product['discounted_price'], 2); ?>
+                    <?php if (!empty($product['avg_rating'])): ?>
+                    <div class="product-rating">
+                        <span class="stars">
+                            <?php for ($i = 1; $i <= 5; $i++): ?><i class="<?php echo $i > round($product['avg_rating']) ? 'far' : 'fas'; ?> fa-star"></i><?php endfor; ?>
+                        </span>
+                        <span><?php echo !empty($product['review_count']) ? '(' . (int) $product['review_count'] . ')' : ''; ?></span>
                     </div>
-                    <?php else: ?>
-                    <div class="product-price">₱<?php echo number_format($product['price'], 2); ?></div>
                     <?php endif; ?>
-                    <div style="font-size: 12px; color: #e65100; margin-bottom: 5px;"><i class="fas fa-fire"></i> <?php echo (int) ($product['total_sold'] ?? 0); ?> sold</div>
-                    <?php if ($product['stock'] <= 0): ?>
-                    <div class="product-stock" style="color:#c62828;font-weight:600;">
-                        <i class="fas fa-ban"></i> Sold Out
+                    <div class="product-price-row">
+                        <?php if (!empty($product['has_discount']) && !empty($product['discounted_price'])): ?>
+                        <div class="product-price">
+                            <span class="original-price">₱<?php echo number_format($product['price'], 2); ?></span>
+                            ₱<?php echo number_format($product['discounted_price'], 2); ?>
+                        </div>
+                        <?php else: ?>
+                        <div class="product-price">₱<?php echo number_format($product['price'], 2); ?></div>
+                        <?php endif; ?>
+                        <?php $soldCount = (int) ($product['total_sold'] ?? 0); ?>
+                        <span class="product-sold">Sold <?php echo $soldCount >= 1000 ? number_format($soldCount / 1000, 1) . 'k' : $soldCount; ?></span>
                     </div>
+                    <?php if ($product['stock'] <= 0): ?>
+                        <div class="stock-indicator out-of-stock">Sold Out</div>
                     <?php endif; ?>
                     <?php $canBuy = ($product['purchasable'] ?? true) && $product['stock'] > 0; ?>
                     <?php
+                        // No static "no-image" file to keep in sync — the placeholder is
+                        // generated inline, same idea as the onerror fallback below, so
+                        // there's no file path that can ever go stale or missing.
+                        $noImageSvg = 'data:image/svg+xml,' . rawurlencode(
+                            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">' .
+                            '<rect width="200" height="200" fill="#f0f0f0"/>' .
+                            '<circle cx="70" cy="70" r="18" fill="#ccc"/>' .
+                            '<path d="M20 160 L75 100 L110 135 L140 100 L180 160 Z" fill="#ccc"/>' .
+                            '</svg>'
+                        );
                         $atcPayload = htmlspecialchars(json_encode([
                             'id' => (int) $product['product_id'],
                             'name' => $product['product_name'],
-                            'image' => !empty($productImage) ? BASE_URL . $productImage : (BASE_URL . 'public/images/no-image.jpg'),
+                            'image' => !empty($productImage) ? BASE_URL . $productImage : $noImageSvg,
                             'price' => (float) $product['price'],
                             'stock' => (int) $product['stock'],
                             'hasVariations' => !empty($product['has_variations']),
@@ -333,6 +480,7 @@ function openAddToCartModal(product, mode) {
         stock: product.stock
     };
 
+    atcState.baseImage = product.image;
     document.getElementById('atcImage').src = product.image;
     document.getElementById('atcName').textContent = product.name;
     document.getElementById('atcPrice').textContent = '₱' + product.price.toFixed(2);
@@ -393,8 +541,8 @@ function renderAtcVariationGroups() {
                     escapeHtml(v.variation_value) + '</span>';
             } else {
                 const outOfStock = v.stock <= 0;
-                html += '<span class="atc-variation-opt' + (outOfStock ? ' disabled' : '') + '" data-variation-id="' + v.variation_id + '"' +
-                    (outOfStock ? '' : ' onclick="atcSelectVariation(' + v.variation_id + ', ' + v.stock + ', ' + v.price_adjustment + ')"') + '">' +
+                html += '<span class="atc-variation-opt' + (outOfStock ? ' disabled' : '') + '" data-variation-id="' + v.variation_id + '" data-image="' + escapeHtml(v.image_url || '') + '"' +
+                    (outOfStock ? '' : ' onclick="atcSelectVariation(this, ' + v.variation_id + ', ' + v.stock + ', ' + v.price_adjustment + ')"') + '">' +
                     escapeHtml(v.variation_value) + (outOfStock ? ' (out of stock)' : '') + '</span>';
             }
         });
@@ -403,7 +551,7 @@ function renderAtcVariationGroups() {
     document.getElementById('atcVariationGroups').innerHTML = html;
 }
 
-function atcSelectVariation(variationId, stock, priceAdjustment) {
+function atcSelectVariation(el, variationId, stock, priceAdjustment) {
     document.getElementById('atcVariationError').style.display = 'none';
 
     // Clicking an already-selected option deselects it instead of re-selecting.
@@ -411,11 +559,12 @@ function atcSelectVariation(variationId, stock, priceAdjustment) {
         atcState.selectedVariationId = null;
         atcState.stock = 0;
 
-        document.querySelectorAll('.atc-variation-opt').forEach(el => {
-            el.classList.remove('selected');
+        document.querySelectorAll('.atc-variation-opt').forEach(opt => {
+            opt.classList.remove('selected');
         });
 
         document.getElementById('atcPrice').textContent = '₱' + atcState.basePrice.toFixed(2);
+        document.getElementById('atcImage').src = atcState.baseImage;
         updateAtcStockDisplay();
         return;
     }
@@ -423,11 +572,12 @@ function atcSelectVariation(variationId, stock, priceAdjustment) {
     atcState.selectedVariationId = variationId;
     atcState.stock = stock;
 
-    document.querySelectorAll('.atc-variation-opt').forEach(el => {
-        el.classList.toggle('selected', el.dataset.variationId == variationId);
+    document.querySelectorAll('.atc-variation-opt').forEach(opt => {
+        opt.classList.toggle('selected', opt.dataset.variationId == variationId);
     });
 
     document.getElementById('atcPrice').textContent = '₱' + (atcState.basePrice + priceAdjustment).toFixed(2);
+    if (el.dataset.image) document.getElementById('atcImage').src = el.dataset.image;
     updateAtcStockDisplay();
 
     if (atcState.qty > stock) {

@@ -22,7 +22,7 @@ class Inventory extends Authenticated_Controller {
         $data['page_title'] = 'Inventory - Reseller Portal';
 
         // My Mini-Shop: this reseller's published (and unpublished) listings
-        $data['myListings'] = $this->db->select('rp.*, p.product_name, p.description, p.price as base_price, p.stock as central_stock, p.status as product_status, c.category_name, pi.image_path as product_image')
+        $data['myListings'] = $this->db->select('rp.*, p.product_name, p.description, p.price as base_price, p.stock as central_stock, p.status as product_status, p.expiry_date, c.category_name, pi.image_path as product_image')
             ->from(RESELLER_PRODUCTS_TABLE . ' rp')
             ->join(PRODUCT_TABLE . ' p', 'p.product_id = rp.product_id')
             ->join(CATEGORY_TABLE . ' c', 'p.category_id = c.category_id', 'left')
@@ -55,6 +55,8 @@ class Inventory extends Authenticated_Controller {
                 $data['soldByProduct'][$row['product_id']] = (int) $row['qty'];
             }
         }
+
+        $data['stats'] = $this->_get_inventory_stats($data['myListings'], $published_ids, $data['soldByProduct']);
 
         $this->load->view('reseller/layouts/header', $data);
         $this->load->view('reseller/inventory/index', $data);
@@ -182,5 +184,125 @@ class Inventory extends Authenticated_Controller {
         $this->load->view('reseller/layouts/header', $data);
         $this->load->view('reseller/inventory/history', $data);
         $this->load->view('reseller/layouts/footer', $data);
+    }
+
+    /**
+     * Mini-shop stat cards + "vs last month" trends, all derived from real
+     * records (published_at timestamps and inventory_movements deltas) — not
+     * fabricated. Stock/product counts don't have a daily-snapshot table, so
+     * "last month" for those two is reconstructed by walking back real
+     * movements/publish dates rather than guessed.
+     */
+    private function _get_inventory_stats($myListings, $published_ids, $soldByProduct) {
+        $monthStart = date('Y-m-01 00:00:00');
+        $lastMonthStart = date('Y-m-01 00:00:00', strtotime('-1 month'));
+        $lastMonthEnd = date('Y-m-t 23:59:59', strtotime('-1 month'));
+        $thirtyDaysAgo = date('Y-m-d H:i:s', strtotime('-30 days'));
+
+        $published = array_filter($myListings, fn($l) => (int) $l['is_published'] === 1);
+        $totalProducts = count($published);
+        $totalStock = array_sum(array_column($published, 'central_stock'));
+        $totalSoldAllTime = array_sum($soldByProduct);
+
+        // Products: how many of today's published listings were already
+        // published 30+ days ago (their published_at gets refreshed only on
+        // (re)publish, so this is a real, if approximate, tenure check).
+        $productsLastMonth = count(array_filter($published, function ($l) use ($thirtyDaysAgo) {
+            return !empty($l['published_at']) && $l['published_at'] <= $thirtyDaysAgo;
+        }));
+
+        // Stock: current total minus the net real movement on these exact
+        // products over the last 30 days = what the total would have read
+        // 30 days ago.
+        $stockLastMonth = $totalStock;
+        if (!empty($published_ids)) {
+            $row = $this->db->select('COALESCE(SUM(quantity_changed), 0) as net_change')
+                ->from(INVENTORY_MOVEMENTS_TABLE)
+                ->where_in('product_id', $published_ids)
+                ->where('created_at >', $thirtyDaysAgo)
+                ->get()->row();
+            $stockLastMonth = $totalStock - (int) ($row->net_change ?? 0);
+        }
+
+        // Sold + Sales: real calendar-month comparison.
+        $soldThisMonth = 0;
+        $soldLastMonth = 0;
+        $salesThisMonth = 0.0;
+        $salesLastMonth = 0.0;
+        if (!empty($published_ids)) {
+            $soldThisMonth = (int) ($this->db->select_sum('od.quantity', 'qty')
+                ->from(ORDER_DETAILS_TABLE . ' od')
+                ->join(ORDER_TABLE . ' o', 'o.order_id = od.order_id')
+                ->where('o.reseller_id', $this->user_id)
+                ->where_in('od.product_id', $published_ids)
+                ->where('o.order_status', 'delivered')
+                ->where('o.created_at >=', $monthStart)
+                ->get()->row()->qty ?? 0);
+
+            $soldLastMonth = (int) ($this->db->select_sum('od.quantity', 'qty')
+                ->from(ORDER_DETAILS_TABLE . ' od')
+                ->join(ORDER_TABLE . ' o', 'o.order_id = od.order_id')
+                ->where('o.reseller_id', $this->user_id)
+                ->where_in('od.product_id', $published_ids)
+                ->where('o.order_status', 'delivered')
+                ->where('o.created_at >=', $lastMonthStart)
+                ->where('o.created_at <=', $lastMonthEnd)
+                ->get()->row()->qty ?? 0);
+        }
+
+        $salesThisMonth = (float) ($this->db->select_sum('total_amount', 'total')
+            ->from(ORDER_TABLE)->where('reseller_id', $this->user_id)
+            ->where('created_at >=', $monthStart)
+            ->get()->row()->total ?? 0);
+
+        $salesLastMonth = (float) ($this->db->select_sum('total_amount', 'total')
+            ->from(ORDER_TABLE)->where('reseller_id', $this->user_id)
+            ->where('created_at >=', $lastMonthStart)->where('created_at <=', $lastMonthEnd)
+            ->get()->row()->total ?? 0);
+
+        $pct = function ($prev, $curr) {
+            if ($prev == 0) {
+                return $curr > 0 ? 100.0 : 0.0;
+            }
+            return (($curr - $prev) / $prev) * 100;
+        };
+
+        // In stock / low stock / out of stock — same >10 / 1-10 / 0 thresholds
+        // the table's own stock badges already use, so the donut always
+        // agrees with what's shown in the list below it.
+        $inStockUnits = 0;
+        $lowStockUnits = 0;
+        $outOfStockCount = 0;
+        $lowStockItems = [];
+        foreach ($published as $l) {
+            $stock = (int) $l['central_stock'];
+            if ($stock > 10) {
+                $inStockUnits += $stock;
+            } elseif ($stock > 0) {
+                $lowStockUnits += $stock;
+                $lowStockItems[] = ['name' => $l['product_name'], 'stock' => $stock];
+            } else {
+                $outOfStockCount++;
+            }
+        }
+        usort($lowStockItems, fn($a, $b) => $a['stock'] <=> $b['stock']);
+
+        return [
+            'total_products' => $totalProducts,
+            'total_stock' => $totalStock,
+            'sold_this_month' => $soldThisMonth,
+            'sales_this_month' => $salesThisMonth,
+            'trend' => [
+                'products' => $pct($productsLastMonth, $totalProducts),
+                'stock' => $pct($stockLastMonth, $totalStock),
+                'sold' => $pct($soldLastMonth, $soldThisMonth),
+                'sales' => $pct($salesLastMonth, $salesThisMonth),
+            ],
+            'in_stock_units' => $inStockUnits,
+            'low_stock_units' => $lowStockUnits,
+            'out_of_stock_count' => $outOfStockCount,
+            'sold_all_time' => $totalSoldAllTime,
+            'low_stock_items' => array_slice($lowStockItems, 0, 5),
+        ];
     }
 }

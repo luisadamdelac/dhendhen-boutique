@@ -145,7 +145,9 @@
     from { opacity: 0; transform: translateY(10px); }
     to   { opacity: 1; transform: translateY(0); }
 }
-.wizard-step.wizard-fade-in { animation: wizardFadeSlide .25s ease; }
+.wizard-step { display: none; }
+.wizard-step.active { display: block; }
+.wizard-step.active.wizard-fade-in { animation: wizardFadeSlide .25s ease; }
 
 /* ── Step action bar ──────────────────────────────────────── */
 .wizard-actions {
@@ -242,7 +244,7 @@
 
 /* ── Shared quick-create modal ───────────────────────────── */
 .ss-modal-overlay {
-    position: fixed; inset: 0; background: rgba(15,23,42,.45); z-index: 1000;
+    position: fixed; inset: 0; background: rgba(15,23,42,.45); z-index: 10000;
     display: flex; align-items: center; justify-content: center; padding: 20px;
     opacity: 0; pointer-events: none; transition: opacity .2s ease;
 }
@@ -253,6 +255,7 @@
     transform: translateY(12px); transition: transform .2s ease;
 }
 .ss-modal-overlay.open .ss-modal { transform: translateY(0); }
+.ss-modal.ss-modal-wide { max-width: 1100px; max-height: 85vh; overflow-y: auto; }
 .ss-modal h4 { margin: 0 0 4px; font-size: 1.05rem; color: var(--text); display: flex; align-items: center; gap: 8px; }
 .ss-modal h4 i { color: var(--primary-pink); }
 .ss-modal p.hint { margin: 0 0 16px; font-size: .8rem; color: var(--gray); }
@@ -264,7 +267,7 @@
 
 /* ── Toasts ───────────────────────────────────────────────── */
 .ss-toast-container {
-    position: fixed; bottom: 24px; right: 24px; z-index: 1100;
+    position: fixed; bottom: 24px; right: 24px; z-index: 10100;
     display: flex; flex-direction: column; gap: 10px;
 }
 .ss-toast {
@@ -351,7 +354,7 @@
     <div class="wizard-header mb-2">
         <div>
             <h2 class="page-title mb-1" style="margin:0;">Create Product</h2>
-            <p class="wizard-step-label">Step <strong id="currentStepNum">1</strong> of 5</p>
+            <p class="wizard-step-label">Step <strong id="wizardStepNum">1</strong> of 5 — <span id="wizardStepName">Product Information</span></p>
         </div>
         <div>
             <a href="<?= site_url('admin/inventory'); ?>" class="btn btn-outline-secondary btn-sm">
@@ -360,29 +363,28 @@
         </div>
     </div>
 
-    <!-- Progress indicator -->
     <div class="wizard-progress" id="wizardProgress">
-        <div class="wizard-progress-step active" data-step-indicator="1">
+        <div class="wizard-progress-step active" data-progress-step="1">
             <div class="step-circle">1</div>
-            <div class="step-label">Information</div>
+            <div class="step-label">Product Info</div>
         </div>
         <div class="wizard-progress-line"></div>
-        <div class="wizard-progress-step" data-step-indicator="2">
+        <div class="wizard-progress-step" data-progress-step="2">
             <div class="step-circle">2</div>
             <div class="step-label">Pricing</div>
         </div>
         <div class="wizard-progress-line"></div>
-        <div class="wizard-progress-step" data-step-indicator="3">
+        <div class="wizard-progress-step" data-progress-step="3">
             <div class="step-circle">3</div>
             <div class="step-label">Inventory</div>
         </div>
         <div class="wizard-progress-line"></div>
-        <div class="wizard-progress-step" data-step-indicator="4">
+        <div class="wizard-progress-step" data-progress-step="4">
             <div class="step-circle">4</div>
-            <div class="step-label">Description</div>
+            <div class="step-label">Details</div>
         </div>
         <div class="wizard-progress-line"></div>
-        <div class="wizard-progress-step" data-step-indicator="5">
+        <div class="wizard-progress-step" data-progress-step="5">
             <div class="step-circle">5</div>
             <div class="step-label">Review</div>
         </div>
@@ -393,7 +395,7 @@
     <!-- ============================================================ -->
     <!-- STEP 1 — Product Information -->
     <!-- ============================================================ -->
-    <div class="wizard-step" data-step="1">
+    <div class="wizard-step active" data-step="1">
         <div class="row">
 
             <!-- LEFT COLUMN: Image + Status -->
@@ -532,14 +534,15 @@
 
         <div class="wizard-actions">
             <span></span>
-            <button type="button" class="btn btn-primary wizard-next" data-next="2">Next <i class="fas fa-arrow-right"></i></button>
+            <button type="button" class="btn btn-primary" onclick="nextStep()">Next <i class="fas fa-arrow-right"></i></button>
         </div>
+
     </div><!-- /step 1 -->
 
     <!-- ============================================================ -->
     <!-- STEP 2 — Pricing -->
     <!-- ============================================================ -->
-    <div class="wizard-step" data-step="2" style="display:none;">
+    <div class="wizard-step" data-step="2">
         <div class="card">
             <div class="card-body">
                 <div class="page-section" style="margin-top:0;">
@@ -594,15 +597,16 @@
         </div>
 
         <div class="wizard-actions">
-            <button type="button" class="btn btn-outline-secondary wizard-back" data-back="1"><i class="fas fa-arrow-left"></i> Back</button>
-            <button type="button" class="btn btn-primary wizard-next" data-next="3">Next <i class="fas fa-arrow-right"></i></button>
+            <button type="button" class="btn btn-outline-secondary" onclick="prevStep()"><i class="fas fa-arrow-left"></i> Back</button>
+            <button type="button" class="btn btn-primary" onclick="nextStep()">Next <i class="fas fa-arrow-right"></i></button>
         </div>
+
     </div><!-- /step 2 -->
 
     <!-- ============================================================ -->
     <!-- STEP 3 — Inventory -->
     <!-- ============================================================ -->
-    <div class="wizard-step" data-step="3" style="display:none;">
+    <div class="wizard-step" data-step="3">
         <div class="card">
             <div class="card-body">
                 <div class="page-section" style="margin-top:0;">
@@ -643,10 +647,10 @@
                 <p class="text-muted" style="margin-top:-6px;font-size:.85rem;">Add at least one Variation Type (e.g. Shade, Finish — up to 2), give it a Value, then generate the combination(s) below to enter stock per branch.</p>
 
                 <div class="table-responsive">
-                    <table class="table table-sm variation-values-table" id="variationTypesContainer">
+                    <table class="table table-sm variation-values-table table-stack" id="variationTypesContainer">
                         <thead>
                             <tr>
-                                <th>Value</th><th>Default Price Adj.</th><th>Default Status</th><th class="text-center">Smart Apply</th><th class="text-center">Remove</th>
+                                <th>Value</th><th>Default Price Adj.</th><th>Default Status</th><th class="text-center">Image</th><th class="text-center">Smart Apply</th><th class="text-center">Remove</th>
                             </tr>
                         </thead>
                     </table>
@@ -665,40 +669,7 @@
 
                 <div style="margin-top:16px;" id="generateCombinationsWrap" hidden>
                     <button type="button" class="btn btn-primary btn-sm" id="generateCombinationsBtn"><i class="fas fa-cogs"></i> Generate Variant Combinations</button>
-                    <span class="text-muted" style="font-size:.8rem;margin-left:8px;">Regenerates automatically whenever you add, remove, or edit a value.</span>
-                </div>
-
-                <!-- Generated Variant Combinations -->
-                <div class="card" id="combinationsCard" style="margin-top:20px;box-shadow:none;border:1px solid var(--border);" hidden>
-                    <div class="card-body">
-                        <div class="page-section" style="margin-top:0;">
-                            <span class="section-title"><i class="fas fa-th-list me-2"></i>Generated Variant Combinations</span>
-                            <hr>
-                        </div>
-
-                        <div class="d-flex flex-wrap align-items-center gap-2" style="margin-bottom:14px;">
-                            <div class="form-check" style="margin-right:8px;">
-                                <input type="checkbox" class="form-check-input" id="selectAllVariants">
-                                <label class="form-check-label" for="selectAllVariants">Select All</label>
-                            </div>
-                            <select class="form-control form-control-sm" id="bulkActionSelect" style="max-width:200px;">
-                                <option value="">Bulk Action…</option>
-                                <option value="stock">Apply Stock</option>
-                                <option value="price">Apply Price Adjustment</option>
-                                <option value="status">Apply Status</option>
-                                <option value="image">Apply Image</option>
-                                <option value="delete">Delete Selected</option>
-                            </select>
-                            <button type="button" class="btn btn-outline-secondary btn-sm" id="bulkApplyBtn">Apply</button>
-                        </div>
-
-                        <div class="table-responsive">
-                            <table class="table table-sm variant-combinations-table" id="combinationsTable">
-                                <thead><tr id="combinationsHeaderRow"></tr></thead>
-                                <tbody id="combinationsBody"></tbody>
-                            </table>
-                        </div>
-                    </div>
+                    <span class="text-muted" style="font-size:.8rem;margin-left:8px;" id="combinationsCountLabel"></span>
                 </div>
 
                 <div class="field-feedback invalid" id="variationStepError" style="display:none;margin-top:10px;">
@@ -739,15 +710,16 @@
         </div>
 
         <div class="wizard-actions">
-            <button type="button" class="btn btn-outline-secondary wizard-back" data-back="2"><i class="fas fa-arrow-left"></i> Back</button>
-            <button type="button" class="btn btn-primary wizard-next" data-next="4">Next <i class="fas fa-arrow-right"></i></button>
+            <button type="button" class="btn btn-outline-secondary" onclick="prevStep()"><i class="fas fa-arrow-left"></i> Back</button>
+            <button type="button" class="btn btn-primary" onclick="nextStep()">Next <i class="fas fa-arrow-right"></i></button>
         </div>
+
     </div><!-- /step 3 -->
 
     <!-- ============================================================ -->
     <!-- STEP 4 — Product Details -->
     <!-- ============================================================ -->
-    <div class="wizard-step" data-step="4" style="display:none;">
+    <div class="wizard-step" data-step="4">
         <div class="card">
             <div class="card-body">
                 <div class="page-section" style="margin-top:0;">
@@ -785,15 +757,16 @@
         </div>
 
         <div class="wizard-actions">
-            <button type="button" class="btn btn-outline-secondary wizard-back" data-back="3"><i class="fas fa-arrow-left"></i> Back</button>
-            <button type="button" class="btn btn-primary wizard-next" data-next="5">Next <i class="fas fa-arrow-right"></i></button>
+            <button type="button" class="btn btn-outline-secondary" onclick="prevStep()"><i class="fas fa-arrow-left"></i> Back</button>
+            <button type="button" class="btn btn-primary" onclick="nextStep()">Next <i class="fas fa-arrow-right"></i></button>
         </div>
+
     </div><!-- /step 4 -->
 
     <!-- ============================================================ -->
     <!-- STEP 5 — Review Product -->
     <!-- ============================================================ -->
-    <div class="wizard-step" data-step="5" style="display:none;">
+    <div class="wizard-step" data-step="5">
         <div class="card">
             <div class="card-body">
                 <div class="page-section" style="margin-top:0;">
@@ -842,7 +815,7 @@
         </div>
 
         <div class="wizard-actions">
-            <button type="button" class="btn btn-outline-secondary wizard-back" data-back="4"><i class="fas fa-arrow-left"></i> Back</button>
+            <button type="button" class="btn btn-outline-secondary" onclick="prevStep()"><i class="fas fa-arrow-left"></i> Back</button>
             <button type="submit" class="btn btn-primary" id="saveBtn">
                 <i class="fas fa-save"></i> Create Product
             </button>
@@ -850,6 +823,43 @@
     </div><!-- /step 5 -->
 
 </form>
+
+<!-- Generated Variant Combinations — modal (button-triggered) -->
+<div class="ss-modal-overlay" id="combinationsModalOverlay">
+    <div class="ss-modal ss-modal-wide" role="dialog" aria-modal="true">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;">
+            <h4><i class="fas fa-th-list"></i> Generated Variant Combinations</h4>
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="combinationsModalCloseX" aria-label="Close"><i class="fas fa-times"></i></button>
+        </div>
+        <p class="hint">Regenerates automatically whenever you add, remove, or edit a value.</p>
+
+        <div class="d-flex flex-wrap align-items-center gap-2" style="margin-bottom:14px;">
+            <div class="form-check" style="margin-right:8px;">
+                <input type="checkbox" class="form-check-input" id="selectAllVariants">
+                <label class="form-check-label" for="selectAllVariants">Select All</label>
+            </div>
+            <select class="form-control form-control-sm" id="bulkActionSelect" style="max-width:200px;">
+                <option value="">Bulk Action…</option>
+                <option value="stock">Apply Stock</option>
+                <option value="price">Apply Price Adjustment</option>
+                <option value="status">Apply Status</option>
+                <option value="delete">Delete Selected</option>
+            </select>
+            <button type="button" class="btn btn-outline-secondary btn-sm" id="bulkApplyBtn">Apply</button>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-sm variant-combinations-table" id="combinationsTable">
+                <thead><tr id="combinationsHeaderRow"></tr></thead>
+                <tbody id="combinationsBody"></tbody>
+            </table>
+        </div>
+
+        <div class="ss-modal-actions">
+            <button type="button" class="btn btn-primary" id="combinationsModalCloseBtn">Done</button>
+        </div>
+    </div>
+</div>
 </div>
 
 <script>
@@ -1186,55 +1196,40 @@ costInput.addEventListener('input', () => validateStep2(true));
 sellInput.addEventListener('input', () => validateStep2(true));
 minStockInput.addEventListener('input', () => validateStep3(true));
 
-/* ── Step navigation ──────────────────────────────────────── */
-function goToStep(n) {
-    document.querySelectorAll('.wizard-step').forEach(s => { s.style.display = 'none'; s.classList.remove('wizard-fade-in'); });
+/* ── Wizard navigation — one step visible at a time ──────────────── */
+const STEP_NAMES = { 1: 'Product Information', 2: 'Pricing', 3: 'Inventory', 4: 'Product Details', 5: 'Review Product' };
+let currentStep = 1;
+
+function showStep(n) {
+    document.querySelectorAll('.wizard-step').forEach(el => el.classList.remove('active', 'wizard-fade-in'));
     const target = document.querySelector('.wizard-step[data-step="' + n + '"]');
-    target.style.display = '';
-    // force reflow so the animation restarts
-    void target.offsetWidth;
-    target.classList.add('wizard-fade-in');
+    if (target) target.classList.add('active', 'wizard-fade-in');
 
-    updateProgress(n);
-    document.getElementById('currentStepNum').textContent = n;
-    if (n === 5) populateReview();
-
-    const shell = document.querySelector('.wizard-header');
-    if (shell) shell.scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
-
-function updateProgress(n) {
     document.querySelectorAll('.wizard-progress-step').forEach(el => {
-        const s = parseInt(el.dataset.stepIndicator, 10);
-        const circle = el.querySelector('.step-circle');
-        el.classList.remove('active', 'completed');
-        if (s < n) {
-            el.classList.add('completed');
-            circle.innerHTML = '<i class="fas fa-check"></i>';
-        } else {
-            circle.textContent = s;
-            if (s === n) el.classList.add('active');
-        }
+        const s = parseInt(el.dataset.progressStep, 10);
+        el.classList.toggle('active', s === n);
+        el.classList.toggle('completed', s < n);
     });
     document.querySelectorAll('.wizard-progress-line').forEach((el, i) => {
         el.classList.toggle('completed', (i + 1) < n);
     });
+
+    document.getElementById('wizardStepNum').textContent = n;
+    document.getElementById('wizardStepName').textContent = STEP_NAMES[n] || '';
+
+    currentStep = n;
+    if (n === 5) populateReview();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-document.querySelectorAll('.wizard-next').forEach(btn => {
-    btn.addEventListener('click', () => {
-        const current = parseInt(btn.closest('.wizard-step').dataset.step, 10);
-        const target = parseInt(btn.dataset.next, 10);
-        if (!runValidation(current, true)) {
-            btn.closest('.wizard-step').scrollIntoView({ behavior: 'smooth', block: 'start' });
-            return;
-        }
-        goToStep(target);
-    });
-});
-document.querySelectorAll('.wizard-back').forEach(btn => {
-    btn.addEventListener('click', () => goToStep(parseInt(btn.dataset.back, 10)));
-});
+function nextStep() {
+    if (!runValidation(currentStep, true)) return;
+    if (currentStep < 5) showStep(currentStep + 1);
+}
+
+function prevStep() {
+    if (currentStep > 1) showStep(currentStep - 1);
+}
 
 /* ── Review step population ───────────────────────────────── */
 function populateReview() {
@@ -1267,7 +1262,7 @@ function populateReview() {
     const revBranches = document.getElementById('rev_branches');
     revBranches.innerHTML = '';
     const branchTotals = {};
-    document.querySelectorAll('.variation-branch-stock-input').forEach(inp => {
+    document.querySelectorAll('.combo-branch-stock-input').forEach(inp => {
         const qty = parseInt(inp.value, 10) || 0;
         branchTotals[inp.dataset.branchId] = (branchTotals[inp.dataset.branchId] || 0) + qty;
     });
@@ -1283,6 +1278,11 @@ function populateReview() {
     document.getElementById('rev_expiry').textContent = document.getElementById('expiry_date').value || 'No expiry';
     document.getElementById('rev_description').textContent = descInput.value.trim() || 'No description provided.';
 }
+
+// The Review section is always visible now (not just on arrival at "step
+// 5"), so keep it in sync as the admin fills out the rest of the form.
+document.getElementById('addProductForm').addEventListener('input', populateReview);
+document.getElementById('addProductForm').addEventListener('change', populateReview);
 
 /* ── Smart select: searchable Brand/Category picker ──────── */
 const BRAND_LIST = <?= json_encode(
@@ -1556,10 +1556,13 @@ const variationTypesContainer = document.getElementById('variationTypesContainer
 const addVariationTypeBtn = document.getElementById('addVariationTypeBtn');
 const variationTypeDropdown = document.getElementById('variationTypeDropdown');
 const generateCombinationsWrap = document.getElementById('generateCombinationsWrap');
-const combinationsCard = document.getElementById('combinationsCard');
+const combinationsCountLabel = document.getElementById('combinationsCountLabel');
+const combinationsModalOverlay = document.getElementById('combinationsModalOverlay');
 const combinationsBody = document.getElementById('combinationsBody');
 const combinationsHeaderRow = document.getElementById('combinationsHeaderRow');
 const variationTypeCapError = document.getElementById('variationTypeCapError');
+const APP_BASE_URL = '<?php echo base_url(); ?>';
+let variationRowIdSeq = 0;
 
 let combinationRowSeq = 0;
 // key ("Type:value|Type:value") -> row data, preserved across regenerations
@@ -1640,7 +1643,7 @@ function addVariationTypeBlock(type, values) {
 
     block.innerHTML =
         '<tr class="variation-type-group-row">' +
-            '<td colspan="5">' +
+            '<td colspan="6">' +
                 '<span class="variation-type-label"><i class="fas fa-tag me-1"></i>' + escHtml(type) + '</span>' +
                 '<button type="button" class="btn btn-sm btn-outline-secondary add-variation-value-btn"><i class="fas fa-plus"></i> Add ' + escHtml(type) + ' Value</button>' +
                 '<button type="button" class="remove-type-btn"><i class="fas fa-trash"></i> Remove Type</button>' +
@@ -1663,6 +1666,9 @@ function addVariationTypeBlock(type, values) {
 function addVariationValueRow(block, value) {
     const row = document.createElement('tr');
     row.className = 'variation-value-row';
+    row.dataset.rowId = String(variationRowIdSeq++);
+
+    const thumbSrc = value && value.image_path ? APP_BASE_URL + value.image_path : '';
 
     row.innerHTML =
         '<td><input type="text" class="form-control form-control-sm variation-value-input" placeholder="Value (e.g. Red)" value="' + escHtml(value ? value.variation_value : '') + '"></td>' +
@@ -1671,6 +1677,11 @@ function addVariationValueRow(block, value) {
             '<option value="active"' + (!value || value.status !== 'inactive' ? ' selected' : '') + '>Active</option>' +
             '<option value="inactive"' + (value && value.status === 'inactive' ? ' selected' : '') + '>Inactive</option>' +
         '</select></td>' +
+        '<td class="text-center">' +
+            '<img class="variation-image-thumb" src="' + escHtml(thumbSrc) + '" style="width:34px;height:34px;object-fit:cover;border-radius:6px;border:1px solid #ddd;cursor:pointer;' + (thumbSrc ? '' : 'display:none;') + '" title="Click to change image">' +
+            '<button type="button" class="btn btn-sm btn-outline-secondary variation-image-btn"' + (thumbSrc ? ' style="display:none;"' : '') + ' title="Upload image for this value"><i class="fas fa-camera"></i></button>' +
+            '<input type="file" accept="image/*" class="variation-image-input" name="variation_images[' + row.dataset.rowId + ']" style="display:none">' +
+        '</td>' +
         '<td class="text-center"><button type="button" class="btn btn-sm btn-outline-primary smart-apply-btn" title="Apply Stock/Price/Status to every combination with this value"><i class="fas fa-bolt"></i></button></td>' +
         '<td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger remove-value-btn" title="Remove"><i class="fas fa-trash"></i></button></td>';
 
@@ -1678,7 +1689,11 @@ function addVariationValueRow(block, value) {
     row.querySelector('.remove-value-btn').addEventListener('click', () => {
         const valueName = row.querySelector('.variation-value-input').value.trim();
         if (valueName && valueHasStock(block.dataset.type, valueName)) {
-            if (!confirm('This value has stock in one or more generated combinations. Removing it will remove those combinations too. Continue?')) return;
+            customConfirm('This value has stock in one or more generated combinations. Removing it will remove those combinations too. Continue?', function() {
+                row.remove();
+                onVariationStructureChanged();
+            }, { title: 'Remove Value' });
+            return;
         }
         row.remove();
         onVariationStructureChanged();
@@ -1687,6 +1702,18 @@ function addVariationValueRow(block, value) {
         const valueName = row.querySelector('.variation-value-input').value.trim();
         if (!valueName) { alert('Enter a value name first.'); return; }
         openApplyModal({ scope: 'value', type: block.dataset.type, value: valueName });
+    });
+
+    const imageInput = row.querySelector('.variation-image-input');
+    const imageThumb = row.querySelector('.variation-image-thumb');
+    const imageBtn = row.querySelector('.variation-image-btn');
+    imageThumb.addEventListener('click', () => imageInput.click());
+    imageBtn.addEventListener('click', () => imageInput.click());
+    imageInput.addEventListener('change', () => {
+        if (!imageInput.files || !imageInput.files[0]) return;
+        imageThumb.src = URL.createObjectURL(imageInput.files[0]);
+        imageThumb.style.display = '';
+        imageBtn.style.display = 'none';
     });
 
     block.appendChild(row);
@@ -1705,6 +1732,7 @@ function onVariationStructureChanged() {
     updateGenerateButtonVisibility();
     syncVariationsJson();
     generateCombinations();
+    if (typeof initResponsiveTableStacking === 'function') initResponsiveTableStacking();
 }
 
 function updateGenerateButtonVisibility() {
@@ -1723,6 +1751,7 @@ function syncVariationsJson() {
                 value: value,
                 default_price_adjustment: parseFloat(row.querySelector('.variation-default-price-input').value) || 0,
                 default_status: row.querySelector('.variation-default-status-select').value,
+                client_row_id: row.dataset.rowId,
             });
         });
     });
@@ -1730,7 +1759,16 @@ function syncVariationsJson() {
 }
 
 /* ── Section 3: Generate Variant Combinations (Cartesian product) ── */
-document.getElementById('generateCombinationsBtn').addEventListener('click', generateCombinations);
+document.getElementById('generateCombinationsBtn').addEventListener('click', () => {
+    generateCombinations();
+    openCombinationsModal();
+});
+
+function openCombinationsModal() { combinationsModalOverlay.classList.add('open'); }
+function closeCombinationsModal() { combinationsModalOverlay.classList.remove('open'); }
+document.getElementById('combinationsModalCloseX').addEventListener('click', closeCombinationsModal);
+document.getElementById('combinationsModalCloseBtn').addEventListener('click', closeCombinationsModal);
+combinationsModalOverlay.addEventListener('mousedown', (e) => { if (e.target === combinationsModalOverlay) closeCombinationsModal(); });
 
 function currentTypeValueLists() {
     const blocks = Array.from(variationTypesContainer.querySelectorAll('.variation-type-block'));
@@ -1804,7 +1842,9 @@ function generateCombinations() {
 /* ── Section 4: Generated Variant Combinations table ────────── */
 function renderCombinationsTable() {
     const keys = Object.keys(combinationRows);
-    combinationsCard.hidden = keys.length === 0;
+    combinationsCountLabel.textContent = keys.length
+        ? keys.length + ' combination(s) generated — click to view/edit'
+        : '';
     if (!keys.length) {
         combinationsBody.innerHTML = '';
         updateTotalStock();
@@ -1812,7 +1852,7 @@ function renderCombinationsTable() {
     }
 
     combinationsHeaderRow.innerHTML =
-        '<th></th><th>Variant Combination</th><th>Image</th>' +
+        '<th></th><th>Variant Combination</th>' +
         VARIATION_BRANCHES.map(b => '<th>' + escHtml(b.label) + '</th>').join('') +
         '<th>Price Adj.</th><th>Status</th><th class="text-center">Actions</th>';
 
@@ -1830,7 +1870,6 @@ function renderCombinationsTable() {
         tr.innerHTML =
             '<td data-label="Select"><input type="checkbox" class="combo-select-checkbox"></td>' +
             '<td data-label="Variant Combination"><strong>' + escHtml(label) + '</strong></td>' +
-            '<td data-label="Image"><input type="file" accept="image/*" class="form-control form-control-sm combo-image-input" name="variant_image[' + escHtml(c.row_key) + ']"></td>' +
             branchCells +
             '<td data-label="Price Adj."><input type="number" step="0.01" class="form-control form-control-sm combo-price-input" value="' + (parseFloat(c.price_adjustment) || 0) + '"></td>' +
             '<td data-label="Status"><select class="form-control form-control-sm combo-status-select">' +
@@ -1850,10 +1889,12 @@ function renderCombinationsTable() {
         });
         tr.querySelector('.combo-delete-btn').addEventListener('click', () => {
             const stock = Object.values(c.branch_stock || {}).reduce((s, q) => s + (parseInt(q, 10) || 0), 0);
-            if (stock > 0 && !confirm('This combination still has ' + stock + ' unit(s) of stock. Delete it anyway?')) return;
-            delete combinationRows[key];
-            tr.remove();
-            syncCombinationsJson();
+            const doDelete = () => { delete combinationRows[key]; tr.remove(); syncCombinationsJson(); };
+            if (stock > 0) {
+                customConfirm('This combination still has ' + stock + ' unit(s) of stock. Delete it anyway?', doDelete, { title: 'Delete Combination' });
+            } else {
+                doDelete();
+            }
         });
 
         combinationsBody.appendChild(tr);
@@ -1916,8 +1957,13 @@ function openApplyModal(opts) {
             '<div class="form-group"><label>Status</label><select class="form-control form-control-sm" id="applyModalStatus"><option value="">(no change)</option><option value="active">Active</option><option value="inactive">Inactive</option></select></div>' +
             '<div class="form-group"><label>Branch Stock (leave blank for no change)</label>' + branchStockFields() + '</div>';
     } else if (action === 'delete') {
+        const hasStock = opts.rows.some(tr => {
+            const key = tr.dataset.key;
+            return Object.values((combinationRows[key] || {}).branch_stock || {}).reduce((s, q) => s + (parseInt(q, 10) || 0), 0) > 0;
+        });
         title = 'Delete Selected Combinations';
-        bodyHtml = '<p>Delete ' + opts.rows.length + ' selected combination(s)? This cannot be undone once saved.</p>';
+        bodyHtml = '<p>Delete ' + opts.rows.length + ' selected combination(s)? This cannot be undone once saved.' +
+            (hasStock ? ' <strong>Some of these still have stock.</strong>' : '') + '</p>';
     } else if (action === 'stock') {
         title = 'Apply Stock';
         bodyHtml = '<div class="form-group"><label>Branch Stock</label>' + branchStockFields() + '</div>';
@@ -1927,9 +1973,6 @@ function openApplyModal(opts) {
     } else if (action === 'status') {
         title = 'Apply Status';
         bodyHtml = '<div class="form-group"><label>Status</label><select class="form-control form-control-sm" id="applyModalStatus"><option value="active">Active</option><option value="inactive">Inactive</option></select></div>';
-    } else if (action === 'image') {
-        title = 'Apply Image';
-        bodyHtml = '<p class="text-muted" style="font-size:.85rem;">Browsers don\'t allow reusing one selected file across multiple file inputs — select the image individually in each row\'s Image column instead.</p>';
     }
 
     showModal(title, bodyHtml, () => {
@@ -1940,11 +1983,10 @@ function openApplyModal(opts) {
                 branchStock: readModalBranchStock(),
             });
         } else if (action === 'delete') {
+            // The confirm above already warns if any selected row still has
+            // stock — no need to ask again per row here.
             opts.rows.forEach(tr => {
-                const key = tr.dataset.key;
-                const stock = Object.values((combinationRows[key] || {}).branch_stock || {}).reduce((s, q) => s + (parseInt(q, 10) || 0), 0);
-                if (stock > 0 && !confirm('One of the selected combinations still has stock. Delete it anyway?')) return;
-                delete combinationRows[key];
+                delete combinationRows[tr.dataset.key];
                 tr.remove();
             });
             syncCombinationsJson();
@@ -2007,7 +2049,7 @@ function showModal(title, bodyHtml, onConfirm) {
     if (!modal) {
         modal = document.createElement('div');
         modal.id = 'variantApplyModal';
-        modal.style.cssText = 'display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center;';
+        modal.style.cssText = 'display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:10050;align-items:center;justify-content:center;';
         modal.innerHTML =
             '<div style="background:#fff;border-radius:12px;max-width:480px;width:92%;padding:24px;box-shadow:0 10px 40px rgba(0,0,0,.2);max-height:85vh;overflow-y:auto;">' +
                 '<h5 style="margin-bottom:14px;" id="variantApplyModalTitle"></h5>' +
@@ -2041,16 +2083,16 @@ window.addEventListener('beforeunload', function(e) {
     e.returnValue = '';
 });
 
-/* ── Form submit ─────────────────────────────────────────── */
+/* ── Form submit — a safety net in case step 5 is ever reached with a
+   stale/invalid earlier step (e.g. browser back/forward), since Next
+   already gates on validation for normal forward navigation. ── */
 document.getElementById('addProductForm').addEventListener('submit', function(e) {
-    const image = document.getElementById('product_image');
-    if (!image.files.length) {
-        e.preventDefault();
-        goToStep(1);
-        imageError.textContent = 'Please select a product image before saving.';
-        imageError.style.display = 'block';
-        uploadZone.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        return;
+    for (let s = 1; s <= 3; s++) {
+        if (!runValidation(s, true)) {
+            e.preventDefault();
+            showStep(s);
+            return;
+        }
     }
     addProductFormDirty = false; // actual save in progress — no need to warn anymore
     const btn = document.getElementById('saveBtn');
@@ -2062,9 +2104,9 @@ document.getElementById('addProductForm').addEventListener('submit', function(e)
 <?php if (!empty($error)): ?>
 (function resumeAfterServerError() {
     for (let s = 1; s <= 4; s++) {
-        if (!runValidation(s, false)) { goToStep(s); return; }
+        if (!runValidation(s, false)) { showStep(s); return; }
     }
-    goToStep(5);
+    showStep(5);
 })();
 <?php endif; ?>
 </script>

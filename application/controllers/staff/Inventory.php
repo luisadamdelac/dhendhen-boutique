@@ -46,14 +46,44 @@ class Inventory extends Authenticated_Controller {
         unset($p);
         $data['products'] = $products;
 
+        $expiryCutoff = date('Y-m-d', strtotime('+30 days'));
         $data['product_stats'] = [
             'total_products'        => count($products),
             'low_stock_products'    => count(array_filter($products, fn($p) => $p['stock'] > 0 && $p['stock'] <= 10)),
             'out_of_stock_products' => count(array_filter($products, fn($p) => $p['stock'] === 0)),
+            'expiring_products'     => count(array_filter($products, fn($p) => !empty($p['expiry_date']) && $p['expiry_date'] <= $expiryCutoff)),
         ];
 
         $this->load->view('staff/layouts/header', $data);
         $this->load->view('staff/inventory/index', $data);
+        $this->load->view('staff/layouts/footer', $data);
+    }
+
+    /**
+     * Products already expired or expiring within 30 days — same lookahead
+     * window as the admin/dashboard "Expiring Soon" stat, but scoped to this
+     * staff member's own branch stock like the rest of this controller.
+     */
+    public function expiring() {
+        $data = $this->set_view_data();
+        $data['page_title'] = 'Expiring Products';
+
+        $products = $this->product_model->base_query()->order_by('p.expiry_date', 'ASC')->get()->result_array();
+        $stock_by_product = $this->staff_branch_id
+            ? StockService::getAvailableStockForProducts(array_column($products, 'product_id'), $this->staff_branch_id)
+            : [];
+
+        $cutoff = date('Y-m-d', strtotime('+30 days'));
+        $expiring = [];
+        foreach ($products as $p) {
+            if (empty($p['expiry_date']) || $p['expiry_date'] > $cutoff) continue;
+            $p['stock'] = $stock_by_product[(int) $p['product_id']] ?? 0;
+            $expiring[] = $p;
+        }
+
+        $data['products'] = $expiring;
+        $this->load->view('staff/layouts/header', $data);
+        $this->load->view('staff/inventory/expiring', $data);
         $this->load->view('staff/layouts/footer', $data);
     }
 

@@ -95,7 +95,7 @@ table.dataTable thead th.sorting:hover { color: var(--primary-pink); cursor: poi
     <!-- Reviews Table -->
     <div class="card border-0 shadow-sm mb-2" style="border-radius:12px;overflow:hidden;">
         <div class="table-responsive">
-            <table class="table inv-table mb-0" id="reviewsDataTable">
+            <table class="table inv-table mb-0 table-stack" id="reviewsDataTable">
                 <thead>
                     <tr>
                         <th class="ps-3">ID</th>
@@ -189,7 +189,8 @@ $(function () {
     const table = $('#reviewsDataTable').DataTable({
         order: [[6, 'desc']],
         columnDefs: [{ orderable: false, targets: [4, 7] }],
-        language: { search: '_INPUT_', searchPlaceholder: 'Search product, customer, or review…', emptyTable: 'No reviews found' }
+        language: { search: '_INPUT_', searchPlaceholder: 'Search product, customer, or review…', emptyTable: 'No reviews found' },
+        drawCallback: function() { if (typeof initResponsiveTableStacking === 'function') initResponsiveTableStacking(); }
     });
 
     $.fn.dataTable.ext.search.push(function (settings, searchData, index) {
@@ -209,7 +210,7 @@ $(function () {
 
 // Approve review
 function approveReview(reviewId) {
-    if (confirm('Are you sure you want to approve this review?')) {
+    customConfirm('Are you sure you want to approve this review?', function() {
         fetch('<?php echo BASE_URL; ?>review/approve', {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -228,12 +229,12 @@ function approveReview(reviewId) {
             showToast('An error occurred', 'danger');
             console.error('Error:', error);
         });
-    }
+    }, { title: 'Approve Review' });
 }
 
 // Reject review
 function rejectReview(reviewId) {
-    if (confirm('Are you sure you want to reject this review?')) {
+    customConfirm('Are you sure you want to reject this review?', function() {
         fetch('<?php echo BASE_URL; ?>review/reject', {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -252,12 +253,12 @@ function rejectReview(reviewId) {
             showToast('An error occurred', 'danger');
             console.error('Error:', error);
         });
-    }
+    }, { title: 'Reject Review' });
 }
 
 // Delete review
 function deleteReview(reviewId) {
-    if (confirm('Are you sure you want to permanently delete this review? This action cannot be undone.')) {
+    customConfirm('Are you sure you want to permanently delete this review? This action cannot be undone.', function() {
         fetch('<?php echo BASE_URL; ?>review/delete', {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -276,7 +277,7 @@ function deleteReview(reviewId) {
             showToast('An error occurred', 'danger');
             console.error('Error:', error);
         });
-    }
+    }, { title: 'Delete Review' });
 }
 
 function showToast(message, type) {

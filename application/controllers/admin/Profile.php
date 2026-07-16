@@ -161,16 +161,18 @@ class Profile extends Authenticated_Controller {
 
         $this->load->library('upload', [
             'upload_path' => $upload_dir,
-            'allowed_types' => 'jpg|jpeg|png|gif',
+            'allowed_types' => 'jpg|jpeg|png|gif|webp',
             'max_size' => 2048,
             'encrypt_name' => TRUE,
         ]);
 
         if ($this->upload->do_upload('photo')) {
+            $path = 'public/uploads/avatars/' . $this->upload->data('file_name');
             $this->db->where('admin_id', $admin_id)->update(ADMIN_TABLE, [
-                'profile_image' => 'public/uploads/avatars/' . $this->upload->data('file_name'),
+                'profile_image' => $path,
                 'updated_at' => date('Y-m-d H:i:s'),
             ]);
+            $this->session->set_userdata('profile_image', $path);
             $this->session->set_flashdata('success', 'Profile photo updated');
         } else {
             $this->session->set_flashdata('error', $this->upload->display_errors('', ''));
@@ -181,6 +183,7 @@ class Profile extends Authenticated_Controller {
 
     public function delete_photo() {
         $this->db->where('admin_id', get_user_id())->update(ADMIN_TABLE, ['profile_image' => NULL]);
+        $this->session->set_userdata('profile_image', '');
         $this->session->set_flashdata('success', 'Profile photo removed');
         redirect('admin/profile');
     }

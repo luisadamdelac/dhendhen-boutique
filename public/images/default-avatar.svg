@@ -1,23 +1,17 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
-  <!-- Background circle -->
-  <circle cx="100" cy="100" r="100" fill="#667eea"/>
-  
-  <!-- Head -->
-  <circle cx="100" cy="70" r="30" fill="white"/>
-  
-  <!-- Body -->
-  <ellipse cx="100" cy="140" rx="35" ry="40" fill="white"/>
-  
-  <!-- Left arm -->
-  <ellipse cx="65" cy="120" rx="12" ry="35" fill="white" transform="rotate(-25 65 120)"/>
-  
-  <!-- Right arm -->
-  <ellipse cx="135" cy="120" rx="12" ry="35" fill="white" transform="rotate(25 135 120)"/>
-  
-  <!-- Eyes -->
-  <circle cx="92" cy="65" r="3" fill="#667eea"/>
-  <circle cx="108" cy="65" r="3" fill="#667eea"/>
-  
-  <!-- Smile -->
-  <path d="M 92 75 Q 100 80 108 75" stroke="#667eea" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <!-- Rounded-square backdrop -->
+  <rect width="200" height="200" rx="28" fill="#f2f3f5"/>
+
+  <!-- Circle plate -->
+  <circle cx="100" cy="100" r="92" fill="#c9ccd1"/>
+
+  <clipPath id="avatarClip">
+    <circle cx="100" cy="100" r="92"/>
+  </clipPath>
+
+  <!-- Person silhouette, clipped to the circle -->
+  <g clip-path="url(#avatarClip)" fill="#eef0f2">
+    <circle cx="100" cy="82" r="34"/>
+    <path d="M38 214 C38 150 162 150 162 214 Z"/>
+  </g>
 </svg>

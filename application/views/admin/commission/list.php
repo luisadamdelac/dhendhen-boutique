@@ -59,7 +59,7 @@ table.dataTable thead th.sorting:hover { color: var(--primary-pink); cursor: poi
                     <tbody>
                         <?php foreach ($transactions as $transaction): ?>
                             <tr data-reseller-id="<?= (int) $transaction['reseller_id']; ?>">
-                                <td class="ps-3">#<?= htmlspecialchars($transaction['commission_id']); ?></td>
+                                <td class="ps-3"><a href="<?= site_url('admin/commission/view/' . $transaction['commission_id']); ?>">#<?= htmlspecialchars($transaction['commission_id']); ?></a></td>
                                 <td><?= htmlspecialchars(trim(($transaction['first_name'] ?? '') . ' ' . ($transaction['last_name'] ?? '')) ?: '-'); ?></td>
                                 <td>₱<?= number_format($transaction['amount'] ?? 0, 2); ?></td>
                                 <td><span class="badge-status badge-<?= $transaction['status'] ?? 'pending'; ?>"><?= ucfirst($transaction['status'] ?? 'pending'); ?></span></td>

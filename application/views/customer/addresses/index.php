@@ -185,7 +185,7 @@
                             </button>
                         </form>
                     <?php endif; ?>
-                    <form method="POST" action="<?php echo BASE_URL; ?>addresses/delete/<?php echo $addr['address_id']; ?>" onsubmit="return confirm('Delete this address?');">
+                    <form method="POST" action="<?php echo BASE_URL; ?>addresses/delete/<?php echo $addr['address_id']; ?>" onsubmit="return confirmSubmit(event, this, 'Delete this address?');">
                         <button type="submit" class="btn-sm btn-sm-danger">
                             <i class="fas fa-trash"></i> Delete
                         </button>

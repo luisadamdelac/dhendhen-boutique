@@ -20,6 +20,9 @@
 
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+
+    <!-- Chart.js (self-hosted) — used by the Dashboard's sales/commission charts -->
+    <script src="<?php echo BASE_URL; ?>public/vendor/chartjs/chart.umd.min.js"></script>
 </head>
 <body>
     <div class="wrapper">
@@ -36,9 +39,14 @@
 
             <div class="header-right">
                 <div class="header-icons">
+                    <?php
+                        $CI = &get_instance();
+                        $CI->load->model('Notification_model');
+                        $unreadCount = $CI->Notification_model->get_unread_count(get_user_id(), 'reseller');
+                    ?>
                     <a href="<?php echo BASE_URL; ?>reseller/notifications" class="header-icon" id="notificationIcon" title="Notifications">
                         <i class="fas fa-bell"></i>
-                        <span class="badge" id="notificationBadge" style="display: none;">0</span>
+                        <span class="badge" id="notificationBadge" style="display: <?php echo $unreadCount > 0 ? 'block' : 'none'; ?>;"><?php echo $unreadCount; ?></span>
                     </a>
                 </div>
 
@@ -128,13 +136,20 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a href="<?php echo BASE_URL; ?>auth/logout/reseller" class="nav-link" onclick="return confirm('Are you sure you want to logout?');">
+                        <a href="<?php echo BASE_URL; ?>auth/logout/reseller" class="nav-link" onclick="return confirmNavigate(event, this, 'Are you sure you want to logout?', 'Logout');">
                             <i class="fas fa-sign-out-alt"></i>
                             <span>Logout</span>
                         </a>
                     </li>
                 </ul>
             </nav>
+
+            <div class="sidebar-promo">
+                <div class="sidebar-promo-icon"><i class="fas fa-crown"></i></div>
+                <h5>Reseller Program</h5>
+                <p>Earn more with our incentives &amp; commissions!</p>
+                <a href="<?php echo BASE_URL; ?>reseller/commission" class="btn btn-light btn-sm w-100">View Incentives</a>
+            </div>
         </aside>
 
         <!-- Main Content -->

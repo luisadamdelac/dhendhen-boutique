@@ -89,10 +89,11 @@
 
 <script>
 function setAdminStatus(adminId, action) {
-    if (!confirm(action === 'activate' ? 'Activate this admin account?' : 'Deactivate this admin account?')) return;
-    fetch('<?php echo site_url('admin/admins/'); ?>' + action + '/' + adminId, { method: 'POST' })
-        .then(r => r.json())
-        .then(data => { alert(data.message || ''); if (data.success) location.reload(); })
-        .catch(() => alert('Request failed'));
+    customConfirm(action === 'activate' ? 'Activate this admin account?' : 'Deactivate this admin account?', function() {
+        fetch('<?php echo site_url('admin/admins/'); ?>' + action + '/' + adminId, { method: 'POST' })
+            .then(r => r.json())
+            .then(data => { alert(data.message || ''); if (data.success) location.reload(); })
+            .catch(() => alert('Request failed'));
+    }, { title: action === 'activate' ? 'Activate Admin' : 'Deactivate Admin' });
 }
 </script>

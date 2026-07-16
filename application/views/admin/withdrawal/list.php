@@ -91,7 +91,7 @@ table.dataTable thead th.sorting:hover { color: var(--primary-pink); cursor: poi
     <div class="card border-0 shadow-sm mb-2" style="border-radius:12px;overflow:hidden;">
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table inv-table mb-0" id="withdrawalsTable">
+                <table class="table inv-table mb-0 table-stack" id="withdrawalsTable">
                     <thead>
                         <tr>
                             <th class="ps-3">#</th>
@@ -162,7 +162,8 @@ $(function () {
     const table = $('#withdrawalsTable').DataTable({
         order: [[0, 'desc']],
         columnDefs: [{ orderable: false, targets: [6] }],
-        language: { search: '_INPUT_', searchPlaceholder: 'Search reseller or email…', emptyTable: 'No withdrawal requests found' }
+        language: { search: '_INPUT_', searchPlaceholder: 'Search reseller or email…', emptyTable: 'No withdrawal requests found' },
+        drawCallback: function() { if (typeof initResponsiveTableStacking === 'function') initResponsiveTableStacking(); }
     });
 
     $.fn.dataTable.ext.search.push(function (settings, searchData, index) {

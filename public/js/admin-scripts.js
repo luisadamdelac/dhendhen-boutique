@@ -1,5 +1,77 @@
-// E-Benta Admin Dashboard JavaScript
+// DropSell Dashboard JavaScript
 // BASE_URL is defined in footer.php before this script loads
+
+// Self-contained confirm modal (inline-styled, no external CSS dependency)
+// so it renders identically across every role's stylesheet (admin-style.css
+// or style.css). Use in place of the native confirm() dialog.
+function customConfirm(message, onConfirm, opts) {
+    opts = opts || {};
+
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px;';
+
+    const box = document.createElement('div');
+    box.style.cssText = 'background:#fff;width:100%;max-width:380px;border-radius:14px;box-shadow:0 8px 32px rgba(0,0,0,.2);padding:24px;font-family:inherit;';
+
+    const title = document.createElement('h4');
+    title.textContent = opts.title || 'Please Confirm';
+    title.style.cssText = 'margin:0 0 10px;font-size:1.05rem;color:#1a1a2e;font-weight:700;';
+
+    const msg = document.createElement('p');
+    msg.textContent = message;
+    msg.style.cssText = 'margin:0 0 20px;font-size:.9rem;color:#475569;line-height:1.5;';
+
+    const actions = document.createElement('div');
+    actions.style.cssText = 'display:flex;justify-content:flex-end;gap:10px;';
+
+    const cancelBtn = document.createElement('button');
+    cancelBtn.type = 'button';
+    cancelBtn.textContent = opts.cancelText || 'Cancel';
+    cancelBtn.style.cssText = 'padding:9px 18px;border-radius:8px;border:1px solid #ddd;background:#fff;color:#333;font-weight:600;cursor:pointer;';
+
+    const okBtn = document.createElement('button');
+    okBtn.type = 'button';
+    okBtn.textContent = opts.okText || 'OK';
+    okBtn.style.cssText = 'padding:9px 18px;border-radius:8px;border:none;background:#EC4899;color:#fff;font-weight:600;cursor:pointer;';
+
+    actions.appendChild(cancelBtn);
+    actions.appendChild(okBtn);
+    box.appendChild(title);
+    box.appendChild(msg);
+    box.appendChild(actions);
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+
+    function close() { overlay.remove(); }
+    cancelBtn.addEventListener('click', function() { close(); if (opts.onCancel) opts.onCancel(); });
+    okBtn.addEventListener('click', function() { close(); onConfirm(); });
+    overlay.addEventListener('click', function(e) { if (e.target === overlay) { close(); if (opts.onCancel) opts.onCancel(); } });
+}
+
+// For "remove"-style links that must confirm before navigating — customConfirm
+// is async (unlike native confirm()), so the link's default navigation is
+// prevented and re-triggered manually once the user confirms.
+function confirmRemovePhoto(event, link, message) {
+    event.preventDefault();
+    customConfirm(message || 'Remove your profile photo?', function() {
+        window.location.href = link.href;
+    });
+    return false;
+}
+
+// Generic version of the above for any confirm-before-navigate link.
+function confirmNavigate(event, link, message, title) {
+    event.preventDefault();
+    customConfirm(message, function() { window.location.href = link.href; }, { title: title });
+    return false;
+}
+
+// Generic confirm-before-submit for a <form onsubmit="return ...">.
+function confirmSubmit(event, form, message, title) {
+    event.preventDefault();
+    customConfirm(message, function() { form.submit(); }, { title: title });
+    return false;
+}
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
@@ -7,7 +79,30 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeDataTables();
     initializeModals();
     initializeSidebarActiveState();
+    initResponsiveTableStacking();
 });
+
+// Mobile "stacked card" tables — copies each <thead> column's text onto the
+// matching <td> as a data-label attribute, so a table only needs
+// class="table-stack" on the <table> itself; the CSS (.table-stack in
+// admin-style.css / style.css) does the rest at narrow widths. Re-run this
+// after dynamically adding/removing rows to a table.table-stack.
+function initResponsiveTableStacking() {
+    document.querySelectorAll('table.table-stack').forEach(function(table) {
+        const headers = Array.from(table.querySelectorAll('thead th')).map(function(th) {
+            return th.textContent.trim();
+        });
+        if (!headers.length) return;
+        table.querySelectorAll('tbody tr').forEach(function(tr) {
+            // A colspan row (e.g. a section-group divider) doesn't map to a
+            // single header — leave it unlabeled rather than mislabel it.
+            if (tr.children.length === 1 && tr.children[0].colSpan > 1) return;
+            Array.from(tr.children).forEach(function(td, i) {
+                if (headers[i]) td.setAttribute('data-label', headers[i]);
+            });
+        });
+    });
+}
 
 // Event Listeners
 function initializeEventListeners() {
@@ -475,16 +570,27 @@ function updateNotificationBadge(count) {
     }
 }
 
-// Check notifications every 30 seconds
-setInterval(checkNotifications, 30000);
+// checkNotifications()/initNotificationDropdowns() are hardcoded to
+// scope=admin and admin/notification/* endpoints — admin-scripts.js is now
+// shared by every role's layout, so this must only run on actual admin
+// pages. Each role's session cookie persists independently (by design, for
+// same-browser multi-role testing), so on a staff/reseller/customer page
+// this would otherwise silently authenticate as whatever admin account is
+// still logged in in another tab and overwrite that page's own
+// #notificationBadge with the admin's unread count.
+if (window.location.pathname.toLowerCase().indexOf('/admin/') !== -1 ||
+    /\/admin$/.test(window.location.pathname.toLowerCase())) {
+    // Check notifications every 30 seconds
+    setInterval(checkNotifications, 30000);
+
+    // Check on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        checkNotifications();
+        initNotificationDropdowns();
+    });
+}
 
 initializeSidebarActiveState();
-
-// Check on page load
-document.addEventListener('DOMContentLoaded', function() {
-    checkNotifications();
-    initNotificationDropdowns();
-});
 
 // --- Header notification / order-alert dropdowns ---
 function notifTypeToUrl(type) {

@@ -78,6 +78,8 @@ class Product extends Authenticated_Controller {
             $data['stat_low_stock'] = $this->db->where('stock <', 10)->where('stock >', 0)->where('is_archived', 0)->count_all_results(PRODUCT_TABLE);
         }
 
+        $data['stat_expiring'] = $this->Product_model->count_expiring(30);
+
         // Branches section — per-branch product/stock counts from the batch ledger
         $data['branches_list'] = $this->db
             ->select('b.*, COUNT(DISTINCT ib.product_id) as total_products, COALESCE(SUM(ib.remaining_quantity), 0) as total_stock')
@@ -566,6 +568,30 @@ class Product extends Authenticated_Controller {
     }
 
     /**
+     * Products already expired or expiring soon (default: within 30 days).
+     */
+    public function expiring() {
+        $data['page_title'] = 'Expiring Products';
+        $data['current_page'] = 'inventory';
+        $page = $this->input->get('page') ?? 1;
+        $limit = PAGINATION_LIMIT;
+        $offset = ($page - 1) * $limit;
+        $days = $this->input->get('days') ?? 30;
+
+        $data['products'] = $this->Product_model->get_expiring($days, $limit, $offset);
+        $data['total'] = $this->Product_model->count_expiring($days);
+        $data['days'] = $days;
+        $data['page'] = $page;
+        $data['pages'] = ceil($data['total'] / $limit);
+        $data['branches'] = $this->db->select('*')->from(BRANCHES_TABLE)->order_by('branch_name')->get()->result_array();
+        $data['branch_stock'] = StockService::getBranchStockForProducts(array_column($data['products'], 'product_id'));
+
+        $this->load->view('admin/layout/header', $data);
+        $this->load->view('admin/product/expiring', $data);
+        $this->load->view('admin/layout/footer', $data);
+    }
+
+    /**
      * Quick restock from the Low Stock page — adds straight to a branch's
      * base (no-variation) stock. Products whose stock lives entirely in a
      * named variation (e.g. "Size: Small") aren't restockable here, since
@@ -879,6 +905,10 @@ class Product extends Authenticated_Controller {
                 'value'                    => $value,
                 'default_price_adjustment' => (float) ($v['default_price_adjustment'] ?? 0),
                 'default_status'           => in_array($status, ['active', 'inactive'], TRUE) ? $status : 'active',
+                // Client-side row id — correlates this row to its optional
+                // uploaded file in $_FILES['variation_images'][id], since a
+                // brand new value has no variation_id yet at post time.
+                'client_row_id'            => (string) ($v['client_row_id'] ?? ''),
             ];
         }
 
@@ -914,6 +944,10 @@ class Product extends Authenticated_Controller {
                 $variation_id = $this->db->insert_id();
             }
             $valueIdMap[$row['type']][$row['value']] = $variation_id;
+
+            if ($row['client_row_id'] !== '') {
+                $this->_maybe_upload_variation_image($variation_id, $row['client_row_id'], $existingKeyed[$key]['image_path'] ?? NULL);
+            }
         }
 
         // Remove values no longer posted — but never silently destroy stock
@@ -926,12 +960,135 @@ class Product extends Authenticated_Controller {
             if ($this->_variation_value_has_stock($variation_id)) {
                 throw new Exception('Cannot remove "' . $row['variation_type'] . ': ' . $row['variation_value'] . '" — it still has stock in one or more variant combinations. Reduce that stock to 0 first.');
             }
+            if (!empty($row['image_path']) && file_exists(FCPATH . $row['image_path'])) {
+                @unlink(FCPATH . $row['image_path']);
+            }
             // Cascades (FK) to delete any product_variants rows (and their
             // now-empty inventory_batches) still referencing this value.
             $this->db->where('variation_id', $variation_id)->delete(PRODUCT_VARIATION_TABLE);
         }
 
         return $valueIdMap;
+    }
+
+    /**
+     * Uploads $_FILES['variation_images'][$client_row_id] (if present) as the
+     * image for a single variation value. CI3's Upload library only reads
+     * flat $_FILES entries, so an indexed file input is remapped to a
+     * single-file shape before calling do_upload(). Bad uploads (wrong type,
+     * too large) are skipped rather than failing the whole product save,
+     * since the image is a nice-to-have, not a required field.
+     */
+    private function _maybe_upload_variation_image($variation_id, $client_row_id, $previous_image_path) {
+        if (empty($_FILES['variation_images']['name'][$client_row_id])) {
+            return;
+        }
+
+        $upload_path = FCPATH . 'uploads/variations/';
+        if (!is_dir($upload_path)) {
+            mkdir($upload_path, 0755, TRUE);
+        }
+
+        $_FILES['variation_image_single'] = [
+            'name'     => $_FILES['variation_images']['name'][$client_row_id],
+            'type'     => $_FILES['variation_images']['type'][$client_row_id],
+            'tmp_name' => $_FILES['variation_images']['tmp_name'][$client_row_id],
+            'error'    => $_FILES['variation_images']['error'][$client_row_id],
+            'size'     => $_FILES['variation_images']['size'][$client_row_id],
+        ];
+
+        $this->load->library('upload', [
+            'upload_path'   => $upload_path,
+            'allowed_types' => 'jpg|jpeg|png|webp',
+            'max_size'      => 5120,
+            'encrypt_name'  => TRUE,
+        ]);
+        $this->upload->initialize([
+            'upload_path'   => $upload_path,
+            'allowed_types' => 'jpg|jpeg|png|webp',
+            'max_size'      => 5120,
+            'encrypt_name'  => TRUE,
+        ]);
+
+        if (!$this->upload->do_upload('variation_image_single')) {
+            unset($_FILES['variation_image_single']);
+            return;
+        }
+
+        $new_image_path = 'uploads/variations/' . $this->upload->data('file_name');
+        $this->db->where('variation_id', $variation_id)->update(PRODUCT_VARIATION_TABLE, ['image_path' => $new_image_path]);
+
+        if (!empty($previous_image_path) && file_exists(FCPATH . $previous_image_path)) {
+            @unlink(FCPATH . $previous_image_path);
+        }
+
+        unset($_FILES['variation_image_single']);
+    }
+
+    /**
+     * Uploads $_FILES['variant_image'][$row_key] (if present) as the primary
+     * image for a generated variant combination (Section 4 of the product
+     * edit wizard — the "Variant Combination" table's per-row "Choose File").
+     * Mirrors _maybe_upload_variation_image()'s single-file remap trick.
+     * $row_key is "existing_<variant_id>" or "new_<seq>" from the client —
+     * a brand new combination has no variant_id yet at post time.
+     */
+    private function _maybe_upload_variant_image($variant_id, $row_key) {
+        if (empty($_FILES['variant_image']['name'][$row_key])) {
+            return;
+        }
+
+        $upload_path = FCPATH . 'uploads/variants/';
+        if (!is_dir($upload_path)) {
+            mkdir($upload_path, 0755, TRUE);
+        }
+
+        $_FILES['variant_image_single'] = [
+            'name'     => $_FILES['variant_image']['name'][$row_key],
+            'type'     => $_FILES['variant_image']['type'][$row_key],
+            'tmp_name' => $_FILES['variant_image']['tmp_name'][$row_key],
+            'error'    => $_FILES['variant_image']['error'][$row_key],
+            'size'     => $_FILES['variant_image']['size'][$row_key],
+        ];
+
+        $this->load->library('upload', [
+            'upload_path'   => $upload_path,
+            'allowed_types' => 'jpg|jpeg|png|webp',
+            'max_size'      => 5120,
+            'encrypt_name'  => TRUE,
+        ]);
+        $this->upload->initialize([
+            'upload_path'   => $upload_path,
+            'allowed_types' => 'jpg|jpeg|png|webp',
+            'max_size'      => 5120,
+            'encrypt_name'  => TRUE,
+        ]);
+
+        if (!$this->upload->do_upload('variant_image_single')) {
+            unset($_FILES['variant_image_single']);
+            return;
+        }
+
+        $new_image_path = 'uploads/variants/' . $this->upload->data('file_name');
+        $existing_image = $this->db->select('variant_image_id, image_path')->from(PRODUCT_VARIANT_IMAGES_TABLE)
+            ->where('variant_id', $variant_id)->where('is_primary', 1)->get()->row_array();
+
+        if ($existing_image) {
+            $this->db->where('variant_image_id', $existing_image['variant_image_id'])
+                ->update(PRODUCT_VARIANT_IMAGES_TABLE, ['image_path' => $new_image_path]);
+            if (!empty($existing_image['image_path']) && file_exists(FCPATH . $existing_image['image_path'])) {
+                @unlink(FCPATH . $existing_image['image_path']);
+            }
+        } else {
+            $this->db->insert(PRODUCT_VARIANT_IMAGES_TABLE, [
+                'variant_id'  => $variant_id,
+                'image_path'  => $new_image_path,
+                'is_primary'  => 1,
+                'created_at'  => date('Y-m-d H:i:s'),
+            ]);
+        }
+
+        unset($_FILES['variant_image_single']);
     }
 
     /**
@@ -1000,6 +1157,11 @@ class Product extends Authenticated_Controller {
                 'price_adjustment' => (float) ($c['price_adjustment'] ?? 0),
                 'status'           => in_array($status, ['active', 'inactive'], TRUE) ? $status : 'active',
                 'branch_stock'     => is_array($c['branch_stock'] ?? NULL) ? $c['branch_stock'] : [],
+                // Client-side row key ("existing_<variant_id>" or "new_<seq>")
+                // — correlates this row to its optional uploaded file in
+                // $_FILES['variant_image'][key], since a brand new
+                // combination has no variant_id yet at post time.
+                'row_key'          => (string) ($c['row_key'] ?? ''),
             ];
         }
 
@@ -1037,6 +1199,10 @@ class Product extends Authenticated_Controller {
                     'updated_at'       => $now,
                 ]);
                 $variant_id = $this->db->insert_id();
+            }
+
+            if ($row['row_key'] !== '') {
+                $this->_maybe_upload_variant_image($variant_id, $row['row_key']);
             }
 
             // Stock deltas — preserve existing batches, only add/deduct the

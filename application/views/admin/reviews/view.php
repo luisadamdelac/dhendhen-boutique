@@ -82,10 +82,19 @@
                     <!-- Customer Information -->
                     <div class="info-section">
                         <h4><i class="fas fa-user" style="color: var(--secondary-violet);"></i> Customer Information</h4>
+                        <?php
+                            $customerAvatarSrc = !empty($review['customer_profile_image'])
+                                ? BASE_URL . $review['customer_profile_image']
+                                : BASE_URL . default_avatar_url();
+                        ?>
                         <div class="info-grid">
                             <div class="info-item">
                                 <label>Customer Name:</label>
-                                <span><?php echo htmlspecialchars($review['customer_name']); ?></span>
+                                <span style="display:flex;align-items:center;gap:8px;">
+                                    <img src="<?php echo $customerAvatarSrc; ?>" alt=""
+                                         style="width:28px;height:28px;border-radius:50%;object-fit:cover;flex-shrink:0;">
+                                    <?php echo htmlspecialchars($review['customer_name']); ?>
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -138,47 +147,7 @@
             </div>
         </div>
         
-        <!-- Quick Actions Sidebar -->
         <div class="col col-4">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">Quick Actions</h3>
-                </div>
-                <div class="card-body">
-                    <div style="display: flex; flex-direction: column; gap: 10px;">
-                        <?php if (!$review['is_visible']): ?>
-                        <button class="btn btn-success" 
-                                onclick="approveReview(<?php echo $review['review_id']; ?>)"
-                                style="width: 100%; justify-content: center;">
-                            <i class="fas fa-check"></i> Approve Review
-                        </button>
-                        <button class="btn btn-danger" 
-                                onclick="rejectReview(<?php echo $review['review_id']; ?>)"
-                                style="width: 100%; justify-content: center;">
-                            <i class="fas fa-times"></i> Reject Review
-                        </button>
-                        <?php else: ?>
-                        <div style="padding: 15px; background: #d4edda; border-radius: 8px; text-align: center; color: #155724;">
-                            <i class="fas fa-check-circle" style="font-size: 24px; margin-bottom: 10px;"></i>
-                            <p style="margin: 0; font-weight: 600;">This review is approved</p>
-                        </div>
-                        <?php endif; ?>
-                        
-                        <button class="btn btn-danger" 
-                                onclick="deleteReview(<?php echo $review['review_id']; ?>)"
-                                style="width: 100%; justify-content: center;">
-                            <i class="fas fa-trash"></i> Delete Review
-                        </button>
-                        
-                        <a href="<?php echo BASE_URL; ?>admin/reviews" 
-                           class="btn btn-outline"
-                           style="width: 100%; justify-content: center;">
-                            <i class="fas fa-arrow-left"></i> Back to Reviews
-                        </a>
-                    </div>
-                </div>
-            </div>
-            
             <!-- Review Timeline -->
             <div class="card" style="margin-top: 20px;">
                 <div class="card-header">
@@ -351,9 +320,9 @@
 <script>
 // Approve review
 function approveReview(reviewId) {
-    if (confirm('Are you sure you want to approve this review? It will become visible to all customers.')) {
+    customConfirm('Are you sure you want to approve this review? It will become visible to all customers.', function() {
         showLoader();
-        
+
         fetch('<?php echo BASE_URL; ?>review/approve', {
             method: 'POST',
             headers: {
@@ -376,14 +345,14 @@ function approveReview(reviewId) {
             showNotification('error', 'An error occurred');
             console.error('Error:', error);
         });
-    }
+    }, { title: 'Approve Review' });
 }
 
 // Reject review
 function rejectReview(reviewId) {
-    if (confirm('Are you sure you want to reject this review? It will not be visible to customers.')) {
+    customConfirm('Are you sure you want to reject this review? It will not be visible to customers.', function() {
         showLoader();
-        
+
         fetch('<?php echo BASE_URL; ?>review/reject', {
             method: 'POST',
             headers: {
@@ -408,14 +377,14 @@ function rejectReview(reviewId) {
             showNotification('error', 'An error occurred');
             console.error('Error:', error);
         });
-    }
+    }, { title: 'Reject Review' });
 }
 
 // Delete review
 function deleteReview(reviewId) {
-    if (confirm('Are you sure you want to permanently delete this review? This action cannot be undone.')) {
+    customConfirm('Are you sure you want to permanently delete this review? This action cannot be undone.', function() {
         showLoader();
-        
+
         fetch('<?php echo BASE_URL; ?>review/delete', {
             method: 'POST',
             headers: {
@@ -440,6 +409,6 @@ function deleteReview(reviewId) {
             showNotification('error', 'An error occurred');
             console.error('Error:', error);
         });
-    }
+    }, { title: 'Delete Review' });
 }
 </script>

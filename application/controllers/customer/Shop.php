@@ -46,6 +46,7 @@ class Shop extends CI_Controller {
 
         $product_ids = array_column($products, 'product_id');
         $variation_product_ids = [];
+        $ratings_by_product = [];
         if (!empty($product_ids)) {
             $variation_product_ids = $this->db->distinct()->select('product_id')
                 ->from(PRODUCT_VARIATION_TABLE)
@@ -53,6 +54,19 @@ class Shop extends CI_Controller {
                 ->where('status', 'active')
                 ->get()->result_array();
             $variation_product_ids = array_column($variation_product_ids, 'product_id');
+
+            // Approved review average/count per product — shown as stars on
+            // the product card once a customer's rating has been moderated in.
+            $rating_rows = $this->db->select('rp.product_id, AVG(pr.rating) as avg_rating, COUNT(pr.review_id) as review_count')
+                ->from('product_reviews pr')
+                ->join(RESELLER_PRODUCTS_TABLE . ' rp', 'rp.reseller_product_id = pr.reseller_product_id')
+                ->where_in('rp.product_id', $product_ids)
+                ->where('pr.status', 'approved')
+                ->group_by('rp.product_id')
+                ->get()->result_array();
+            foreach ($rating_rows as $row) {
+                $ratings_by_product[$row['product_id']] = $row;
+            }
         }
 
         foreach ($products as &$p) {
@@ -61,6 +75,8 @@ class Shop extends CI_Controller {
                 $p['price'] = (float) $p['buy_price'];
             }
             $p['has_variations'] = in_array($p['product_id'], $variation_product_ids);
+            $p['avg_rating'] = isset($ratings_by_product[$p['product_id']]) ? (float) $ratings_by_product[$p['product_id']]['avg_rating'] : NULL;
+            $p['review_count'] = isset($ratings_by_product[$p['product_id']]) ? (int) $ratings_by_product[$p['product_id']]['review_count'] : 0;
         }
         unset($p);
 
@@ -85,6 +101,11 @@ class Shop extends CI_Controller {
             ->order_by('variation_type', 'ASC')->order_by('variation_id', 'ASC')
             ->get()->result_array();
 
+        foreach ($variations as &$v) {
+            $v['image_url'] = !empty($v['image_path']) ? base_url($v['image_path']) : NULL;
+        }
+        unset($v);
+
         echo json_encode(['success' => TRUE, 'variations' => $variations, 'combinations' => $this->_combinations_for_product($id)]);
     }
 
@@ -99,7 +120,7 @@ class Shop extends CI_Controller {
     private function _combinations_for_product($product_id) {
         require_once APPPATH . 'services/StockService.php';
 
-        $combos = $this->db->select('v.*, v1.variation_type as type_1, v1.variation_value as value_1, v2.variation_type as type_2, v2.variation_value as value_2', FALSE)
+        $combos = $this->db->select('v.*, v1.variation_type as type_1, v1.variation_value as value_1, v1.image_path as value_1_image, v2.variation_type as type_2, v2.variation_value as value_2, v2.image_path as value_2_image', FALSE)
             ->from(PRODUCT_VARIANTS_TABLE . ' v')
             ->join(PRODUCT_VARIATION_TABLE . ' v1', 'v1.variation_id = v.variation_id_1', 'left')
             ->join(PRODUCT_VARIATION_TABLE . ' v2', 'v2.variation_id = v.variation_id_2', 'left')
@@ -115,7 +136,20 @@ class Shop extends CI_Controller {
 
             $image = $this->db->select('image_path')->from(PRODUCT_VARIANT_IMAGES_TABLE)
                 ->where('variant_id', $variant_id)->where('is_primary', 1)->get()->row_array();
-            $c['image_url'] = $image ? base_url($image['image_path']) : NULL;
+
+            if ($image) {
+                $c['image_url'] = base_url($image['image_path']);
+            } elseif (!empty($c['value_1_image'])) {
+                // No dedicated variant photo — fall back to whichever axis
+                // value has its own image (e.g. "Volume: 50ml" has a bottle
+                // shot even though this combination is "50ml / Original Pink").
+                $c['image_url'] = base_url($c['value_1_image']);
+            } elseif (!empty($c['value_2_image'])) {
+                $c['image_url'] = base_url($c['value_2_image']);
+            } else {
+                $c['image_url'] = NULL;
+            }
+            unset($c['value_1_image'], $c['value_2_image']);
         }
         unset($c);
 
@@ -167,6 +201,11 @@ class Shop extends CI_Controller {
             ->where('product_id', $id)->where('status', 'active')
             ->order_by('variation_type', 'ASC')->order_by('variation_id', 'ASC')
             ->get()->result_array();
+
+        foreach ($data['variations'] as &$v) {
+            $v['image_url'] = !empty($v['image_path']) ? base_url($v['image_path']) : NULL;
+        }
+        unset($v);
         $data['combinations'] = $this->_combinations_for_product($id);
 
         $data['reviews'] = $this->db->select('pr.*, pr.comment as review, c.first_name, c.last_name')
@@ -184,6 +223,9 @@ class Shop extends CI_Controller {
         unset($review);
 
         $data['product']['review_count'] = count($data['reviews']);
+        $data['product']['avg_rating'] = $data['product']['review_count'] > 0
+            ? array_sum(array_column($data['reviews'], 'rating')) / $data['product']['review_count']
+            : NULL;
 
         $data['relatedProducts'] = $this->db->select('p.*, pi.image_path as product_image')
             ->from(PRODUCT_TABLE . ' p')

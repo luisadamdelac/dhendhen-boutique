@@ -1,13 +1,15 @@
         </main>
     </div>
 
-    <!-- User Dropdown Menu (Reseller) -->
-    <div id="userDropdown" style="display: none; position: absolute; top: 60px; right: 20px; background: white; border-radius: 12px; box-shadow: var(--shadow-lg); padding: 10px; min-width: 200px; z-index: 9999;">
+    <!-- User Dropdown Menu (Reseller) — position: fixed (not absolute) so it
+         stays anchored to the fixed header instead of scrolling away with
+         the page content underneath it. -->
+    <div id="userDropdown" style="display: none; position: fixed; top: var(--header-height); right: 20px; background: white; border-radius: 12px; box-shadow: var(--shadow-lg); padding: 10px; min-width: 200px; z-index: 9999;">
         <a href="<?php echo BASE_URL; ?>reseller/profile" style="display: block; padding: 10px 15px; color: var(--dark-gray); text-decoration: none; border-radius: 8px; transition: var(--transition-base);">
             <i class="fas fa-user"></i> Profile
         </a>
         <hr style="margin: 8px 0; border: none; border-top: 1px solid var(--secondary-lavender);">
-        <a href="<?php echo BASE_URL; ?>auth/logout/reseller" onclick="return confirm('Are you sure you want to logout?');" style="display: block; padding: 10px 15px; color: var(--danger); text-decoration: none; border-radius: 8px; transition: var(--transition-base);">
+        <a href="<?php echo BASE_URL; ?>auth/logout/reseller" onclick="return confirmNavigate(event, this, 'Are you sure you want to logout?', 'Logout');" style="display: block; padding: 10px 15px; color: var(--danger); text-decoration: none; border-radius: 8px; transition: var(--transition-base);">
             <i class="fas fa-sign-out-alt"></i> Logout
         </a>
     </div>
@@ -20,7 +22,7 @@
     <!-- Bootstrap 5 JS Bundle (self-hosted — modals, dropdowns, alerts) -->
     <script src="<?php echo BASE_URL; ?>public/vendor/bootstrap/bootstrap.bundle.min.js"></script>
 
-    <script src="<?php echo BASE_URL; ?>public/js/admin-scripts.js"></script>
+    <script src="<?php echo BASE_URL; ?>public/js/admin-scripts.js?v=<?php echo @filemtime(FCPATH . 'public/js/admin-scripts.js') ?: time(); ?>"></script>
     <script>
         // Sidebar Toggle — below 1200px (Tablet/Mobile) the sidebar is an
         // off-canvas drawer; at 1200px+ (Desktop/Laptop) it's a manual

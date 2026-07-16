@@ -20,7 +20,7 @@
             </p>
         <?php else: ?>
             <div class="table-responsive">
-                <table class="table table-striped">
+                <table class="table table-striped table-stack">
                     <thead>
                         <tr>
                             <th>Title</th>
@@ -76,9 +76,10 @@ function markAsRead(id) {
 }
 
 function deleteNotification(id) {
-    if (!confirm('Delete this notification?')) return;
-    fetch('<?php echo site_url('reseller/notifications/delete/'); ?>' + id, { method: 'POST' })
-        .then(r => r.json())
-        .then(data => { if (data.success) location.reload(); });
+    customConfirm('Delete this notification?', function() {
+        fetch('<?php echo site_url('reseller/notifications/delete/'); ?>' + id, { method: 'POST' })
+            .then(r => r.json())
+            .then(data => { if (data.success) location.reload(); });
+    }, { title: 'Delete Notification' });
 }
 </script>

@@ -323,7 +323,7 @@
         </h2>
         
         <div style="overflow-x: auto;">
-            <table class="items-table">
+            <table class="items-table table-stack">
                 <thead>
                     <tr>
                         <th>Product</th>
@@ -387,7 +387,7 @@
         <?php if ($order['order_status'] == 'pending'): ?>
             <a href="<?php echo BASE_URL; ?>customer/orders/cancel/<?php echo $order['order_id']; ?>"
                class="btn btn-danger"
-               onclick="return confirm('Are you sure you want to cancel this order?')">
+               onclick="return confirmNavigate(event, this, 'Are you sure you want to cancel this order?', 'Cancel Order')">
                 <i class="fas fa-times-circle"></i> Cancel Order
             </a>
         <?php endif; ?>

@@ -40,12 +40,20 @@ table.dataTable thead th.sorting:hover { color: var(--primary-pink); cursor: poi
         <h4 class="fw-bold mb-0" style="color:#1a1a2e;">Inventory</h4>
         <small class="text-muted">Welcome back, <strong><?php echo htmlspecialchars($user_full_name ?? 'Staff'); ?></strong> — stock levels across branches.</small>
     </div>
-    <a href="<?php echo site_url('staff/inventory/low_stock'); ?>" class="btn btn-outline-warning btn-sm" style="position:relative;">
-        <i class="fas fa-exclamation-triangle me-1"></i> Low Stock
-        <?php if (!empty($product_stats['low_stock_products'])): ?>
-            <span class="badge bg-danger ms-1"><?php echo (int) $product_stats['low_stock_products']; ?></span>
-        <?php endif; ?>
-    </a>
+    <div class="d-flex gap-2">
+        <a href="<?php echo site_url('staff/inventory/low_stock'); ?>" class="btn btn-outline-warning btn-sm" style="position:relative;">
+            <i class="fas fa-exclamation-triangle me-1"></i> Low Stock
+            <?php if (!empty($product_stats['low_stock_products'])): ?>
+                <span class="badge bg-danger ms-1"><?php echo (int) $product_stats['low_stock_products']; ?></span>
+            <?php endif; ?>
+        </a>
+        <a href="<?php echo site_url('staff/inventory/expiring'); ?>" class="btn btn-outline-warning btn-sm" style="position:relative;">
+            <i class="fas fa-calendar-times me-1"></i> Expiring
+            <?php if (!empty($product_stats['expiring_products'])): ?>
+                <span class="badge bg-danger ms-1"><?php echo (int) $product_stats['expiring_products']; ?></span>
+            <?php endif; ?>
+        </a>
+    </div>
 </div>
 
 <div class="row g-3 mb-3">
@@ -86,9 +94,9 @@ table.dataTable thead th.sorting:hover { color: var(--primary-pink); cursor: poi
             </div>
             <div class="card-body">
                 <div class="table-responsive">
-                    <table class="table table-striped" id="staffInventoryTable">
+                    <table class="table table-striped table-stack" id="staffInventoryTable">
                         <thead>
-                            <tr><th></th><th>Product</th><th>SKU</th><th>Branch</th><th>Category</th><th>Stock</th><th>Status</th><th>Actions</th></tr>
+                            <tr><th></th><th>Product</th><th>SKU</th><th>Branch</th><th>Category</th><th>Stock</th><th>Expiry</th><th>Status</th><th>Actions</th></tr>
                         </thead>
                         <tbody>
                             <?php foreach ($products as $product): ?>
@@ -120,6 +128,17 @@ table.dataTable thead th.sorting:hover { color: var(--primary-pink); cursor: poi
                                     <td><?php echo htmlspecialchars($product['branch_name'] ?? '-'); ?></td>
                                     <td><?php echo htmlspecialchars($product['category_name'] ?? '-'); ?></td>
                                     <td id="stock-<?php echo $product['product_id']; ?>"><?php echo (int) $product['stock']; ?></td>
+                                    <td>
+                                        <?php if (!empty($product['expiry_date'])): ?>
+                                            <?php $daysLeft = (int) ceil((strtotime($product['expiry_date']) - strtotime(date('Y-m-d'))) / 86400); ?>
+                                            <span class="small" style="color:#1a1a2e;"><?php echo date('M j, Y', strtotime($product['expiry_date'])); ?></span><br>
+                                            <span style="font-size:10.5px;font-weight:600;color:<?php echo $daysLeft <= 30 ? '#dc3545' : '#8a94ad'; ?>;">
+                                                <?php echo $daysLeft < 0 ? 'Expired' : $daysLeft . ' days left'; ?>
+                                            </span>
+                                        <?php else: ?>
+                                            <span class="text-muted">—</span>
+                                        <?php endif; ?>
+                                    </td>
                                     <td>
                                         <span class="badge badge-<?php echo $product['status'] === 'available' ? 'success' : 'secondary'; ?>">
                                             <?php echo $product['status'] === 'available' ? 'Available' : 'Not Available'; ?>
@@ -190,8 +209,9 @@ table.dataTable thead th.sorting:hover { color: var(--primary-pink); cursor: poi
 <script>
 $(function () {
     $('#staffInventoryTable').DataTable({
-        columnDefs: [{ orderable: false, targets: [0, 7] }],
-        language: { search: '_INPUT_', searchPlaceholder: 'Search product or SKU…', emptyTable: 'No products found' }
+        columnDefs: [{ orderable: false, targets: [0, 8] }],
+        language: { search: '_INPUT_', searchPlaceholder: 'Search product or SKU…', emptyTable: 'No products found' },
+        drawCallback: function() { if (typeof initResponsiveTableStacking === 'function') initResponsiveTableStacking(); }
     });
 });
 

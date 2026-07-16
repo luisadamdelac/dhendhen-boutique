@@ -138,8 +138,9 @@
 <script>
 document.querySelectorAll('.delete-admin').forEach(btn => {
     btn.addEventListener('click', function() {
-        if (confirm('Are you sure you want to delete this admin?')) {
-            fetch('<?= site_url('admin/admins/delete/'); ?>' + this.dataset.id, {
+        const adminId = this.dataset.id;
+        customConfirm('Are you sure you want to delete this admin?', function() {
+            fetch('<?= site_url('admin/admins/delete/'); ?>' + adminId, {
                 method: 'POST'
             })
             .then(r => r.json())
@@ -147,7 +148,7 @@ document.querySelectorAll('.delete-admin').forEach(btn => {
                 if (d.success) location.reload();
                 else alert(d.message);
             });
-        }
+        }, { title: 'Delete Admin' });
     });
 });
 </script>

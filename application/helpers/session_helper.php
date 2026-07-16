@@ -108,18 +108,48 @@ if (!function_exists('is_logged_in')) {
     }
 
     /**
-     * Get current user's profile image
+     * Get current user's profile image — read fresh from the database
+     * rather than trusting the cached session value. A photo can also be
+     * set on this user's behalf by someone else (e.g. an admin uploading a
+     * staff member's photo from Admin > Staff), and there's no way to push
+     * that update into an already-open browser session — only a live DB
+     * read stays accurate for both that case and the user's own uploads.
      */
     function get_user_profile_image() {
         $CI = &get_instance();
-        return $CI->session->userdata('profile_image') ?: '';
+
+        $userType = $CI->session->userdata('user_type');
+        $userId = $CI->session->userdata('user_id');
+        if (empty($userType) || empty($userId)) {
+            return '';
+        }
+
+        $tables = array(
+            ROLE_ADMIN    => array('table' => ADMIN_TABLE, 'pk' => 'admin_id'),
+            ROLE_STAFF    => array('table' => STAFF_TABLE, 'pk' => 'staff_id'),
+            ROLE_RESELLER => array('table' => RESELLER_TABLE, 'pk' => 'reseller_id'),
+            ROLE_CUSTOMER => array('table' => CUSTOMER_TABLE, 'pk' => 'customer_id'),
+        );
+        if (!isset($tables[$userType])) {
+            return $CI->session->userdata('profile_image') ?: '';
+        }
+
+        $CI->load->database();
+        $row = $CI->db->select('profile_image')
+            ->where($tables[$userType]['pk'], $userId)
+            ->get($tables[$userType]['table'])
+            ->row_array();
+
+        return !empty($row['profile_image']) ? $row['profile_image'] : '';
     }
 
     /**
      * Default avatar path used everywhere a profile_image isn't set.
      */
     function default_avatar_url() {
-        return 'public/images/default-avatar.svg';
+        $path = 'public/images/default-avatar.svg';
+        $version = @filemtime(FCPATH . $path) ?: time();
+        return $path . '?v=' . $version;
     }
 
     /**

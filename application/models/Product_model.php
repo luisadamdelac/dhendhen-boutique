@@ -160,6 +160,35 @@ class Product_model extends CI_Model {
     }
 
     /**
+     * Products already expired or expiring within $days — expiry_date is
+     * optional per product, so NULL (never set) is excluded rather than
+     * treated as "expiring now".
+     */
+    public function get_expiring($days = 30, $limit = NULL, $offset = NULL) {
+        $query = $this->db->select('p.*, c.category_name')
+                         ->from($this->table . ' p')
+                         ->join($this->categories_table . ' c', 'p.category_id = c.category_id', 'left')
+                         ->where('p.expiry_date IS NOT NULL', NULL, FALSE)
+                         ->where('p.expiry_date <=', date('Y-m-d', strtotime('+' . (int) $days . ' days')))
+                         ->where('p.is_archived', 0)
+                         ->order_by('p.expiry_date', 'ASC');
+
+        if ($limit) {
+            $query->limit($limit, $offset);
+        }
+
+        return $query->get()->result_array();
+    }
+
+    public function count_expiring($days = 30) {
+        return $this->db->from($this->table)
+            ->where('expiry_date IS NOT NULL', NULL, FALSE)
+            ->where('expiry_date <=', date('Y-m-d', strtotime('+' . (int) $days . ' days')))
+            ->where('is_archived', 0)
+            ->count_all_results();
+    }
+
+    /**
      * Get out of stock products
      */
     public function get_out_of_stock() {

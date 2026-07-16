@@ -230,14 +230,15 @@
     var reapproveBtn = document.getElementById('reapproveBtn');
 
     function doAction(url, confirmMsg) {
-        if (!confirm(confirmMsg)) return;
-        fetch(url, { method: 'POST' })
-            .then(function(r) { return r.json(); })
-            .then(function(d) {
-                if (d.success) location.reload();
-                else alert(d.message || 'Action failed.');
-            })
-            .catch(function() { alert('Request failed.'); });
+        customConfirm(confirmMsg, function() {
+            fetch(url, { method: 'POST' })
+                .then(function(r) { return r.json(); })
+                .then(function(d) {
+                    if (d.success) location.reload();
+                    else alert(d.message || 'Action failed.');
+                })
+                .catch(function() { alert('Request failed.'); });
+        });
     }
 
     if (suspendBtn) {

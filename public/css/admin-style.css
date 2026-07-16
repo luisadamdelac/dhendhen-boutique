@@ -526,6 +526,58 @@ body.sidebar-open .sidebar-backdrop {
     font-weight: 600;
 }
 
+/* Sidebar promo card (e.g. Reseller Program) */
+.sidebar-promo {
+    margin: var(--spacing-lg) var(--spacing-sm) var(--spacing-sm);
+    padding: var(--spacing-lg) var(--spacing-md);
+    background: rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: var(--radius-lg);
+    text-align: center;
+}
+
+.sidebar-collapsed .sidebar-promo {
+    display: none;
+}
+
+.sidebar-promo-icon {
+    width: 46px;
+    height: 46px;
+    margin: 0 auto var(--spacing-sm);
+    border-radius: var(--radius-full);
+    background: rgba(255, 255, 255, 0.2);
+    color: var(--white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+}
+
+.sidebar-promo h5 {
+    color: var(--white);
+    font-size: var(--font-size-sm);
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.sidebar-promo p {
+    color: rgba(255, 255, 255, 0.85);
+    font-size: var(--font-size-xs);
+    margin-bottom: var(--spacing-md);
+    line-height: 1.4;
+}
+
+.sidebar-promo .btn-light {
+    background: var(--white);
+    color: var(--primary-pink-dark);
+    font-weight: 600;
+    border: none;
+}
+
+.sidebar-promo .btn-light:hover {
+    background: var(--primary-pink-light);
+}
+
 /* Action icon shared style for admin tables */
 .action-icon {
     background: #fff;
@@ -617,7 +669,7 @@ body.sidebar-open .sidebar-backdrop {
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-sm);
     padding: var(--spacing-xl);
-    transition: box-shadow var(--transition-base);
+    transition: box-shadow var(--transition-base), transform var(--transition-base);
     position: relative;
     max-width: 100%;
     box-sizing: border-box;
@@ -625,6 +677,7 @@ body.sidebar-open .sidebar-backdrop {
 
 .card:hover {
     box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
 }
 
 .card-header {
@@ -639,10 +692,19 @@ body.sidebar-open .sidebar-backdrop {
 }
 
 .card-title {
-    font-size: var(--font-size-xl);
+    font-size: var(--font-size-lg);
     font-weight: 700;
     color: var(--text);
     white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    letter-spacing: -0.2px;
+}
+
+.card-title i {
+    color: var(--primary-pink);
+    font-size: 0.95em;
 }
 
 .card-body {
@@ -664,23 +726,47 @@ body.sidebar-open .sidebar-backdrop {
     background: var(--card-bg);
     border: 1px solid rgba(226,232,240,.85);
     position: relative;
-    padding: 1.2rem 1rem;
+    padding: 1.35rem 1.25rem;
     border-radius: 1rem;
     display: flex;
     align-items: center;
     gap: 1rem;
     box-shadow: var(--shadow-sm);
     min-height: 132px;
+    transition: box-shadow var(--transition-base), transform var(--transition-base), border-color var(--transition-base);
+    overflow: hidden;
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: var(--gradient-primary);
+    opacity: 0;
+    transition: opacity var(--transition-base);
+}
+
+.stat-card:hover {
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-3px);
+    border-color: rgba(255, 105, 180, 0.25);
+}
+
+.stat-card:hover::before {
+    opacity: 1;
 }
 
 .stat-icon {
-    width: 62px;
-    height: 62px;
-    border-radius: 18px;
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.2rem;
+    font-size: 1.15rem;
     margin-bottom: 0;
     background: var(--primary-pink);
     color: var(--white);
@@ -688,17 +774,22 @@ body.sidebar-open .sidebar-backdrop {
 }
 
 .stat-value {
-    font-size: var(--font-size-2xl);
-    font-weight: 700;
+    font-size: 1.6rem;
+    font-weight: 800;
     color: var(--text);
-    margin-bottom: var(--spacing-xs);
+    margin-bottom: 2px;
+    letter-spacing: -0.3px;
     word-break: break-word;
+    line-height: 1.2;
 }
 
 .stat-label {
     font-size: var(--font-size-sm);
     color: var(--gray);
-    font-weight: 500;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    font-size: 0.72rem;
 }
 
 .stat-change {
@@ -720,6 +811,104 @@ body.sidebar-open .sidebar-backdrop {
 .stat-change.negative {
     background: rgba(220, 53, 69, 0.1);
     color: var(--danger);
+}
+
+/* ============================================
+   LEADERBOARD ROWS (Top Products / Top Resellers)
+   ============================================ */
+.leaderboard-row {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md) var(--spacing-sm);
+    border-radius: var(--radius-md);
+    border-bottom: 1px solid var(--border);
+    transition: background-color var(--transition-fast);
+}
+
+.leaderboard-row:last-child {
+    border-bottom: none;
+}
+
+.leaderboard-row:hover {
+    background: var(--page-bg);
+}
+
+.leaderboard-rank {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-full);
+    background: var(--gradient-primary);
+    color: var(--white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: var(--font-size-sm);
+    flex-shrink: 0;
+}
+
+.leaderboard-row:nth-child(2) .leaderboard-rank {
+    background: linear-gradient(135deg, #C0C0C0, #9CA3AF);
+}
+
+.leaderboard-row:nth-child(3) .leaderboard-rank {
+    background: linear-gradient(135deg, #CD7F32, #B45309);
+}
+
+.leaderboard-thumb {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-md);
+    object-fit: cover;
+    flex-shrink: 0;
+    border: 1px solid var(--border);
+    background: var(--page-bg);
+}
+
+.leaderboard-thumb-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--gray);
+    font-size: 1rem;
+}
+
+.leaderboard-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.leaderboard-title {
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.leaderboard-meta {
+    font-size: var(--font-size-xs);
+    color: var(--gray);
+    margin-top: 2px;
+}
+
+.leaderboard-value {
+    text-align: right;
+    flex-shrink: 0;
+}
+
+.leaderboard-value strong {
+    color: var(--primary-pink-dark);
+    font-size: var(--font-size-base);
+    font-weight: 700;
+}
+
+.leaderboard-value p {
+    font-size: var(--font-size-xs);
+    color: var(--gray);
+    margin-top: 2px;
 }
 
 /* ============================================
@@ -836,8 +1025,6 @@ body.sidebar-open .sidebar-backdrop {
 
 .btn-icon i {
     font-size: 0.95rem;
-    background: var(--info);
-    color: var(--white);
 }
 
 .btn-info:hover {
@@ -1335,6 +1522,47 @@ textarea.form-control {
     }
     table {
         display: block;
+    }
+}
+
+/* ── Generic mobile "stacked card" table treatment ───────────────────
+   Opt in with class="table-stack" on the <table> — pairs with
+   initResponsiveTableStacking() in admin-scripts.js, which copies each
+   <thead> column label onto its matching <td data-label> automatically,
+   so individual pages don't need to hand-annotate every cell. */
+@media (max-width: 768px) {
+    table.table-stack thead { display: none; }
+    table.table-stack,
+    table.table-stack tbody,
+    table.table-stack tr,
+    table.table-stack td {
+        display: block;
+        width: 100%;
+    }
+    table.table-stack tr {
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        margin-bottom: 12px;
+        padding: 10px;
+    }
+    table.table-stack td {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        border: none;
+        padding: 8px 4px;
+        text-align: right;
+    }
+    table.table-stack td[data-label]::before {
+        content: attr(data-label);
+        font-weight: 600;
+        font-size: .72rem;
+        color: var(--gray);
+        text-transform: uppercase;
+        letter-spacing: .02em;
+        flex-shrink: 0;
+        text-align: left;
     }
 }
 

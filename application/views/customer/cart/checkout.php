@@ -523,7 +523,7 @@
 <div id="confirmModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:9999; align-items:center; justify-content:center;">
     <div style="background:white; border-radius:16px; max-width:500px; width:90%; margin:auto; padding:35px; box-shadow:0 20px 60px rgba(0,0,0,0.3); animation:modalSlideIn 0.3s ease-out; position:relative; top:50%; transform:translateY(-50%); max-height:90vh; overflow-y:auto;">
         <div style="text-align:center; margin-bottom:25px;">
-            <div style="width:70px; height:70px; background:linear-gradient(135deg, #ff69b4, #ee82ee); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 15px;">
+            <div style="width:70px; height:70px; background:linear-gradient(135deg, #EC4899, #DB2777); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 15px;">
                 <i class="fas fa-shopping-bag" style="font-size:30px; color:white;"></i>
             </div>
             <h2 style="font-size:22px; color:#333; margin-bottom:5px;">Confirm Your Order</h2>
@@ -560,7 +560,7 @@
             <button type="button" onclick="closeConfirmModal()" style="flex:1; padding:14px; border:2px solid #ddd; background:white; border-radius:10px; font-size:15px; font-weight:600; cursor:pointer; font-family:inherit; color:#666; transition:all 0.2s;">
                 <i class="fas fa-arrow-left"></i> Go Back
             </button>
-            <button type="button" onclick="confirmAndSubmit()" id="btnConfirmPurchase" style="flex:1; padding:14px; border:none; background:linear-gradient(135deg, #ff69b4, #ee82ee); color:white; border-radius:10px; font-size:15px; font-weight:600; cursor:pointer; font-family:inherit; transition:all 0.2s;">
+            <button type="button" onclick="confirmAndSubmit()" id="btnConfirmPurchase" style="flex:1; padding:14px; border:none; background:linear-gradient(135deg, #EC4899, #DB2777); color:white; border-radius:10px; font-size:15px; font-weight:600; cursor:pointer; font-family:inherit; transition:all 0.2s;">
                 <i class="fas fa-check"></i> Confirm Purchase
             </button>
         </div>
@@ -613,7 +613,7 @@
             <button type="button" onclick="closeAddAddressModal()" style="flex:1; padding:13px; border:2px solid #ddd; background:white; border-radius:10px; font-size:14px; font-weight:600; cursor:pointer; font-family:inherit; color:#666;">
                 Cancel
             </button>
-            <button type="button" onclick="submitNewAddress()" id="btnSaveNewAddress" style="flex:1; padding:13px; border:none; background:linear-gradient(135deg, #ff69b4, #ee82ee); color:white; border-radius:10px; font-size:14px; font-weight:600; cursor:pointer; font-family:inherit;">
+            <button type="button" onclick="submitNewAddress()" id="btnSaveNewAddress" style="flex:1; padding:13px; border:none; background:linear-gradient(135deg, #EC4899, #DB2777); color:white; border-radius:10px; font-size:14px; font-weight:600; cursor:pointer; font-family:inherit;">
                 <i class="fas fa-save"></i> Save Address
             </button>
         </div>

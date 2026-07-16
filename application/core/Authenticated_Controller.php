@@ -135,6 +135,8 @@ class Authenticated_Controller extends CI_Controller {
             'page_title' => '',
             'current_page' => $this->get_current_page(),
             'low_stock_products' => [],
+            'expiring_products' => [],
+            'inventory_attention_count' => 0,
             'pending_orders_notifications' => 0,
             'pending_resellers' => 0,
             'pending_withdrawals' => 0,
@@ -182,6 +184,24 @@ class Authenticated_Controller extends CI_Controller {
                 ->where('min_stock_alert IS NOT NULL')
                 ->where('stock <= min_stock_alert')
                 ->get(PRODUCT_TABLE)->result_array();
+
+            // Products expiring within 30 days (same lookahead window as the
+            // dashboard's "Expiring Soon" stat) — the Inventory badge should
+            // flag these too, not just low stock, since both need the admin
+            // to go look at the product.
+            $defaults['expiring_products'] = $this->db
+                ->select('product_id')
+                ->where('is_archived', 0)
+                ->where('expiry_date IS NOT NULL', NULL, FALSE)
+                ->where('expiry_date <=', date('Y-m-d', strtotime('+30 days')))
+                ->get(PRODUCT_TABLE)->result_array();
+
+            // Distinct products across both lists, so one that's both low
+            // stock and expiring doesn't get counted twice in the badge.
+            $defaults['inventory_attention_count'] = count(array_unique(array_merge(
+                array_column($defaults['low_stock_products'], 'product_id'),
+                array_column($defaults['expiring_products'], 'product_id')
+            )));
         } elseif ($this->user_type === 'staff') {
             // Staff can't touch an order until admin has confirmed payment —
             // so their Orders badge counts what's actually actionable by

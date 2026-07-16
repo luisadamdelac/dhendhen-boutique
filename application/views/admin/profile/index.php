@@ -1,5 +1,37 @@
 <!-- User Profile -->
 <style>
+.has-toggle {
+    position: relative;
+}
+.has-toggle input {
+    padding-right: 44px !important;
+}
+/* Hide Edge/IE's built-in password reveal icon so it doesn't double up
+   with our own toggle button. */
+.has-toggle input::-ms-reveal,
+.has-toggle input::-ms-clear {
+    display: none;
+}
+.toggle-password {
+    position: absolute;
+    right: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #999;
+    font-size: 15px;
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+.toggle-password:hover {
+    color: var(--primary-pink, #EC4899);
+}
 .profile-card {
     border-radius: 14px;
     border: 1px solid #eef0f8;
@@ -91,7 +123,7 @@
                             <?php if (!empty($user['profile_image'])): ?>
                             <a href="<?php echo site_url('admin/profile/delete_photo'); ?>"
                                class="btn btn-outline"
-                               onclick="return confirm('Are you sure you want to remove your profile photo?');">
+                               onclick="return confirmRemovePhoto(event, this, 'Are you sure you want to remove your profile photo?');">
                                 <i class="fas fa-trash"></i> Remove
                             </a>
                             <?php endif; ?>
@@ -104,7 +136,7 @@
                         </h6>
                         <ul style="margin: 0; padding-left: 20px; font-size: 13px; color: #666;">
                             <li>Maximum file size: 2MB</li>
-                            <li>Supported formats: JPG, PNG, GIF</li>
+                            <li>Supported formats: JPG, PNG, GIF, WebP</li>
                             <li>Recommended size: 200x200px</li>
                             <li>Square images work best</li>
                         </ul>
@@ -233,13 +265,12 @@
                                     <label for="current_password">
                                         <i class="fas fa-lock"></i> Current Password
                                     </label>
-                                    <div style="position: relative;">
-                                        <input type="password" class="form-control" id="current_password" name="current_password" 
+                                    <div class="has-toggle">
+                                        <input type="password" class="form-control" id="current_password" name="current_password"
                                                placeholder="Enter your current password">
-                                        <span onclick="togglePassword('current_password')" 
-                                              style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #666;">
+                                        <button type="button" class="toggle-password" onclick="togglePassword('current_password')" tabindex="-1">
                                             <i class="fas fa-eye" id="current_password_icon"></i>
-                                        </span>
+                                        </button>
                                     </div>
                                     <small class="text-muted">Required to change password</small>
                                 </div>
@@ -251,13 +282,12 @@
                                     <label for="new_password">
                                         <i class="fas fa-key"></i> New Password
                                     </label>
-                                    <div style="position: relative;">
-                                        <input type="password" class="form-control" id="new_password" name="new_password" 
+                                    <div class="has-toggle">
+                                        <input type="password" class="form-control" id="new_password" name="new_password"
                                                placeholder="Enter new password" minlength="6">
-                                        <span onclick="togglePassword('new_password')" 
-                                              style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #666;">
+                                        <button type="button" class="toggle-password" onclick="togglePassword('new_password')" tabindex="-1">
                                             <i class="fas fa-eye" id="new_password_icon"></i>
-                                        </span>
+                                        </button>
                                     </div>
                                     <small class="text-muted">Minimum 6 characters</small>
                                 </div>
@@ -269,13 +299,12 @@
                                     <label for="confirm_password">
                                         <i class="fas fa-lock"></i> Confirm Password
                                     </label>
-                                    <div style="position: relative;">
-                                        <input type="password" class="form-control" id="confirm_password" name="confirm_password" 
+                                    <div class="has-toggle">
+                                        <input type="password" class="form-control" id="confirm_password" name="confirm_password"
                                                placeholder="Confirm new password">
-                                        <span onclick="togglePassword('confirm_password')" 
-                                              style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #666;">
+                                        <button type="button" class="toggle-password" onclick="togglePassword('confirm_password')" tabindex="-1">
                                             <i class="fas fa-eye" id="confirm_password_icon"></i>
-                                        </span>
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -305,9 +334,9 @@ function previewAndUpload(input) {
         const file = input.files[0];
         
         // Validate file type
-        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
         if (!allowedTypes.includes(file.type)) {
-            alert('Please select a valid image file (JPG, PNG, or GIF)');
+            alert('Please select a valid image file (JPG, PNG, GIF, or WebP)');
             input.value = '';
             return;
         }
@@ -327,13 +356,13 @@ function previewAndUpload(input) {
         reader.readAsDataURL(file);
         
         // Auto-submit form
-        if (confirm('Upload this photo as your profile picture?')) {
+        customConfirm('Upload this photo as your profile picture?', function() {
             document.getElementById('photoForm').submit();
-        } else {
+        }, { onCancel: function() {
             input.value = '';
             // Reload current photo
             location.reload();
-        }
+        } });
     }
 }
 

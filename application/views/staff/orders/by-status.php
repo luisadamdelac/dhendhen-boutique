@@ -40,7 +40,7 @@
             </div>
             <div class="card-body">
                 <div class="table-responsive">
-                    <table class="table table-hover table-striped">
+                    <table class="table table-hover table-striped table-stack">
                         <thead class="table-secondary">
                             <tr>
                                 <th>Order #</th>

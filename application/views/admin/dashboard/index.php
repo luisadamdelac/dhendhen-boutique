@@ -186,13 +186,13 @@ $is_admin_only = !$is_staff_view && !$is_reseller_view;
                         </div>
                     </div>
                     <div style="margin-top: 20px;">
-                        <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--secondary-lavender);">
-                            <span><i class="fas fa-circle" style="color: #ff69b4;"></i> Pending</span>
-                            <strong>₱<?php echo number_format($commission_stats['pending_amount'] ?? 0, 2); ?></strong>
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 4px; border-bottom: 1px solid var(--border);">
+                            <span style="display:flex;align-items:center;gap:8px;font-weight:600;color:var(--text);font-size:var(--font-size-sm);"><i class="fas fa-circle" style="color: #ff69b4; font-size: 10px;"></i> Pending</span>
+                            <strong style="color:var(--primary-pink-dark);">₱<?php echo number_format($commission_stats['pending_amount'] ?? 0, 2); ?></strong>
                         </div>
-                        <div style="display: flex; justify-content: space-between; padding: 10px 0;">
-                            <span><i class="fas fa-circle" style="color: #ee82ee;"></i> Approved</span>
-                            <strong>₱<?php echo number_format($commission_stats['approved_amount'] ?? 0, 2); ?></strong>
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 4px;">
+                            <span style="display:flex;align-items:center;gap:8px;font-weight:600;color:var(--text);font-size:var(--font-size-sm);"><i class="fas fa-circle" style="color: #ee82ee; font-size: 10px;"></i> Approved</span>
+                            <strong style="color:var(--primary-pink-dark);">₱<?php echo number_format($commission_stats['approved_amount'] ?? 0, 2); ?></strong>
                         </div>
                     </div>
                 </div>
@@ -216,18 +216,19 @@ $is_admin_only = !$is_staff_view && !$is_reseller_view;
                 <div class="card-body">
                     <?php if (!empty($top_products)): ?>
                         <?php foreach ($top_products as $index => $product): ?>
-                            <div style="display: flex; align-items: center; padding: 15px 0; border-bottom: 1px solid var(--secondary-lavender);">
-                                <div style="width: 40px; height: 40px; background: var(--gradient-primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; margin-right: 15px;">
-                                    <?php echo $index + 1; ?>
+                            <div class="leaderboard-row">
+                                <div class="leaderboard-rank"><?php echo $index + 1; ?></div>
+                                <?php if (!empty($product['product_image'])): ?>
+                                    <img class="leaderboard-thumb" src="<?php echo base_url($product['product_image']); ?>" alt="<?php echo htmlspecialchars($product['product_name'] ?? ''); ?>">
+                                <?php else: ?>
+                                    <span class="leaderboard-thumb leaderboard-thumb-placeholder"><i class="fas fa-image"></i></span>
+                                <?php endif; ?>
+                                <div class="leaderboard-info">
+                                    <div class="leaderboard-title"><?php echo htmlspecialchars($product['product_name'] ?? $product['name'] ?? 'N/A'); ?></div>
+                                    <div class="leaderboard-meta"><?php echo $product['total_sold'] ?? 0; ?> sold</div>
                                 </div>
-<div style="flex: 1;">
-                                    <?php echo htmlspecialchars($product['product_name'] ?? $product['name'] ?? 'N/A'); ?>
-                                    <p style="margin: 0; font-size: 12px; color: var(--gray);">
-                                        <?php echo $product['total_sold'] ?? 0; ?> sold
-                                    </p>
-                                </div>
-                                <div style="text-align: right;">
-                                    <strong style="color: var(--primary-pink);">₱<?php echo number_format($product['price'] ?? 0, 2); ?></strong>
+                                <div class="leaderboard-value">
+                                    <strong>₱<?php echo number_format($product['price'] ?? 0, 2); ?></strong>
                                 </div>
                             </div>
                         <?php endforeach; ?>
@@ -249,21 +250,15 @@ $is_admin_only = !$is_staff_view && !$is_reseller_view;
                 <div class="card-body">
                     <?php if (!empty($top_resellers)): ?>
                         <?php foreach ($top_resellers as $index => $reseller): ?>
-                            <div style="display: flex; align-items: center; padding: 15px 0; border-bottom: 1px solid var(--secondary-lavender);">
-                                <div style="width: 40px; height: 40px; background: var(--gradient-primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; margin-right: 15px;">
-                                    <?php echo $index + 1; ?>
+                            <div class="leaderboard-row">
+                                <div class="leaderboard-rank"><?php echo $index + 1; ?></div>
+                                <div class="leaderboard-info">
+                                    <div class="leaderboard-title"><?php echo htmlspecialchars($reseller['full_name'] ?? 'N/A'); ?></div>
+                                    <div class="leaderboard-meta"><?php echo htmlspecialchars($reseller['email'] ?? 'N/A'); ?></div>
                                 </div>
-                                <div style="flex: 1;">
-                                    <h4 style="margin: 0; font-size: 14px; font-weight: 600;"><?php echo htmlspecialchars($reseller['full_name'] ?? 'N/A'); ?></h4>
-                                    <p style="margin: 0; font-size: 12px; color: var(--gray);">
-                                        <?php echo htmlspecialchars($reseller['email'] ?? 'N/A'); ?>
-                                    </p>
-                                </div>
-                                <div style="text-align: right;">
-                                    <strong style="color: var(--primary-pink); font-size: 16px;">₱<?php echo number_format($reseller['total_sales'] ?? 0, 2); ?></strong>
-                                    <p style="margin: 0; font-size: 12px; color: var(--gray);">
-                                        Commission: ₱<?php echo number_format($reseller['total_commission'] ?? 0, 2); ?>
-                                    </p>
+                                <div class="leaderboard-value">
+                                    <strong>₱<?php echo number_format($reseller['total_sales'] ?? 0, 2); ?></strong>
+                                    <p>Commission: ₱<?php echo number_format($reseller['total_commission'] ?? 0, 2); ?></p>
                                 </div>
                             </div>
                         <?php endforeach; ?>
@@ -292,6 +287,10 @@ $is_admin_only = !$is_staff_view && !$is_reseller_view;
     });
     const salesValues = salesData.map(item => parseFloat(item.sales));
 
+    const salesFillGradient = salesCtx.createLinearGradient(0, 0, 0, 280);
+    salesFillGradient.addColorStop(0, 'rgba(255, 105, 180, 0.28)');
+    salesFillGradient.addColorStop(1, 'rgba(255, 105, 180, 0.02)');
+
     new Chart(salesCtx, {
         type: 'line',
         data: {
@@ -300,32 +299,37 @@ $is_admin_only = !$is_staff_view && !$is_reseller_view;
                 label: 'Sales (₱)',
                 data: salesValues,
                 borderColor: '#ff69b4',
-                backgroundColor: 'rgba(255, 105, 180, 0.1)',
-                borderWidth: 3,
+                backgroundColor: salesFillGradient,
+                borderWidth: 2.5,
                 tension: 0.4,
                 fill: true,
                 pointBackgroundColor: '#ff69b4',
                 pointBorderColor: '#fff',
                 pointBorderWidth: 2,
-                pointRadius: 5,
-                pointHoverRadius: 7
+                pointRadius: 0,
+                pointHoverRadius: 6,
+                pointHoverBorderWidth: 3
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            interaction: { intersect: false, mode: 'index' },
             plugins: {
                 legend: {
                     display: false
                 },
                 tooltip: {
-                    backgroundColor: 'rgba(255, 105, 180, 0.9)',
-                    titleColor: '#fff',
-                    bodyColor: '#fff',
-                    borderColor: '#ff69b4',
-                    borderWidth: 2,
+                    backgroundColor: '#fff',
+                    titleColor: '#1a1a2e',
+                    bodyColor: '#e0559c',
+                    bodyFont: { weight: '700' },
+                    borderColor: '#f0d9e8',
+                    borderWidth: 1,
                     padding: 12,
                     displayColors: false,
+                    cornerRadius: 10,
+                    boxPadding: 4,
                     callbacks: {
                         label: function(context) {
                             return '₱' + context.parsed.y.toLocaleString('en-US', {minimumFractionDigits: 2});
@@ -337,15 +341,17 @@ $is_admin_only = !$is_staff_view && !$is_reseller_view;
                 y: {
                     beginAtZero: true,
                     ticks: {
+                        color: '#9ca3af',
                         callback: function(value) {
                             return '₱' + value.toLocaleString();
                         }
                     },
                     grid: {
-                        color: 'rgba(230, 230, 250, 0.5)'
+                        color: 'rgba(226, 232, 240, 0.6)'
                     }
                 },
                 x: {
+                    ticks: { color: '#9ca3af' },
                     grid: {
                         display: false
                     }
@@ -381,7 +387,7 @@ $is_admin_only = !$is_staff_view && !$is_reseller_view;
                     '#ff69b4',
                     '#ee82ee'
                 ] : ['#eee'],
-                borderWidth: 2,
+                borderWidth: 3,
                 borderColor: '#fff',
                 hoverOffset: commissionHasData ? 10 : 0
             }]
@@ -389,19 +395,22 @@ $is_admin_only = !$is_staff_view && !$is_reseller_view;
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            cutout: '68%',
+            cutout: '72%',
             plugins: {
                 legend: {
                     display: false
                 },
                 tooltip: {
                     enabled: commissionHasData,
-                    backgroundColor: 'rgba(255, 105, 180, 0.9)',
-                    titleColor: '#fff',
-                    bodyColor: '#fff',
-                    borderColor: '#ff69b4',
-                    borderWidth: 2,
+                    backgroundColor: '#fff',
+                    titleColor: '#1a1a2e',
+                    bodyColor: '#e0559c',
+                    bodyFont: { weight: '700' },
+                    borderColor: '#f0d9e8',
+                    borderWidth: 1,
                     padding: 12,
+                    cornerRadius: 10,
+                    boxPadding: 4,
                     callbacks: {
                         label: function(context) {
                             return context.label + ': ₱' + context.parsed.toLocaleString('en-US', {minimumFractionDigits: 2});

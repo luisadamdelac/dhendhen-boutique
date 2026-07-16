@@ -7,7 +7,9 @@
     <title><?php echo $page_title ?? 'Shop'; ?> - <?php echo SITE_NAME; ?></title>
     
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -27,6 +29,9 @@
                 <i class="fas fa-phone"></i> +63 123 456 7890
                 <span style="margin-left: 20px;"><i class="fas fa-envelope"></i> info@dhendhen.com</span>
             </div>
+            <div class="top-bar-promo">
+                <i class="fas fa-star"></i> New Arrivals Every Week
+            </div>
         </div>
     </div>
     
@@ -34,20 +39,29 @@
     <header class="header">
         <div class="header-content">
             <a href="<?php echo BASE_URL; ?>shop" class="logo">
-                <i class="fas fa-heart"></i>
+                <span class="logo-badge"><i class="fas fa-shopping-bag"></i></span>
                 <?php echo SITE_NAME; ?>
             </a>
             
             <div class="search-bar">
                 <form action="<?php echo BASE_URL; ?>shop" method="GET">
                     <input type="text" name="search" placeholder="Search products..." value="<?php echo $_GET['search'] ?? ''; ?>">
+                    <button type="submit" class="search-bar-submit" aria-label="Search">
+                        <i class="fas fa-search"></i>
+                    </button>
                 </form>
             </div>
             
             <div class="header-actions">
                 <?php if (isset($_SESSION['user_account_id']) && (($_SESSION['user_type'] ?? '') === 'customer')): ?>
+                    <?php
+                        $headerAvatarImage = get_user_profile_image();
+                        $headerAvatarSrc = !empty($headerAvatarImage)
+                            ? BASE_URL . $headerAvatarImage
+                            : BASE_URL . default_avatar_url();
+                    ?>
                     <a href="<?php echo BASE_URL; ?>account" class="header-btn">
-                        <i class="fas fa-user"></i>
+                        <img src="<?php echo $headerAvatarSrc; ?>" alt="" style="width:22px;height:22px;border-radius:50%;object-fit:cover;flex-shrink:0;">
                         <span><?php echo $_SESSION['full_name'] ?? $_SESSION['email'] ?? 'Account'; ?></span>
                     </a>
                     <a href="<?php echo BASE_URL; ?>cart" class="header-btn">

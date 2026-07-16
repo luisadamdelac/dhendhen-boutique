@@ -205,20 +205,29 @@
                 <div style="width:90px;height:90px;border-radius:50%;overflow:hidden;border:3px solid var(--primary-light, #eee);flex-shrink:0;">
                     <img id="currentPhoto" src="<?php echo $avatarSrc; ?>" alt="Profile Photo" style="width:100%;height:100%;object-fit:cover;">
                 </div>
-                <form method="POST" action="<?php echo BASE_URL; ?>account/update_photo" enctype="multipart/form-data" id="photoForm">
-                    <input type="file" id="photoInput" name="photo" accept="image/*" style="display:none;" onchange="previewAndUpload(this)">
-                    <div style="display:flex; gap:10px; flex-wrap:wrap;">
-                        <button type="button" class="btn btn-outline" onclick="document.getElementById('photoInput').click();">
-                            <i class="fas fa-camera"></i> Change Photo
-                        </button>
-                        <?php if (!empty($avatarImage)): ?>
-                        <a href="<?php echo BASE_URL; ?>account/delete_photo" class="btn btn-outline"
-                           onclick="return confirm('Remove your profile photo?');">
-                            <i class="fas fa-trash"></i> Remove
-                        </a>
-                        <?php endif; ?>
+                <div>
+                    <div style="margin-bottom: 10px;">
+                        <h4 style="margin: 0 0 3px 0;"><?php echo htmlspecialchars($user['full_name'] ?? ''); ?></h4>
+                        <p style="color: #666; margin: 0;">
+                            <i class="fas fa-shield-alt" style="color: var(--primary, var(--primary-pink));"></i>
+                            Customer
+                        </p>
                     </div>
-                </form>
+                    <form method="POST" action="<?php echo BASE_URL; ?>account/update_photo" enctype="multipart/form-data" id="photoForm">
+                        <input type="file" id="photoInput" name="photo" accept="image/*" style="display:none;" onchange="previewAndUpload(this)">
+                        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                            <button type="button" class="btn btn-outline" onclick="document.getElementById('photoInput').click();">
+                                <i class="fas fa-camera"></i> Change Photo
+                            </button>
+                            <?php if (!empty($avatarImage)): ?>
+                            <a href="<?php echo BASE_URL; ?>account/delete_photo" class="btn btn-outline"
+                               onclick="return confirmRemovePhoto(event, this, 'Remove your profile photo?');">
+                                <i class="fas fa-trash"></i> Remove
+                            </a>
+                            <?php endif; ?>
+                        </div>
+                    </form>
+                </div>
             </div>
 
             <form method="POST" action="<?php echo BASE_URL; ?>account/update_profile">
@@ -489,9 +498,9 @@
         if (input.files && input.files[0]) {
             const file = input.files[0];
 
-            const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+            const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
             if (!allowedTypes.includes(file.type)) {
-                alert('Please select a valid image file (JPG, PNG, or GIF)');
+                alert('Please select a valid image file (JPG, PNG, GIF, or WebP)');
                 input.value = '';
                 return;
             }
@@ -508,12 +517,12 @@
             };
             reader.readAsDataURL(file);
 
-            if (confirm('Upload this photo as your profile picture?')) {
+            customConfirm('Upload this photo as your profile picture?', function() {
                 document.getElementById('photoForm').submit();
-            } else {
+            }, { onCancel: function() {
                 input.value = '';
                 location.reload();
-            }
+            } });
         }
     }
 
@@ -531,7 +540,7 @@
             "Bulalacao": ["Bagong Sikat","Balatasan","Benli","Cabugao","Cambunang","Campaasan","Maasin","Maujao","Milagrosa","Nasukob","Poblacion","San Francisco","San Isidro","San Juan","San Roque"],
             "Gloria": ["Agos","Agsalin","Alma Villa","Andres Bonifacio","Balete","Banus","Banutan","Bulaklakan","Buong Lupa","Gaudencio Antonino","Guimbonan","Kawit","Lucio Laurel","Macario Adriatico","Malamig","Malayong","Maligaya","Malubay","Manguyang","Maragooc","Mirayan","Narra","Papandungin","San Antonio","Santa Maria","Santa Theresa","Tambong"],
             "Mansalay": ["B. del Mundo","Balugo","Bonbon","Budburan","Cabalwa","Don Pedro","Maliwanag","Manaul","Panaytayan","Poblacion","Roma","Santa Brigida","Santa Maria","Santa Teresita","Villa Celestial","Wasig","Waygan"],
-            "Naujan": ["Adrialuna","Andres Ilagan","Antipolo","Apitong","Arangin","Aurora","Bacungan","Bagong Buhay","Balite","Bancuro","Banuton","Barcenaga","Bayani","Buhangin","Caburo","Concepcion","Dao","Del Pilar","Estrella","Evangelista","Gamao","General Esco","Herrera","Inarawan","Kalinisan","Laguna","Mabini","Magtibay","Mahabang Parang","Malaya","Malinao","Malvar","Masagana","Masaguing","Melgar A","Melgar B","Metolza","Montelago","Montemayor","Motoderazo","Mulawin","Nag-iba I","Nag-iba II","Pagkakaisa","Paitan","Paniquian","Pinagsabangan I","Pinagsabangan II","Piñahan","Poblacion I","Poblacion II","Poblacion III","Sampaguita","San Agustin I","San Agustin II","San Andres","San Antonio","San Carlos","San Isidro","San Jose","San Luis","San Nicolas","San Pedro","Santa Cruz","Santa Isabel","Santa Maria","Santiago","Santo Niño","Tagumpay","Tigkan"],
+            "Naujan": ["Adrialuna","Andres Ilagan","Antipolo","Apitong","Arangin","Aurora","Bacungan","Bagong Buhay","Balite","Bancuro","Banuton","Barcenaga","Bayani","Buhangin","Caburo","Concepcion","Curva","Dao","Del Pilar","Estrella","Evangelista","Gamao","General Esco","Herrera","Inarawan","Kalinisan","Laguna","Mabini","Magtibay","Mahabang Parang","Malaya","Malinao","Malvar","Masagana","Masaguing","Melgar A","Melgar B","Metolza","Montelago","Montemayor","Motoderazo","Mulawin","Nag-iba I","Nag-iba II","Pagkakaisa","Paitan","Paniquian","Pinagsabangan I","Pinagsabangan II","Piñahan","Poblacion I","Poblacion II","Poblacion III","Sampaguita","San Agustin I","San Agustin II","San Andres","San Antonio","San Carlos","San Isidro","San Jose","San Luis","San Nicolas","San Pedro","Santa Cruz","Santa Isabel","Santa Maria","Santiago","Santo Niño","Tagumpay","Tigkan"],
             "Pinamalayan": ["Anoling","Bacungan","Bangbang","Banilad","Buli","Cacawan","Calingag","Del Razon","Guinhawa","Inclanay","Lumangbayan","Malaya","Maliangcog","Maningcol","Marayos","Marfrancisco","Nabuslot","Pagalagala","Palayan","Pambisan Malaki","Pambisan Munti","Panggulayan","Papandayan","Pili","Quinabigan","Ranzo","Rosario","Sabang","Santa Isabel","Santa Maria","Santa Rita","Santo Niño","Wawa","Zone I","Zone II","Zone III","Zone IV"],
             "Pola": ["Bacawan","Bacungan","Batuhan","Bayanan","Biga","Buhay na Tubig","Calima","Calubasanhon","Campamento","Casiligan","Malibago","Maluanluan","Matulatula","Misong","Pahilahan","Panikihan","Pula","Puting Cacao","Tagbakin","Tagumpay","Tiguihan","Zone I","Zone II"],
             "Puerto Galera": ["Aninuan","Baclayan","Balatero","Dulangan","Palangan","Poblacion","Sabang","San Antonio","San Isidro","Santo Niño","Sinandigan","Tabinay","Villaflor"],

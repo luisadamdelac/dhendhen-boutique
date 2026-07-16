@@ -9,6 +9,48 @@
 .dataTables_wrapper .dataTables_filter input:focus { outline: none; border-color: var(--primary-pink); }
 table.dataTable thead th { position: relative; }
 table.dataTable thead th.sorting:hover { color: var(--primary-pink); cursor: pointer; }
+
+/* Header alert pills */
+.hdr-pill { display:inline-flex; align-items:center; gap:6px; padding:7px 14px; border-radius:20px; font-size:12.5px; font-weight:600; background:#fff; border:1px solid #fbc02d; color:#a66a00; text-decoration:none; transition:box-shadow .15s; }
+.hdr-pill:hover { color:#a66a00; box-shadow:0 2px 8px rgba(0,0,0,.08); }
+.hdr-pill .cnt { background:#dc3545; color:#fff; font-size:10.5px; font-weight:700; border-radius:999px; padding:1px 7px; margin-left:2px; }
+
+/* Stat cards v2 (icon on the right, subtitle below) */
+.stat-card-v2 { display:flex; align-items:center; justify-content:space-between; gap:.75rem; padding:1.1rem 1.25rem; border-radius:14px; }
+.stat-card-v2 .scv2-label { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.4px; color:#8a94ad; margin-bottom:6px; }
+.stat-card-v2 .scv2-value { font-size:1.7rem; font-weight:800; color:#1a1a2e; line-height:1; margin-bottom:6px; }
+.stat-card-v2 .scv2-sub { font-size:11.5px; color:#8a94ad; }
+.stat-card-v2 .scv2-icon { width:42px; height:42px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1rem; flex-shrink:0; }
+
+/* Analytics / alerts / branch-stock widgets */
+.iv-widget-title { font-size:14px; font-weight:700; color:#1a1a2e; margin-bottom:2px; }
+.iv-widget-sub { font-size:11.5px; color:#8a94ad; margin-bottom:14px; }
+.iv-legend-row { display:flex; align-items:center; justify-content:space-between; padding:6px 0; font-size:12.5px; }
+.iv-legend-row .dot { width:9px; height:9px; border-radius:50%; display:inline-block; margin-right:8px; }
+.iv-legend-row .pct { color:#8a94ad; font-size:11px; }
+
+.alert-item { display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--border); }
+.alert-item:last-child { border-bottom:none; }
+.alert-item .ai-thumb { width:38px; height:38px; border-radius:9px; object-fit:cover; border:1px solid var(--border); flex-shrink:0; }
+.alert-item .ai-thumb-ph { width:38px; height:38px; border-radius:9px; background:#f4f5f9; display:flex; align-items:center; justify-content:center; color:#c3c9d6; flex-shrink:0; }
+.alert-item .ai-info { flex:1; min-width:0; }
+.alert-item .ai-info strong { display:block; font-size:12.5px; color:#1a1a2e; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.alert-item .ai-info span { font-size:11px; color:#8a94ad; }
+.alert-item .ai-right { text-align:right; flex-shrink:0; }
+.alert-item .ai-right .ai-count { display:block; font-size:11.5px; font-weight:600; color:#1a1a2e; }
+.alert-item .ai-right .ai-hint { font-size:10.5px; color:#8a94ad; }
+.alert-pill { font-size:10px; font-weight:700; padding:2px 9px; border-radius:20px; display:inline-block; }
+.alert-pill.low { background:#fff3e0; color:#e65100; }
+.alert-pill.exp { background:#fce4ec; color:#c2185b; }
+
+.branch-bar-row { padding:12px 0; border-bottom:1px solid var(--border); }
+.branch-bar-row:last-child { border-bottom:none; }
+.branch-bar-row .bbr-top { display:flex; align-items:center; justify-content:space-between; font-size:12.5px; margin-bottom:6px; }
+.branch-bar-row .bbr-top strong { color:#1a1a2e; font-weight:700; }
+.branch-bar-row .bbr-top span.items { color:#8a94ad; }
+.branch-bar-track { height:7px; border-radius:999px; background:#f0f1f6; overflow:hidden; }
+.branch-bar-fill { height:100%; border-radius:999px; background:linear-gradient(90deg,#8b5cf6,#a78bfa); }
+.branch-bar-pct { text-align:right; font-size:11px; color:#8a94ad; margin-top:4px; }
 </style>
 
 <div class="container-fluid py-4">
@@ -19,12 +61,14 @@ table.dataTable thead th.sorting:hover { color: var(--primary-pink); cursor: poi
             <h4 class="fw-bold mb-0" style="color:#1a1a2e;">Inventory Management</h4>
             <small class="text-muted">Products, stock levels, and physical branches</small>
         </div>
-        <div class="d-flex gap-2 flex-wrap">
-            <a href="<?= site_url('admin/product/low_stock'); ?>" class="btn btn-outline-warning btn-sm">
-                <i class="fas fa-exclamation-triangle me-1"></i> Low Stock
-                <?php if ($stat_low_stock > 0): ?>
-                    <span class="badge bg-danger ms-1"><?= $stat_low_stock; ?></span>
-                <?php endif; ?>
+        <div class="d-flex gap-2 flex-wrap align-items-center">
+            <a href="<?= site_url('admin/product/expiring'); ?>" class="hdr-pill">
+                <i class="fas fa-calendar-times"></i> Expiring Soon
+                <?php if ($stat_expiring > 0): ?><span class="cnt"><?= $stat_expiring; ?></span><?php endif; ?>
+            </a>
+            <a href="<?= site_url('admin/product/low_stock'); ?>" class="hdr-pill">
+                <i class="fas fa-exclamation-triangle"></i> Low Stock
+                <?php if ($stat_low_stock > 0): ?><span class="cnt"><?= $stat_low_stock; ?></span><?php endif; ?>
             </a>
             <a href="<?= site_url('admin/product/add'); ?>" class="btn btn-primary btn-sm">
                 <i class="fas fa-plus me-1"></i> Add Product
@@ -33,41 +77,55 @@ table.dataTable thead th.sorting:hover { color: var(--primary-pink); cursor: poi
     </div>
 
     <!-- Stat Cards -->
-    <div class="row g-3 mb-2">
-        <div class="col-6 col-md-3">
-            <div class="stat-card">
-                <div class="stat-icon" style="background:#eef0ff;color:#4361ee;"><i class="fas fa-boxes"></i></div>
+    <div class="row row-cols-2 row-cols-md-5 g-3 mb-3">
+        <div class="col">
+            <div class="stat-card stat-card-v2">
                 <div>
-                    <div class="stat-label">Total Products</div>
-                    <div class="stat-value"><?= number_format($stat_total); ?></div>
+                    <div class="scv2-label">Total Products</div>
+                    <div class="scv2-value"><?= number_format($stat_total); ?></div>
+                    <div class="scv2-sub">All registered products</div>
                 </div>
+                <div class="scv2-icon" style="background:#eef0ff;color:#4361ee;"><i class="fas fa-boxes"></i></div>
             </div>
         </div>
-        <div class="col-6 col-md-3">
-            <div class="stat-card">
-                <div class="stat-icon" style="background:#e8f5e9;color:#2e7d32;"><i class="fas fa-check-circle"></i></div>
+        <div class="col">
+            <div class="stat-card stat-card-v2">
                 <div>
-                    <div class="stat-label">Available</div>
-                    <div class="stat-value" style="color:#2e7d32;"><?= number_format($stat_available); ?></div>
+                    <div class="scv2-label">Available Stock</div>
+                    <div class="scv2-value"><?= number_format($stat_available); ?></div>
+                    <div class="scv2-sub">Products in stock</div>
                 </div>
+                <div class="scv2-icon" style="background:#e8f5e9;color:#2e7d32;"><i class="fas fa-check"></i></div>
             </div>
         </div>
-        <div class="col-6 col-md-3">
-            <div class="stat-card">
-                <div class="stat-icon" style="background:#ffebee;color:#c62828;"><i class="fas fa-ban"></i></div>
+        <div class="col">
+            <div class="stat-card stat-card-v2">
                 <div>
-                    <div class="stat-label">Unavailable</div>
-                    <div class="stat-value" style="color:#c62828;"><?= number_format($stat_not_available); ?></div>
+                    <div class="scv2-label">Unavailable Stock</div>
+                    <div class="scv2-value"><?= number_format($stat_not_available); ?></div>
+                    <div class="scv2-sub">Out of stock products</div>
                 </div>
+                <div class="scv2-icon" style="background:#ffebee;color:#c62828;"><i class="fas fa-xmark"></i></div>
             </div>
         </div>
-        <div class="col-6 col-md-3">
-            <div class="stat-card">
-                <div class="stat-icon" style="background:#fff8e1;color:#f57f17;"><i class="fas fa-exclamation-triangle"></i></div>
+        <div class="col">
+            <div class="stat-card stat-card-v2">
                 <div>
-                    <div class="stat-label">Low Stock</div>
-                    <div class="stat-value" style="<?= $stat_low_stock > 0 ? 'color:#f57f17;' : ''; ?>"><?= number_format($stat_low_stock); ?></div>
+                    <div class="scv2-label">Low Stock</div>
+                    <div class="scv2-value"><?= number_format($stat_low_stock); ?></div>
+                    <div class="scv2-sub">Need restocking</div>
                 </div>
+                <div class="scv2-icon" style="background:#fff8e1;color:#f57f17;"><i class="fas fa-triangle-exclamation"></i></div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="stat-card stat-card-v2">
+                <div>
+                    <div class="scv2-label">Expiring Soon</div>
+                    <div class="scv2-value"><?= number_format($stat_expiring); ?></div>
+                    <div class="scv2-sub">Within 30 days</div>
+                </div>
+                <div class="scv2-icon" style="background:#fff3e0;color:#e65100;"><i class="fas fa-box-archive"></i></div>
             </div>
         </div>
     </div>
@@ -146,14 +204,16 @@ table.dataTable thead th.sorting:hover { color: var(--primary-pink); cursor: poi
     <!-- Products Table -->
     <div class="card border-0 shadow-sm mb-2" style="border-radius:12px;overflow:hidden;">
         <div class="table-responsive">
-            <table class="table inv-table mb-0" id="productsTable">
+            <table class="table inv-table mb-0 table-stack" id="productsTable">
                 <thead>
                     <tr>
-                        <th class="ps-3" style="width:36%;">Product</th>
+                        <th class="ps-3" style="width:34px;"><input type="checkbox" id="selectAllProducts" class="form-check-input"></th>
+                        <th style="width:30%;">Product</th>
                         <th>Branch</th>
                         <th>Category</th>
                         <th class="text-end">Price</th>
                         <th class="text-center">Stock</th>
+                        <th class="text-center">Expiration</th>
                         <th class="text-center">Status</th>
                         <th class="text-center pe-3">Actions</th>
                     </tr>
@@ -176,7 +236,8 @@ table.dataTable thead th.sorting:hover { color: var(--primary-pink); cursor: poi
                         $status_label = $status_labels[$status_key] ?? ucfirst($status_key);
                     ?>
                     <tr>
-                        <td class="ps-3">
+                        <td class="ps-3"><input type="checkbox" class="form-check-input product-row-check"></td>
+                        <td>
                             <div class="d-flex align-items-center gap-2">
                                 <?php if (!empty($p['primary_image'])): ?>
                                     <img src="<?= base_url($p['primary_image']); ?>" class="row-thumb" alt=""
@@ -211,6 +272,17 @@ table.dataTable thead th.sorting:hover { color: var(--primary-pink); cursor: poi
                             <span class="stock-badge <?= $stock_cls; ?>"><?= number_format((int)$st); ?></span>
                         </td>
                         <td class="text-center">
+                            <?php if (!empty($p['expiry_date'])): ?>
+                                <?php $daysLeft = (int) ceil((strtotime($p['expiry_date']) - strtotime(date('Y-m-d'))) / 86400); ?>
+                                <span class="small" style="color:#1a1a2e;"><?= date('M j, Y', strtotime($p['expiry_date'])); ?></span><br>
+                                <span style="font-size:10.5px;font-weight:600;color:<?= $daysLeft <= 30 ? '#dc3545' : '#8a94ad'; ?>;">
+                                    <?= $daysLeft < 0 ? 'Expired' : $daysLeft . ' days left'; ?>
+                                </span>
+                            <?php else: ?>
+                                <span class="text-muted">—</span>
+                            <?php endif; ?>
+                        </td>
+                        <td class="text-center">
                             <span class="badge-status badge-<?= $status_key; ?>"><?= $status_label; ?></span>
                         </td>
                         <td class="text-center pe-3">
@@ -243,6 +315,129 @@ table.dataTable thead th.sorting:hover { color: var(--primary-pink); cursor: poi
                 <?php endif; ?>
                 </tbody>
             </table>
+        </div>
+    </div>
+
+    <?php
+        // Everything below is derived from data already loaded above ($products, $branches_list)
+        // — purely presentational, no new queries.
+        $donutTotal = max(1, (int) $stat_total);
+        $donutBreakdown = [
+            ['label' => 'Available Stock',   'color' => '#22C55E', 'count' => (int) $stat_available],
+            ['label' => 'Low Stock',         'color' => '#F59E0B', 'count' => (int) $stat_low_stock],
+            ['label' => 'Out of Stock',      'color' => '#EF4444', 'count' => (int) $stat_not_available],
+            ['label' => 'Expiring Soon',     'color' => '#8B5CF6', 'count' => (int) $stat_expiring],
+        ];
+
+        $lowStockAlerts = array_filter($products, function ($p) {
+            $st = (int) ($p['stock'] ?? 0);
+            $min = (int) ($p['min_stock_alert'] ?? 10);
+            return $st > 0 && $st <= $min;
+        });
+        usort($lowStockAlerts, fn($a, $b) => (int) $a['stock'] <=> (int) $b['stock']);
+
+        $expiringAlerts = array_filter($products, function ($p) {
+            return !empty($p['expiry_date']) && strtotime($p['expiry_date']) <= strtotime('+30 days');
+        });
+        usort($expiringAlerts, fn($a, $b) => strtotime($a['expiry_date']) <=> strtotime($b['expiry_date']));
+
+        $stockAlerts = array_slice(array_merge(array_slice($lowStockAlerts, 0, 3), array_slice($expiringAlerts, 0, 2)), 0, 5);
+
+        $branchGrandTotal = max(1, array_sum(array_column($branches_list, 'total_stock')));
+        $topBranches = $branches_list;
+        usort($topBranches, fn($a, $b) => (int) $b['total_stock'] <=> (int) $a['total_stock']);
+        $topBranches = array_slice($topBranches, 0, 5);
+    ?>
+
+    <!-- Analytics / Alerts / Branch Stock -->
+    <div class="row g-3 mb-3">
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm h-100" style="border-radius:14px;padding:1.25rem;">
+                <div class="iv-widget-title"><i class="fas fa-chart-pie me-1 text-primary"></i> Inventory Analytics <span class="text-muted fw-normal" style="font-size:11.5px;">(This Month)</span></div>
+                <div class="chart-container" style="height:170px;position:relative;margin-top:8px;">
+                    <canvas id="inventoryDonutChart"></canvas>
+                    <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;">
+                        <div style="font-size:20px;font-weight:800;color:#1a1a2e;"><?= number_format($stat_total); ?></div>
+                        <div style="font-size:10px;color:#8a94ad;text-transform:uppercase;letter-spacing:.04em;">Total Products</div>
+                    </div>
+                </div>
+                <div style="margin-top:10px;">
+                    <?php foreach ($donutBreakdown as $d): ?>
+                        <?php $pct = round(($d['count'] / $donutTotal) * 100, 1); ?>
+                        <div class="iv-legend-row">
+                            <span><span class="dot" style="background:<?= $d['color']; ?>;"></span><?= $d['label']; ?></span>
+                            <strong><?= (int) $d['count']; ?> <span class="pct">(<?= $pct; ?>%)</span></strong>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm h-100" style="border-radius:14px;padding:1.25rem;">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div class="iv-widget-title mb-0"><i class="fas fa-bell me-1 text-warning"></i> Stock Alerts</div>
+                    <a href="<?= site_url('admin/product/low_stock'); ?>" style="font-size:11.5px;font-weight:600;">View All</a>
+                </div>
+                <div style="margin-top:10px;">
+                    <?php if (!empty($stockAlerts)): ?>
+                        <?php foreach ($stockAlerts as $p): ?>
+                            <?php $isExpiring = !empty($p['expiry_date']) && strtotime($p['expiry_date']) <= strtotime('+30 days') && (int) ($p['stock'] ?? 0) > (int) ($p['min_stock_alert'] ?? 10); ?>
+                            <div class="alert-item">
+                                <?php if (!empty($p['primary_image'])): ?>
+                                    <img src="<?= base_url($p['primary_image']); ?>" class="ai-thumb" alt=""
+                                         onerror="this.replaceWith(Object.assign(document.createElement('div'), {className:'ai-thumb-ph', innerHTML:'<i class=\'fas fa-box\'></i>'}));">
+                                <?php else: ?>
+                                    <div class="ai-thumb-ph"><i class="fas fa-box"></i></div>
+                                <?php endif; ?>
+                                <div class="ai-info">
+                                    <strong><?= htmlspecialchars($p['product_name']); ?></strong>
+                                    <span>SKU: <?= htmlspecialchars($p['sku'] ?? '—'); ?></span>
+                                </div>
+                                <div class="ai-right">
+                                    <?php if ($isExpiring): ?>
+                                        <span class="alert-pill exp">Expiring Soon</span><br>
+                                        <span class="ai-count">Expires in <?= max(0, (int) ceil((strtotime($p['expiry_date']) - time()) / 86400)); ?> days</span><br>
+                                        <span class="ai-hint">Check inventory</span>
+                                    <?php else: ?>
+                                        <span class="alert-pill low">Low Stock</span><br>
+                                        <span class="ai-count">Only <?= (int) $p['stock']; ?> left</span><br>
+                                        <span class="ai-hint">Reorder suggested</span>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <p class="text-center text-muted" style="padding:24px 0;font-size:.85rem;">No stock alerts right now.</p>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm h-100" style="border-radius:14px;padding:1.25rem;">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div class="iv-widget-title mb-0"><i class="fas fa-store me-1 text-success"></i> Top Branch Stock</div>
+                    <span class="text-muted" style="font-size:11.5px;">This Month <i class="fas fa-chevron-down" style="font-size:9px;"></i></span>
+                </div>
+                <div style="margin-top:6px;">
+                    <?php if (!empty($topBranches)): ?>
+                        <?php foreach ($topBranches as $b): ?>
+                            <?php $pct = round(((int) $b['total_stock'] / $branchGrandTotal) * 100); ?>
+                            <div class="branch-bar-row">
+                                <div class="bbr-top">
+                                    <strong><?= htmlspecialchars($b['branch_name']); ?></strong>
+                                    <span class="items"><?= number_format((int) $b['total_stock']); ?> items</span>
+                                </div>
+                                <div class="branch-bar-track"><div class="branch-bar-fill" style="width:<?= $pct; ?>%;"></div></div>
+                                <div class="branch-bar-pct"><?= $pct; ?>%</div>
+                            </div>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <p class="text-center text-muted" style="padding:24px 0;font-size:.85rem;">No branches yet.</p>
+                    <?php endif; ?>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -468,7 +663,7 @@ var ORIENTAL_MINDORO_BARANGAYS = {
     "Bulalacao": ["Bagong Sikat","Balatasan","Benli","Cabugao","Cambunang","Campaasan","Maasin","Maujao","Milagrosa","Nasukob","Poblacion","San Francisco","San Isidro","San Juan","San Roque"],
     "Gloria": ["Agos","Agsalin","Alma Villa","Andres Bonifacio","Balete","Banus","Banutan","Bulaklakan","Buong Lupa","Gaudencio Antonino","Guimbonan","Kawit","Lucio Laurel","Macario Adriatico","Malamig","Malayong","Maligaya","Malubay","Manguyang","Maragooc","Mirayan","Narra","Papandungin","San Antonio","Santa Maria","Santa Theresa","Tambong"],
     "Mansalay": ["B. del Mundo","Balugo","Bonbon","Budburan","Cabalwa","Don Pedro","Maliwanag","Manaul","Panaytayan","Poblacion","Roma","Santa Brigida","Santa Maria","Santa Teresita","Villa Celestial","Wasig","Waygan"],
-    "Naujan": ["Adrialuna","Andres Ilagan","Antipolo","Apitong","Arangin","Aurora","Bacungan","Bagong Buhay","Balite","Bancuro","Banuton","Barcenaga","Bayani","Buhangin","Caburo","Concepcion","Dao","Del Pilar","Estrella","Evangelista","Gamao","General Esco","Herrera","Inarawan","Kalinisan","Laguna","Mabini","Magtibay","Mahabang Parang","Malaya","Malinao","Malvar","Masagana","Masaguing","Melgar A","Melgar B","Metolza","Montelago","Montemayor","Motoderazo","Mulawin","Nag-iba I","Nag-iba II","Pagkakaisa","Paitan","Paniquian","Pinagsabangan I","Pinagsabangan II","Piñahan","Poblacion I","Poblacion II","Poblacion III","Sampaguita","San Agustin I","San Agustin II","San Andres","San Antonio","San Carlos","San Isidro","San Jose","San Luis","San Nicolas","San Pedro","Santa Cruz","Santa Isabel","Santa Maria","Santiago","Santo Niño","Tagumpay","Tigkan"],
+    "Naujan": ["Adrialuna","Andres Ilagan","Antipolo","Apitong","Arangin","Aurora","Bacungan","Bagong Buhay","Balite","Bancuro","Banuton","Barcenaga","Bayani","Buhangin","Caburo","Concepcion","Curva","Dao","Del Pilar","Estrella","Evangelista","Gamao","General Esco","Herrera","Inarawan","Kalinisan","Laguna","Mabini","Magtibay","Mahabang Parang","Malaya","Malinao","Malvar","Masagana","Masaguing","Melgar A","Melgar B","Metolza","Montelago","Montemayor","Motoderazo","Mulawin","Nag-iba I","Nag-iba II","Pagkakaisa","Paitan","Paniquian","Pinagsabangan I","Pinagsabangan II","Piñahan","Poblacion I","Poblacion II","Poblacion III","Sampaguita","San Agustin I","San Agustin II","San Andres","San Antonio","San Carlos","San Isidro","San Jose","San Luis","San Nicolas","San Pedro","Santa Cruz","Santa Isabel","Santa Maria","Santiago","Santo Niño","Tagumpay","Tigkan"],
     "Pinamalayan": ["Anoling","Bacungan","Bangbang","Banilad","Buli","Cacawan","Calingag","Del Razon","Guinhawa","Inclanay","Lumangbayan","Malaya","Maliangcog","Maningcol","Marayos","Marfrancisco","Nabuslot","Pagalagala","Palayan","Pambisan Malaki","Pambisan Munti","Panggulayan","Papandayan","Pili","Quinabigan","Ranzo","Rosario","Sabang","Santa Isabel","Santa Maria","Santa Rita","Santo Niño","Wawa","Zone I","Zone II","Zone III","Zone IV"],
     "Pola": ["Bacawan","Bacungan","Batuhan","Bayanan","Biga","Buhay na Tubig","Calima","Calubasanhon","Campamento","Casiligan","Malibago","Maluanluan","Matulatula","Misong","Pahilahan","Panikihan","Pula","Puting Cacao","Tagbakin","Tagumpay","Tiguihan","Zone I","Zone II"],
     "Puerto Galera": ["Aninuan","Baclayan","Balatero","Dulangan","Palangan","Poblacion","Sabang","San Antonio","San Isidro","Santo Niño","Sinandigan","Tabinay","Villaflor"],
@@ -667,13 +862,59 @@ $(function () {
     // Excel/PDF export lives in Reports, not on this operational list page.
     $('#productsTable').DataTable({
         columnDefs: [
-            { orderable: false, targets: [1, 6] } // Branch (badges) and Actions columns aren't meaningfully sortable
+            { orderable: false, targets: [0, 2, 6, 8] } // Checkbox, Branch (badges), Expiration (text) and Actions columns aren't meaningfully sortable
         ],
         language: {
             search: '_INPUT_',
             searchPlaceholder: 'Quick search…',
             emptyTable: <?= json_encode('No products found' . (($search || $category || $branch || $status) ? ' — <a href="' . site_url('admin/inventory') . '">clear filters</a>' : '')); ?>
-        }
+        },
+        // Re-apply the mobile stacked-card data-labels after every redraw
+        // (pagination/sort/search), since DataTables only touches <tbody>
+        // rows and our labels live on those same <td> elements.
+        drawCallback: function() { if (typeof initResponsiveTableStacking === 'function') initResponsiveTableStacking(); }
+    });
+
+    document.getElementById('selectAllProducts')?.addEventListener('change', function() {
+        document.querySelectorAll('.product-row-check').forEach(cb => cb.checked = this.checked);
     });
 });
+
+</script>
+
+<script>
+(function() {
+    const donutCanvas = document.getElementById('inventoryDonutChart');
+    if (!donutCanvas) return;
+    const donutData = <?php echo json_encode(array_map(fn($d) => (int) $d['count'], $donutBreakdown)); ?>;
+    const donutColors = <?php echo json_encode(array_column($donutBreakdown, 'color')); ?>;
+    const donutHasData = donutData.some(v => v > 0);
+
+    new Chart(donutCanvas.getContext('2d'), {
+        type: 'doughnut',
+        data: {
+            labels: <?php echo json_encode(array_column($donutBreakdown, 'label')); ?>,
+            datasets: [{
+                data: donutHasData ? donutData : [1],
+                backgroundColor: donutHasData ? donutColors : ['#eee'],
+                borderWidth: 3,
+                borderColor: '#fff',
+                hoverOffset: donutHasData ? 8 : 0,
+            }],
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '72%',
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    enabled: donutHasData,
+                    backgroundColor: '#fff', titleColor: '#1a1a2e', bodyColor: '#e0559c', bodyFont: { weight: '700' },
+                    borderColor: '#f0d9e8', borderWidth: 1, padding: 10, cornerRadius: 10,
+                },
+            },
+        },
+    });
+})();
 </script>

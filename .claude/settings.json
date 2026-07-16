@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/ACER/AppData/Local/Temp/claude/c--xampp-htdocs-DropSell/8f77bd95-8e98-4a0a-89f0-9da3381b061b/scratchpad/**)",
+      "Bash(NODE_PATH=\"/c/Users/ACER/AppData/Local/npm-cache/_npx/e41f203b7505f1fb/node_modules\" node test-variation-image.js result2.png)"
+    ]
+  }
+}

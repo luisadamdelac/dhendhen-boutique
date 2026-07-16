@@ -42,7 +42,7 @@
                             </button>
                             <?php if (!empty($avatarImage)): ?>
                             <a href="<?php echo BASE_URL; ?>reseller/profile/delete_photo" class="btn btn-sm btn-outline"
-                               onclick="return confirm('Remove your profile photo?');">
+                               onclick="return confirmRemovePhoto(event, this, 'Remove your profile photo?');">
                                 <i class="fas fa-trash"></i> Remove
                             </a>
                             <?php endif; ?>
@@ -224,14 +224,9 @@
 .profile-avatar-large {
     width: 100px;
     height: 100px;
-    background: linear-gradient(135deg, #e91e63 0%, #c2185b 100%);
     border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 2.5rem;
-    font-weight: bold;
+    overflow: hidden;
+    border: 3px solid var(--primary-pink-light, #fce4ec);
     flex-shrink: 0;
 }
 
@@ -393,9 +388,9 @@ function previewAndUpload(input) {
     if (input.files && input.files[0]) {
         const file = input.files[0];
 
-        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
         if (!allowedTypes.includes(file.type)) {
-            alert('Please select a valid image file (JPG, PNG, or GIF)');
+            alert('Please select a valid image file (JPG, PNG, GIF, or WebP)');
             input.value = '';
             return;
         }
@@ -412,12 +407,12 @@ function previewAndUpload(input) {
         };
         reader.readAsDataURL(file);
 
-        if (confirm('Upload this photo as your profile picture?')) {
+        customConfirm('Upload this photo as your profile picture?', function() {
             document.getElementById('photoForm').submit();
-        } else {
+        }, { onCancel: function() {
             input.value = '';
             location.reload();
-        }
+        } });
     }
 }
 </script>

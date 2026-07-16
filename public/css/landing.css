@@ -55,7 +55,7 @@
 
 .landing-back-link:hover {
     transform: translateY(-2px);
-    border-color: rgba(147,112,219,0.55);
+    border-color: rgba(236,72,153,0.55);
     box-shadow: 0 16px 34px rgba(15,23,42,0.10);
 }
 
@@ -85,9 +85,9 @@
     gap: 10px;
     padding: 10px 14px;
     border-radius: 999px;
-    background: rgba(255,105,180,0.10);
-    border: 1px solid rgba(255,105,180,0.18);
-    color: #ff69b4;
+    background: rgba(236,72,153,0.10);
+    border: 1px solid rgba(236,72,153,0.18);
+    color: #EC4899;
     font-weight: 700;
     margin-bottom: 14px;
 }
@@ -132,7 +132,7 @@
     padding: 12px 14px;
 }
 
-.highlight i { color: #9370db; font-size: 1.1rem; margin-top: 2px; }
+.highlight i { color: #DB2777; font-size: 1.1rem; margin-top: 2px; }
 .highlight-title { font-weight: 900; color: #0f172a; }
 .highlight-sub { font-size: 0.9rem; color: #64748b; margin-top: 2px; font-weight: 600; }
 
@@ -158,12 +158,12 @@
     width: 56px;
     height: 56px;
     border-radius: 16px;
-    background: rgba(147,112,219,0.12);
-    border: 1px solid rgba(147,112,219,0.22);
+    background: rgba(236,72,153,0.12);
+    border: 1px solid rgba(236,72,153,0.22);
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #9370db;
+    color: #DB2777;
     font-size: 1.6rem;
 }
 
@@ -190,7 +190,7 @@
 .role-tile:hover {
     transform: translateY(-4px);
     box-shadow: 0 16px 34px rgba(15,23,42,0.10);
-    border-color: rgba(147,112,219,0.55);
+    border-color: rgba(236,72,153,0.55);
 }
 
 .role-icon {
@@ -215,8 +215,8 @@
     align-items: center;
     color: #334155;
     font-weight: 800;
-    background: rgba(255,105,180,0.08);
-    border: 1px solid rgba(255,105,180,0.18);
+    background: rgba(236,72,153,0.08);
+    border: 1px solid rgba(236,72,153,0.18);
     border-radius: 14px;
     padding: 10px 12px;
 }
@@ -234,9 +234,9 @@
     filter: blur(0px);
 }
 
-.blob-1 { width: 120px; height: 120px; right: 20px; top: 10px; background: #ff69b4; }
-.blob-2 { width: 90px; height: 90px; right: 120px; top: 110px; background: #9370db; }
-.blob-3 { width: 140px; height: 140px; right: 40px; top: 170px; background: #9370db; }
+.blob-1 { width: 120px; height: 120px; right: 20px; top: 10px; background: #EC4899; }
+.blob-2 { width: 90px; height: 90px; right: 120px; top: 110px; background: #DB2777; }
+.blob-3 { width: 140px; height: 140px; right: 40px; top: 170px; background: #DB2777; }
 
 .landing-section { padding: 18px 0 0; }
 

@@ -132,7 +132,7 @@ class Profile extends Authenticated_Controller {
 
         $this->load->library('upload', [
             'upload_path' => $upload_dir,
-            'allowed_types' => 'jpg|jpeg|png|gif',
+            'allowed_types' => 'jpg|jpeg|png|gif|webp',
             'max_size' => 2048,
             'encrypt_name' => TRUE,
         ]);

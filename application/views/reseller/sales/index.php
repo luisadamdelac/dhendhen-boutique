@@ -7,7 +7,7 @@
         <h4 style="margin-bottom: 1rem;">Monthly Sales (Last 6 Months)</h4>
         <?php if (!empty($salesData['monthly'])): ?>
             <div class="table-responsive" style="margin-bottom: 3rem;">
-                <table class="table table-striped">
+                <table class="table table-striped table-stack">
                     <thead>
                         <tr>
                             <th>Month</th>

@@ -8,7 +8,7 @@ class Reviews extends Authenticated_Controller {
     }
 
     private function base_query() {
-        return $this->db->select('pr.*, p.product_name, c.first_name as customer_first_name, c.last_name as customer_last_name, u.email as customer_email')
+        return $this->db->select('pr.*, p.product_name, c.first_name as customer_first_name, c.last_name as customer_last_name, c.profile_image as customer_profile_image, u.email as customer_email')
             ->from('product_reviews pr')
             ->join(RESELLER_PRODUCTS_TABLE . ' rp', 'pr.reseller_product_id = rp.reseller_product_id')
             ->join(PRODUCT_TABLE . ' p', 'rp.product_id = p.product_id')

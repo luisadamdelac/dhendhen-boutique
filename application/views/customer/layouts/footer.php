@@ -9,28 +9,55 @@
                     <i class="fas fa-heart"></i> <?php echo SITE_NAME; ?>
                 </h4>
                 <p>
-                    Your trusted online beauty products and boutique shop. 
+                    Your trusted online beauty products and boutique shop.
                     Quality products at affordable prices.
                 </p>
+                <?php
+                    $CI =& get_instance();
+                    $CI->load->model('Settings_model');
+                    $socialLinks = [
+                        'facebook-f' => $CI->Settings_model->get('social_facebook'),
+                        'instagram' => $CI->Settings_model->get('social_instagram'),
+                        'tiktok' => $CI->Settings_model->get('social_tiktok'),
+                    ];
+                    $socialLinks = array_filter($socialLinks);
+                ?>
+                <?php if (!empty($socialLinks)): ?>
+                <div class="social-links">
+                    <?php foreach ($socialLinks as $icon => $url): ?>
+                        <a href="<?php echo htmlspecialchars($url); ?>" target="_blank" rel="noopener"><i class="fab fa-<?php echo $icon; ?>"></i></a>
+                    <?php endforeach; ?>
+                </div>
+                <?php endif; ?>
             </div>
-            
+
             <div class="footer-section">
                 <h4>Quick Links</h4>
                 <a href="<?php echo BASE_URL; ?>shop"><i class="fas fa-chevron-right"></i> Shop</a>
+                <a href="<?php echo BASE_URL; ?>shop?category=all"><i class="fas fa-chevron-right"></i> All Products</a>
                 <a href="<?php echo BASE_URL; ?>cart"><i class="fas fa-chevron-right"></i> Cart</a>
                 <?php if (isset($_SESSION['user_account_id']) && (($_SESSION['user_type'] ?? '') === 'customer')): ?>
-                    <a href="<?php echo BASE_URL; ?>orders"><i class="fas fa-chevron-right"></i> My Orders</a>
                     <a href="<?php echo BASE_URL; ?>account"><i class="fas fa-chevron-right"></i> My Account</a>
                 <?php else: ?>
                     <a href="<?php echo BASE_URL; ?>auth/login"><i class="fas fa-chevron-right"></i> Login</a>
                     <a href="<?php echo BASE_URL; ?>auth/register"><i class="fas fa-chevron-right"></i> Register</a>
                 <?php endif; ?>
             </div>
-            
-            <?php
-                $CI =& get_instance();
-                $CI->load->model('Settings_model');
-            ?>
+
+            <div class="footer-section">
+                <h4>Customer Service</h4>
+                <?php if (isset($_SESSION['user_account_id']) && (($_SESSION['user_type'] ?? '') === 'customer')): ?>
+                    <a href="<?php echo BASE_URL; ?>orders"><i class="fas fa-chevron-right"></i> My Orders</a>
+                    <a href="<?php echo BASE_URL; ?>refund"><i class="fas fa-chevron-right"></i> Refunds</a>
+                    <a href="<?php echo BASE_URL; ?>addresses"><i class="fas fa-chevron-right"></i> Addresses</a>
+                    <a href="<?php echo BASE_URL; ?>settings"><i class="fas fa-chevron-right"></i> Settings</a>
+                <?php else: ?>
+                    <a href="<?php echo BASE_URL; ?>auth/login"><i class="fas fa-chevron-right"></i> Track My Orders</a>
+                    <a href="<?php echo BASE_URL; ?>auth/login"><i class="fas fa-chevron-right"></i> Refunds</a>
+                    <a href="<?php echo BASE_URL; ?>auth/register_reseller"><i class="fas fa-chevron-right"></i> Become a Reseller</a>
+                <?php endif; ?>
+            </div>
+
             <div class="footer-section">
                 <h4>Contact Us</h4>
                 <p><i class="fas fa-phone"></i> <?php echo htmlspecialchars($CI->Settings_model->get_company_phone() ?: '+63 123 456 7890'); ?></p>
@@ -38,26 +65,17 @@
                 <p><i class="fas fa-map-marker-alt"></i> <?php echo htmlspecialchars($CI->Settings_model->get_company_address()); ?></p>
             </div>
 
-            <?php
-                $socialLinks = [
-                    'facebook-f' => $CI->Settings_model->get('social_facebook'),
-                    'instagram' => $CI->Settings_model->get('social_instagram'),
-                    'tiktok' => $CI->Settings_model->get('social_tiktok'),
-                ];
-                $socialLinks = array_filter($socialLinks);
-            ?>
-            <?php if (!empty($socialLinks)): ?>
             <div class="footer-section">
-                <h4>Follow Us</h4>
-                <div class="social-links">
-                    <?php foreach ($socialLinks as $icon => $url): ?>
-                        <a href="<?php echo htmlspecialchars($url); ?>" target="_blank" rel="noopener"><i class="fab fa-<?php echo $icon; ?>"></i></a>
-                    <?php endforeach; ?>
-                </div>
+                <h4>Newsletter</h4>
+                <p>Get updates on new arrivals and exclusive offers.</p>
+                <form class="footer-newsletter-form" onsubmit="event.preventDefault(); this.reset();">
+                    <input type="email" placeholder="Your email address" required>
+                    <button type="submit"><i class="fas fa-paper-plane"></i></button>
+                </form>
+                <p class="footer-newsletter-note">We respect your privacy. Unsubscribe anytime.</p>
             </div>
-            <?php endif; ?>
         </div>
-        
+
         <div class="footer-bottom">
             <p>&copy; <?php echo date('Y'); ?> <?php echo SITE_NAME; ?>. Made with <span class="heart"><i class="fas fa-heart"></i></span> All rights reserved.</p>
         </div>
@@ -161,6 +179,11 @@
             .modal { padding: 0.5rem; }
         }
     </style>
+
+    <!-- Shared JS (customConfirm and friends) — same file admin/staff/reseller
+         load, cache-busted so updates to it take effect immediately instead
+         of a stale cached copy silently missing newer functions. -->
+    <script src="<?php echo BASE_URL; ?>public/js/admin-scripts.js?v=<?php echo @filemtime(FCPATH . 'public/js/admin-scripts.js') ?: time(); ?>"></script>
 
     <script>
         function openModal(modalId) {

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo isset($page_title) ? $page_title . ' - ' : ''; ?>E-Benta Admin - Dhendhen Beauty Products</title>
+    <title><?php echo isset($page_title) ? $page_title . ' - ' : ''; ?>DropSell Admin</title>
     
     <!-- Favicon with Data URI (no 404 errors) -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛍️</text></svg>">
@@ -47,11 +47,6 @@
                         <input type="text" name="search" placeholder="Search products…" id="globalSearch" value="<?php echo isset($_GET['search']) ? htmlspecialchars($_GET['search']) : ''; ?>">
                     </form>
                 </div>
-
-                <!-- Search toggle (small phones only — expands the search box) -->
-                <button type="button" class="header-icon search-toggle-btn" id="searchToggle" title="Search">
-                    <i class="fas fa-search"></i>
-                </button>
 
                 <!-- Icons -->
                 <div class="header-icons">
@@ -154,8 +149,8 @@
                         <a href="<?php echo site_url('admin/product'); ?>" class="nav-link <?php echo (isset($page_title) && strpos($page_title, 'Inventory') !== false) ? 'active' : ''; ?>">
                             <i class="fas fa-boxes"></i>
                             <span>Inventory</span>
-                            <?php if(isset($low_stock_products) && count($low_stock_products) > 0): ?>
-                                <span class="badge"><?php echo count($low_stock_products); ?></span>
+                            <?php if (!empty($inventory_attention_count)): ?>
+                                <span class="badge" title="<?php echo count($low_stock_products ?? []); ?> low stock, <?php echo count($expiring_products ?? []); ?> expiring soon"><?php echo $inventory_attention_count; ?></span>
                             <?php endif; ?>
                         </a>
                     </li>

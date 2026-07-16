@@ -123,6 +123,57 @@ class Staff extends Authenticated_Controller {
     }
 
     /**
+     * Admin-managed profile photo — mirrors staff/Profile::update_photo(),
+     * but scoped to whichever staff_id admin is looking at rather than
+     * $this->user_id, so admin can set a staff member's photo on their
+     * behalf (e.g. before that staff has ever logged in to upload one).
+     */
+    public function upload_photo($staff_id = '') {
+        if (empty($staff_id) || $this->input->method() !== 'post' || empty($_FILES['photo']['name'])) {
+            redirect('admin/staff/view/' . $staff_id);
+        }
+
+        $staff = $this->db->where('staff_id', $staff_id)->get(STAFF_TABLE)->row_array();
+        if (!$staff) {
+            show_404();
+        }
+
+        $upload_dir = FCPATH . 'public/uploads/avatars/';
+        if (!is_dir($upload_dir)) {
+            mkdir($upload_dir, 0755, TRUE);
+        }
+
+        $this->load->library('upload', [
+            'upload_path' => $upload_dir,
+            'allowed_types' => 'jpg|jpeg|png|gif|webp',
+            'max_size' => 2048,
+            'encrypt_name' => TRUE,
+        ]);
+
+        if ($this->upload->do_upload('photo')) {
+            $path = 'public/uploads/avatars/' . $this->upload->data('file_name');
+            $this->db->where('staff_id', $staff_id)->update(STAFF_TABLE, [
+                'profile_image' => $path,
+                'updated_at' => date('Y-m-d H:i:s'),
+            ]);
+            $this->session->set_flashdata('success', 'Staff photo updated');
+        } else {
+            $this->session->set_flashdata('error', $this->upload->display_errors('', ''));
+        }
+
+        redirect('admin/staff/view/' . $staff_id);
+    }
+
+    public function remove_photo($staff_id = '') {
+        if (empty($staff_id) || $this->input->method() !== 'post') {
+            show_404();
+        }
+        $this->db->where('staff_id', $staff_id)->update(STAFF_TABLE, ['profile_image' => NULL]);
+        $this->session->set_flashdata('success', 'Staff photo removed');
+        redirect('admin/staff/view/' . $staff_id);
+    }
+
+    /**
      * Delete staff
      */
     public function delete($staff_id = '') {

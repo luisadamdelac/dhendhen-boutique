@@ -165,7 +165,7 @@ table.dataTable thead th.sorting:hover { color: var(--primary-pink); cursor: poi
     <div class="card border-0 shadow-sm mb-2" style="border-radius:12px;overflow:hidden;">
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table inv-table mb-0" id="ordersDataTable">
+                <table class="table inv-table mb-0 table-stack" id="ordersDataTable">
                     <thead>
                         <tr>
                             <th>Order #</th>
@@ -488,11 +488,6 @@ document.getElementById('paymentForm').addEventListener('submit', function(e) {
         return;
     }
 
-    if (newStatus === 'completed') {
-        const ok = confirm('Mark this payment as Completed?\n\nOnce approved, this cannot be undone — it unlocks the order for staff to process.');
-        if (!ok) return;
-    }
-
     const rejectionReason = document.getElementById('rejectionReasonInput').value.trim();
     if (newStatus === 'failed' && !rejectionReason) {
         alert('Please provide a reason for rejecting this payment.');
@@ -500,6 +495,19 @@ document.getElementById('paymentForm').addEventListener('submit', function(e) {
         return;
     }
 
+    if (newStatus === 'completed') {
+        customConfirm(
+            'Once approved, this cannot be undone — it unlocks the order for staff to process.',
+            function() { submitPaymentUpdate(newStatus, rejectionReason); },
+            { title: 'Mark this payment as Completed?', okText: 'Mark Completed' }
+        );
+        return;
+    }
+
+    submitPaymentUpdate(newStatus, rejectionReason);
+});
+
+function submitPaymentUpdate(newStatus, rejectionReason) {
     const btn = document.getElementById('paymentSubmitBtn');
     const originalHtml = btn.innerHTML;
     btn.disabled = true;
@@ -530,7 +538,7 @@ document.getElementById('paymentForm').addEventListener('submit', function(e) {
         btn.innerHTML = originalHtml;
         alert('Request failed');
     });
-});
+}
 
 /* ── Read-only Details modal (Commission / Refund / Cancellation) ── */
 function openDetailsModal(orderId, type) {
@@ -590,7 +598,8 @@ $(function () {
     const table = $('#ordersDataTable').DataTable({
         order: [[6, 'desc']],
         columnDefs: [{ orderable: false, targets: [7] }],
-        language: { search: '_INPUT_', searchPlaceholder: 'Search orders…' }
+        language: { search: '_INPUT_', searchPlaceholder: 'Search orders…' },
+        drawCallback: function() { if (typeof initResponsiveTableStacking === 'function') initResponsiveTableStacking(); }
     });
 
     // Status / Payment Method / Date Range — custom filters read straight off each row's data-* attributes

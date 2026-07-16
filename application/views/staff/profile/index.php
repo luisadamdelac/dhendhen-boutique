@@ -83,6 +83,15 @@ input[type="password"]::-webkit-clear-button {
                     <div class="profile-avatar">
                         <img id="currentPhoto" src="<?php echo $avatarSrc; ?>" alt="Profile Photo" style="width:100%;height:100%;object-fit:cover;">
                     </div>
+
+                    <div style="margin-bottom: 15px;">
+                        <h4 style="margin: 10px 0 5px 0;"><?php echo htmlspecialchars(trim(($profile['first_name'] ?? '') . ' ' . ($profile['last_name'] ?? ''))); ?></h4>
+                        <p style="color: #666; margin: 0;">
+                            <i class="fas fa-shield-alt" style="color: var(--primary-pink);"></i>
+                            Staff
+                        </p>
+                    </div>
+
                     <form method="POST" action="<?php echo site_url('staff/profile/update_photo'); ?>" enctype="multipart/form-data" id="photoForm">
                         <input type="file" id="photoInput" name="photo" accept="image/*" style="display:none;" onchange="previewAndUpload(this)">
                         <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
@@ -91,7 +100,7 @@ input[type="password"]::-webkit-clear-button {
                             </button>
                             <?php if (!empty($avatarImage)): ?>
                             <a href="<?php echo site_url('staff/profile/delete_photo'); ?>" class="btn btn-outline"
-                               onclick="return confirm('Remove your profile photo?');">
+                               onclick="return confirmRemovePhoto(event, this, 'Remove your profile photo?');">
                                 <i class="fas fa-trash"></i> Remove
                             </a>
                             <?php endif; ?>
@@ -104,7 +113,7 @@ input[type="password"]::-webkit-clear-button {
                         </h6>
                         <ul style="margin: 0; padding-left: 20px; font-size: 13px; color: #666;">
                             <li>Maximum file size: 2MB</li>
-                            <li>Supported formats: JPG, PNG, GIF</li>
+                            <li>Supported formats: JPG, PNG, GIF, WebP</li>
                             <li>Square images work best</li>
                         </ul>
                     </div>
@@ -237,9 +246,9 @@ function previewAndUpload(input) {
     if (input.files && input.files[0]) {
         const file = input.files[0];
 
-        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
         if (!allowedTypes.includes(file.type)) {
-            alert('Please select a valid image file (JPG, PNG, or GIF)');
+            alert('Please select a valid image file (JPG, PNG, GIF, or WebP)');
             input.value = '';
             return;
         }
@@ -257,12 +266,12 @@ function previewAndUpload(input) {
         };
         reader.readAsDataURL(file);
 
-        if (confirm('Upload this photo as your profile picture?')) {
+        customConfirm('Upload this photo as your profile picture?', function() {
             document.getElementById('photoForm').submit();
-        } else {
+        }, { onCancel: function() {
             input.value = '';
             location.reload();
-        }
+        } });
     }
 }
 
