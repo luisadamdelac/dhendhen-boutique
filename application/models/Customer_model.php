@@ -66,7 +66,7 @@ class Customer_model extends CI_Model {
             'contact_number'  => $data['contact_number'],
             'street'          => $data['street'] ?? NULL,
             'barangay'        => $data['barangay'] ?? NULL,
-            'city'            => $data['city'],
+            'municipality'    => $data['municipality'] ?? NULL,
             'profile_image'   => $data['profile_image'] ?? NULL,
             'created_at'      => date('Y-m-d H:i:s'),
             'updated_at'      => date('Y-m-d H:i:s')
@@ -90,7 +90,7 @@ class Customer_model extends CI_Model {
             'contact_number'=> $data['contact_number'] ?? NULL,
             'street'        => $data['street'] ?? NULL,
             'barangay'      => $data['barangay'] ?? NULL,
-            'city'          => $data['city'] ?? NULL,
+            'municipality'  => $data['municipality'] ?? NULL,
             'profile_image' => $data['profile_image'] ?? NULL,
             'updated_at'    => date('Y-m-d H:i:s')
         );

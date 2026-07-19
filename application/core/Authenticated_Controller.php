@@ -138,6 +138,8 @@ class Authenticated_Controller extends CI_Controller {
             'expiring_products' => [],
             'inventory_attention_count' => 0,
             'pending_orders_notifications' => 0,
+            'pending_refunds' => 0,
+            'pending_reviews' => 0,
             'pending_resellers' => 0,
             'pending_withdrawals' => 0,
         );
@@ -173,6 +175,19 @@ class Authenticated_Controller extends CI_Controller {
             $defaults['pending_orders_notifications'] = (int) $this->db
                 ->where('order_status', 'pending')
                 ->count_all_results(ORDER_TABLE);
+
+            // Refunds/Reviews live under the same sidebar "Orders" tab as
+            // Orders (see sidebar.php's $ordersActive check) and each has
+            // its own badge pill on the in-page order_tabs.php partial —
+            // kept as separate counts (not folded into the total above) so
+            // each pill shows what specifically needs a look, instead of
+            // one queue's backlog showing up on a different tab's badge.
+            $defaults['pending_refunds'] = (int) $this->db
+                ->where('status', 'pending')
+                ->count_all_results(REFUND_REQUEST_TABLE);
+            $defaults['pending_reviews'] = (int) $this->db
+                ->where('status', 'pending')
+                ->count_all_results(PRODUCT_REVIEWS_TABLE);
 
             // Products at/below their own min_stock_alert (including sold
             // out, 0) — same gap: the Inventory badge template existed but
@@ -210,6 +225,49 @@ class Authenticated_Controller extends CI_Controller {
             $defaults['pending_orders_notifications'] = (int) $this->db
                 ->where_in('order_status', ['paid', 'processing', 'to_ship'])
                 ->count_all_results(ORDER_TABLE);
+
+            // Staff Inventory only ever shows their own branch's stock (see
+            // staff/Inventory.php), so the sidebar badge has to be scoped
+            // the same way — a product that's low everywhere else but fine
+            // at this branch shouldn't flag here, and vice versa.
+            $staff_branch_id = (int) ($this->db->select('branch_id')
+                ->where('staff_id', $this->user_id)
+                ->get(STAFF_TABLE)->row_array()['branch_id'] ?? 0);
+
+            if ($staff_branch_id) {
+                require_once APPPATH . 'services/StockService.php';
+
+                $alertable_products = $this->db
+                    ->select('product_id, min_stock_alert')
+                    ->where('is_archived', 0)
+                    ->where('min_stock_alert IS NOT NULL')
+                    ->get(PRODUCT_TABLE)->result_array();
+
+                $branch_stock = StockService::getAvailableStockForProducts(
+                    array_column($alertable_products, 'product_id'),
+                    $staff_branch_id
+                );
+
+                $low_stock_product_ids = [];
+                foreach ($alertable_products as $p) {
+                    $qty = $branch_stock[(int) $p['product_id']] ?? 0;
+                    if ($qty <= (int) $p['min_stock_alert']) {
+                        $low_stock_product_ids[] = (int) $p['product_id'];
+                    }
+                }
+
+                $defaults['expiring_products'] = $this->db
+                    ->select('product_id')
+                    ->where('is_archived', 0)
+                    ->where('expiry_date IS NOT NULL', NULL, FALSE)
+                    ->where('expiry_date <=', date('Y-m-d', strtotime('+30 days')))
+                    ->get(PRODUCT_TABLE)->result_array();
+
+                $defaults['inventory_attention_count'] = count(array_unique(array_merge(
+                    $low_stock_product_ids,
+                    array_column($defaults['expiring_products'], 'product_id')
+                )));
+            }
         } elseif ($this->user_type === 'reseller') {
             // Resellers don't act on orders either, but a pending order is
             // still new/incoming for them — worth flagging the same way
@@ -218,6 +276,16 @@ class Authenticated_Controller extends CI_Controller {
                 ->where('reseller_id', $this->user_id)
                 ->where('order_status', 'pending')
                 ->count_all_results(ORDER_TABLE);
+
+            // A withdrawal sitting unverified is squarely on the reseller —
+            // they're the only one who can enter the OTP, so this is exactly
+            // the kind of "needs your action" state the sidebar badges exist
+            // for elsewhere.
+            $defaults['pending_withdrawals'] = (int) $this->db
+                ->where('reseller_id', $this->user_id)
+                ->where('status', 'pending')
+                ->where('otp_verified', 0)
+                ->count_all_results(WITHDRAWAL_TABLE);
         }
 
         return array_merge($defaults, $extra);

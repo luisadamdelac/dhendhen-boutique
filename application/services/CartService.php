@@ -83,21 +83,63 @@ class CartService {
             }
         }
 
-        // Two-axis combination rows (product_variants) — joined to both
-        // variation values so a display label ("Shade: X, Finish: Y") can be
-        // built the same way the legacy single-axis path builds one.
+        // Combination rows (product_variants) — any number of axes, so a
+        // display label ("Shade: X, Finish: Y, Size: Z") can be built the
+        // same way the legacy single-axis path builds one.
         $variantIds = array_filter(array_column($cart, 'variant_id'));
         $variantsById = [];
         if (!empty($variantIds)) {
             require_once APPPATH . 'services/StockService.php';
-            $variantRows = $CI->db->select('v.*, v1.variation_type as type_1, v1.variation_value as value_1, v2.variation_type as type_2, v2.variation_value as value_2', FALSE)
+            $uniqueVariantIds = array_unique($variantIds);
+            $variantRows = $CI->db->select('v.*')
                 ->from(PRODUCT_VARIANTS_TABLE . ' v')
-                ->join(PRODUCT_VARIATION_TABLE . ' v1', 'v1.variation_id = v.variation_id_1', 'left')
-                ->join(PRODUCT_VARIATION_TABLE . ' v2', 'v2.variation_id = v.variation_id_2', 'left')
-                ->where_in('v.variant_id', array_unique($variantIds))
+                ->where_in('v.variant_id', $uniqueVariantIds)
                 ->where('v.status', 'active')
                 ->get()->result_array();
+
+            $extraByVariant = [];
+            $extraRows = $CI->db->select('variant_id, variation_id')
+                ->from(PRODUCT_VARIANT_EXTRA_VALUES_TABLE)
+                ->where_in('variant_id', $uniqueVariantIds)
+                ->order_by('variant_id, axis_order', 'ASC')
+                ->get()->result_array();
+            foreach ($extraRows as $er) {
+                $extraByVariant[(int) $er['variant_id']][] = (int) $er['variation_id'];
+            }
+
+            $axisIdsByVariant = [];
+            $allAxisIds = [];
+            foreach ($variantRows as $row) {
+                $ids = [(int) $row['variation_id_1']];
+                if (!empty($row['variation_id_2'])) {
+                    $ids[] = (int) $row['variation_id_2'];
+                }
+                foreach ($extraByVariant[(int) $row['variant_id']] ?? [] as $vid) {
+                    $ids[] = $vid;
+                }
+                $axisIdsByVariant[(int) $row['variant_id']] = $ids;
+                $allAxisIds = array_merge($allAxisIds, $ids);
+            }
+
+            $valueById = [];
+            if (!empty($allAxisIds)) {
+                $valueRows = $CI->db->select('variation_id, variation_type, variation_value')
+                    ->from(PRODUCT_VARIATION_TABLE)
+                    ->where_in('variation_id', array_unique($allAxisIds))
+                    ->get()->result_array();
+                foreach ($valueRows as $vr) {
+                    $valueById[(int) $vr['variation_id']] = $vr;
+                }
+            }
+
             foreach ($variantRows as $v) {
+                $labelParts = [];
+                foreach ($axisIdsByVariant[(int) $v['variant_id']] ?? [] as $vid) {
+                    if (isset($valueById[$vid])) {
+                        $labelParts[] = $valueById[$vid]['variation_type'] . ': ' . $valueById[$vid]['variation_value'];
+                    }
+                }
+                $v['variation_label'] = implode(', ', $labelParts);
                 $variantsById[$v['variant_id']] = $v;
             }
         }
@@ -130,7 +172,7 @@ class CartService {
                 }
                 $priceAdjustment = (float) $variant['price_adjustment'];
                 $availableStock = array_sum(StockService::getVariantBranchStock($variantId));
-                $variationLabel = $variant['type_1'] . ': ' . $variant['value_1'] . ($variant['type_2'] ? ', ' . $variant['type_2'] . ': ' . $variant['value_2'] : '');
+                $variationLabel = $variant['variation_label'];
             } elseif ($variationId) {
                 $variation = $variationsById[$variationId] ?? NULL;
                 if (!$variation || (int) $variation['product_id'] !== $productId) {

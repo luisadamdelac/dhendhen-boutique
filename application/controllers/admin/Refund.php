@@ -120,6 +120,55 @@ class Refund extends Authenticated_Controller {
     }
 
     /**
+     * Mark an approved refund as actually paid out — the step that was
+     * missing before: approve() only does inventory/commission bookkeeping,
+     * it never confirms the item came back in sellable condition or that
+     * money actually left the store. Both are required here, same as the
+     * withdrawal payout flow's GCash reference requirement.
+     */
+    public function complete($refund_id = '') {
+        if (empty($refund_id) || $this->input->method() !== 'post') {
+            show_404();
+        }
+
+        $refund = $this->db->select('*')->from(REFUND_REQUEST_TABLE)->where('refund_id', $refund_id)->get()->row_array();
+        if (!$refund) {
+            echo json_encode(['success' => FALSE, 'message' => 'Refund request not found']);
+            return;
+        }
+
+        if ($refund['status'] !== 'approved') {
+            echo json_encode(['success' => FALSE, 'message' => 'This refund must be approved before it can be marked as refunded']);
+            return;
+        }
+
+        if ($this->input->post('item_received') !== '1') {
+            echo json_encode(['success' => FALSE, 'message' => 'Please confirm the item was received back in good condition.']);
+            return;
+        }
+
+        $payment_reference = trim((string) $this->input->post('payment_reference', TRUE));
+        if (!preg_match('/^\d{13}$/', $payment_reference)) {
+            echo json_encode(['success' => FALSE, 'message' => 'GCash Reference Number is required and must be exactly 13 digits.']);
+            return;
+        }
+
+        $this->db->update(REFUND_REQUEST_TABLE, [
+            'status' => 'completed',
+            'item_received' => 1,
+            'payment_reference' => $payment_reference,
+            'completed_at' => date('Y-m-d H:i:s'),
+            'updated_at' => date('Y-m-d H:i:s'),
+        ], ['refund_id' => $refund_id]);
+
+        require_once APPPATH . 'services/NotificationService.php';
+        NotificationService::refundCompleted($refund_id, $refund['customer_id'], $refund['order_id'], (float) $refund['amount']);
+
+        $this->Activity_log_model->log_activity(get_user_id(), 'admin', 'complete_refund', "Marked refund as paid: $refund_id, ref: $payment_reference", get_client_ip());
+        echo json_encode(['success' => TRUE, 'message' => 'Refund marked as paid successfully']);
+    }
+
+    /**
      * Reject refund
      */
     public function reject($refund_id = '') {

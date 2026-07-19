@@ -47,8 +47,8 @@
                 <input type="text" id="req_gcash_name" class="form-control" maxlength="100" value="<?php echo htmlspecialchars($saved_gcash_name ?? ''); ?>">
             </div>
             <div class="form-group" style="margin:0;">
-                <button type="button" class="btn btn-primary" onclick="submitWithdrawalRequest()">
-                    <i class="fas fa-paper-plane"></i> Submit Request
+                <button type="button" class="btn btn-primary" id="btnSubmitWithdrawal" onclick="submitWithdrawalRequest()">
+                    <i class="fas fa-paper-plane" id="btnSubmitWithdrawalIcon"></i> <span id="btnSubmitWithdrawalText">Submit Request</span>
                 </button>
             </div>
         </div>
@@ -85,8 +85,8 @@
                                     <?php if ($status === 'pending' && !(int) $w['otp_verified']): ?>
                                         <div class="otp-form">
                                             <input type="text" id="otp_<?php echo $w['withdrawal_id']; ?>" class="form-control" maxlength="6" placeholder="000000">
-                                            <button class="btn btn-sm btn-primary" onclick="verifyOTP(<?php echo $w['withdrawal_id']; ?>)">
-                                                <i class="fas fa-check"></i> Verify OTP
+                                            <button class="btn btn-sm btn-primary" onclick="verifyOTP(<?php echo $w['withdrawal_id']; ?>, this)">
+                                                <i class="fas fa-check"></i> <span>Verify OTP</span>
                                             </button>
                                         </div>
                                     <?php endif; ?>
@@ -171,6 +171,19 @@ function submitWithdrawalRequest() {
         return;
     }
 
+    const btn = document.getElementById('btnSubmitWithdrawal');
+    const icon = document.getElementById('btnSubmitWithdrawalIcon');
+    const text = document.getElementById('btnSubmitWithdrawalText');
+    btn.disabled = true;
+    icon.className = 'fas fa-spinner fa-spin';
+    text.textContent = 'Submitting…';
+
+    const resetBtn = () => {
+        btn.disabled = false;
+        icon.className = 'fas fa-paper-plane';
+        text.textContent = 'Submit Request';
+    };
+
     fetch('<?php echo site_url('reseller/withdrawals/request_withdrawal'); ?>', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -178,19 +191,44 @@ function submitWithdrawalRequest() {
     })
     .then(r => r.json())
     .then(data => {
-        showInfoModal(data.success ? 'Request Submitted' : 'Request Failed',
-            data.message || (data.success ? 'Request submitted' : 'Request failed'),
-            data.success ? () => location.reload() : null);
+        if (data.success) {
+            // The OTP field for this new request only exists in the
+            // server-rendered list, so it won't appear until the page
+            // reloads — don't make the reseller click "OK" first (or
+            // manually hit refresh) just to see it; reload on its own
+            // shortly after the confirmation is shown. Button stays in its
+            // loading state until then instead of resetting.
+            showInfoModal('Request Submitted', data.message || 'Request submitted');
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            resetBtn();
+            showInfoModal('Request Failed', data.message || 'Request failed');
+        }
     })
-    .catch(() => showInfoModal('Error', 'Failed to submit withdrawal request.'));
+    .catch(() => {
+        resetBtn();
+        showInfoModal('Error', 'Failed to submit withdrawal request.');
+    });
 }
 
-function verifyOTP(withdrawalId) {
+function verifyOTP(withdrawalId, btn) {
     const otp = document.getElementById('otp_' + withdrawalId).value;
     if (!otp || otp.length !== 6) {
         showInfoModal('Invalid OTP', 'Please enter a valid 6-digit OTP.');
         return;
     }
+
+    const icon = btn.querySelector('i');
+    const label = btn.querySelector('span');
+    btn.disabled = true;
+    icon.className = 'fas fa-spinner fa-spin';
+    label.textContent = 'Verifying…';
+    const resetBtn = () => {
+        btn.disabled = false;
+        icon.className = 'fas fa-check';
+        label.textContent = 'Verify OTP';
+    };
+
     fetch('<?php echo site_url('reseller/withdrawals/verify_withdrawal_otp'); ?>', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -199,11 +237,16 @@ function verifyOTP(withdrawalId) {
     .then(r => r.json())
     .then(data => {
         if (data.success) {
-            showInfoModal('Success', 'OTP verified successfully! Your withdrawal is now awaiting admin approval.', () => location.reload());
+            showInfoModal('Success', 'OTP verified successfully! Your withdrawal is now awaiting admin approval.');
+            setTimeout(() => location.reload(), 1500);
         } else {
+            resetBtn();
             showInfoModal('Error', data.message || 'Invalid OTP');
         }
     })
-    .catch(() => showInfoModal('Error', 'Failed to verify OTP.'));
+    .catch(() => {
+        resetBtn();
+        showInfoModal('Error', 'Failed to verify OTP.');
+    });
 }
 </script>

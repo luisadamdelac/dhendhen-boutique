@@ -25,8 +25,8 @@
                         <a href="<?php echo site_url('admin/product'); ?>" class="nav-link <?php echo (isset($page_title) && strpos($page_title, 'Inventory') !== false) ? 'active' : ''; ?>">
                             <i class="fas fa-boxes"></i>
                             <span>Inventory</span>
-                            <?php if(isset($low_stock_products) && count($low_stock_products) > 0): ?>
-                                <span class="badge"><?php echo count($low_stock_products); ?></span>
+                            <?php if(!empty($inventory_attention_count)): ?>
+                                <span class="badge"><?php echo $inventory_attention_count; ?></span>
                             <?php endif; ?>
                         </a>
                     </li>
@@ -35,8 +35,13 @@
                     <?php 
                         // Orders section (negotiation removed from grouping/badges)
                         $ordersActive = isset($page_title) && (strpos($page_title, 'Order') !== false || strpos($page_title, 'Refund') !== false || strpos($page_title, 'Review') !== false);
-                        // Orders badge: show unread order notifications if available.
-                        $totalOrderBadge = (isset($pending_orders_notifications) ? (int)$pending_orders_notifications : 0);
+                        // This nav entry covers Orders, Refunds, and Reviews
+                        // (see order_tabs.php, which gives each its own
+                        // badge) — the sidebar shows their combined total
+                        // since there's only one link, not one per sub-tab.
+                        $totalOrderBadge = (isset($pending_orders_notifications) ? (int)$pending_orders_notifications : 0)
+                            + (isset($pending_refunds) ? (int)$pending_refunds : 0)
+                            + (isset($pending_reviews) ? (int)$pending_reviews : 0);
 
                     ?>
                     <li class="nav-item">

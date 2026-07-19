@@ -77,6 +77,10 @@ class Profile extends Authenticated_Controller {
                 $this->session->set_flashdata('error', 'New password and confirmation do not match');
                 redirect('admin/profile');
             }
+            if (!preg_match('/^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[!@#$%^&*]).{12,}$/', (string) $new_password)) {
+                $this->session->set_flashdata('error', 'Password must be at least 12 characters and include an uppercase letter, lowercase letter, number, and special character (!@#$%^&*).');
+                redirect('admin/profile');
+            }
 
             $this->db->where('user_account_id', $admin['user_account_id'])->update(USER_ACCOUNT_TABLE, [
                 'password' => password_hash($new_password, PASSWORD_BCRYPT, ['cost' => 12]),
@@ -122,7 +126,10 @@ class Profile extends Authenticated_Controller {
 
         if ($this->input->method() === 'post') {
             $this->form_validation->set_rules('current_password', 'Current Password', 'required');
-            $this->form_validation->set_rules('new_password', 'New Password', 'required|min_length[6]');
+            $this->form_validation->set_rules('new_password', 'New Password',
+                'required|min_length[12]|regex_match[/^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[!@#$%^&*]).{12,}$/]',
+                ['regex_match' => 'Password must be at least 12 characters and include an uppercase letter, lowercase letter, number, and special character (!@#$%^&*).']
+            );
             $this->form_validation->set_rules('confirm_password', 'Confirm Password', 'required|matches[new_password]');
 
             if ($this->form_validation->run() === FALSE) {

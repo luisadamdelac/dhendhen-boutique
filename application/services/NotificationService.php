@@ -194,6 +194,18 @@ class NotificationService {
     }
 
     /**
+     * Create notification for refund actually paid out (item received back,
+     * GCash reference recorded) — distinct from refundApproved(), which only
+     * means the request was accepted, not that money has moved yet.
+     */
+    public static function refundCompleted($refundId, $customerId, $orderId, $amount) {
+        NotificationService::create('customer', $customerId,
+            'Refund Sent',
+            'Your refund of ₱' . number_format($amount, 2) . ' for Order ID ' . $orderId . ' has been sent to your GCash account.',
+            'refund', $refundId);
+    }
+
+    /**
      * Create notification for withdrawal request submitted
      */
     public static function withdrawalSubmitted($withdrawalId, $resellerId, $amount) {

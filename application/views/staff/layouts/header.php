@@ -87,6 +87,9 @@
                         <a href="<?php echo BASE_URL; ?>staff/inventory" class="nav-link <?php echo (isset($page_title) && (strpos($page_title, 'Inventory') !== false || strpos($page_title, 'Stock') !== false)) ? 'active' : ''; ?>">
                             <i class="fas fa-boxes"></i>
                             <span>Inventory</span>
+                            <?php if (!empty($inventory_attention_count)): ?>
+                                <span class="badge"><?php echo $inventory_attention_count; ?></span>
+                            <?php endif; ?>
                         </a>
                     </li>
                     <li class="nav-item">

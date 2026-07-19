@@ -45,8 +45,9 @@ class Account extends CI_Controller {
 
         $this->load->model('settings_model');
         $data['minimum_spend'] = (float) $this->settings_model->get_minimum_spend();
-        // Eligibility is based on delivered orders only.
-        $data['total_spend'] = (float) ($this->db->select_sum('total_amount')
+        // Eligibility is based on a single delivered order reaching the
+        // minimum — small purchases don't add up over time toward it.
+        $data['best_single_order'] = (float) ($this->db->select_max('total_amount')
             ->from(ORDER_TABLE)
             ->where('customer_id', $customer_id)
             ->where('order_status', 'delivered')
@@ -111,8 +112,8 @@ class Account extends CI_Controller {
             redirect('account');
         }
 
-        if (strlen($new) < 6) {
-            $this->session->set_flashdata('error', 'Password must be at least 6 characters.');
+        if (!preg_match('/^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[!@#$%^&*]).{12,}$/', (string) $new)) {
+            $this->session->set_flashdata('error', 'Password must be at least 12 characters and include an uppercase letter, lowercase letter, number, and special character (!@#$%^&*).');
             redirect('account');
         }
 
@@ -196,16 +197,17 @@ class Account extends CI_Controller {
 
         $this->load->model('settings_model');
         $minimum_spend = (float) $this->settings_model->get_minimum_spend();
-        // Eligibility is based on delivered orders only.
-        $total_spend = (float) ($this->db->select_sum('total_amount')
+        // Eligibility requires a SINGLE delivered order reaching the
+        // minimum — small purchases don't accumulate toward it.
+        $best_single_order = (float) ($this->db->select_max('total_amount')
             ->from(ORDER_TABLE)
             ->where('customer_id', $customer_id)
             ->where('order_status', 'delivered')
             ->get()->row()->total_amount ?? 0);
 
-        if ($total_spend < $minimum_spend) {
-            $this->session->set_flashdata('error', 'You need at least ₱' . number_format($minimum_spend, 2) .
-                ' in completed purchases to apply as a reseller (you have ₱' . number_format($total_spend, 2) . ').');
+        if ($best_single_order < $minimum_spend) {
+            $this->session->set_flashdata('error', 'You need a single completed order of at least ₱' . number_format($minimum_spend, 2) .
+                ' to apply as a reseller (your largest order so far is ₱' . number_format($best_single_order, 2) . ').');
             redirect('account');
         }
 

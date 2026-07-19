@@ -77,29 +77,31 @@ class Refunds extends CI_Controller {
             redirect('refund');
         }
 
-        // --- Evidence upload (optional) ---
-        $image_path = NULL;
-        if (!empty($_FILES['evidence']['name'])) {
-            $upload_path = FCPATH . 'uploads/refunds/';
-            if (!is_dir($upload_path)) {
-                mkdir($upload_path, 0755, TRUE);
-            }
-
-            $this->load->library('upload', [
-                'upload_path'   => $upload_path,
-                'allowed_types' => 'jpg|jpeg|png|webp',
-                'max_size'      => 5120,
-                'encrypt_name'  => TRUE,
-            ]);
-
-            if (!$this->upload->do_upload('evidence')) {
-                $this->session->set_flashdata('error', 'Evidence upload failed: ' . $this->upload->display_errors('', ''));
-                redirect('refund');
-            }
-
-            $upload_data = $this->upload->data();
-            $image_path  = 'uploads/refunds/' . $upload_data['file_name'];
+        // --- Evidence upload (required) ---
+        if (empty($_FILES['evidence']['name'])) {
+            $this->session->set_flashdata('error', 'Please upload a photo of the item as evidence for your refund request.');
+            redirect('refund');
         }
+
+        $upload_path = FCPATH . 'uploads/refunds/';
+        if (!is_dir($upload_path)) {
+            mkdir($upload_path, 0755, TRUE);
+        }
+
+        $this->load->library('upload', [
+            'upload_path'   => $upload_path,
+            'allowed_types' => 'jpg|jpeg|png|webp',
+            'max_size'      => 5120,
+            'encrypt_name'  => TRUE,
+        ]);
+
+        if (!$this->upload->do_upload('evidence')) {
+            $this->session->set_flashdata('error', 'Evidence upload failed: ' . $this->upload->display_errors('', ''));
+            redirect('refund');
+        }
+
+        $upload_data = $this->upload->data();
+        $image_path  = 'uploads/refunds/' . $upload_data['file_name'];
 
         $this->db->insert(REFUND_REQUEST_TABLE, [
             'refund_number' => 'RF' . str_pad((string) random_int(0, 99999999), 8, '0', STR_PAD_LEFT),

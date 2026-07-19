@@ -165,11 +165,20 @@ class Withdrawal extends Authenticated_Controller {
             return;
         }
 
+        // Same 13-digit GCash reference format enforced at customer checkout
+        // — the admin is confirming they actually sent the payout via GCash,
+        // so a reference is required, not just optional bookkeeping text.
+        $payment_reference = trim((string) $this->input->post('payment_reference', TRUE));
+        if (!preg_match('/^\d{13}$/', $payment_reference)) {
+            echo json_encode(['success' => FALSE, 'message' => 'GCash Reference Number is required and must be exactly 13 digits.']);
+            return;
+        }
+
         $this->db->trans_start();
 
         $this->db->update(WITHDRAWAL_TABLE, [
             'status' => 'completed',
-            'payment_reference' => $this->input->post('payment_reference') ?? NULL
+            'payment_reference' => $payment_reference
         ], ['withdrawal_id' => $withdrawal_id]);
 
         $this->load->model('reseller_model');

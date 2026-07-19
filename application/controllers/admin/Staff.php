@@ -281,7 +281,6 @@ class Staff extends Authenticated_Controller {
             'street' => $this->input->post('street', TRUE),
             'city' => $city ?: NULL,
             'barangay' => $barangay ?: NULL,
-            'municipality' => NULL,
             'branch_id' => $this->input->post('branch_id', TRUE) ?: NULL,
         ];
 

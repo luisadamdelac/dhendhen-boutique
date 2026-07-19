@@ -117,16 +117,61 @@ class Inventory extends Authenticated_Controller {
      * offer a specific combination instead of only the base product.
      */
     private function _variants_for_branch($product_id) {
-        $variants = $this->db->select('v.*, v1.variation_type as type_1, v1.variation_value as value_1, v2.variation_type as type_2, v2.variation_value as value_2', FALSE)
+        $variants = $this->db->select('v.*')
             ->from(PRODUCT_VARIANTS_TABLE . ' v')
-            ->join(PRODUCT_VARIATION_TABLE . ' v1', 'v1.variation_id = v.variation_id_1', 'left')
-            ->join(PRODUCT_VARIATION_TABLE . ' v2', 'v2.variation_id = v.variation_id_2', 'left')
             ->where('v.product_id', $product_id)
             ->get()->result_array();
 
+        if (empty($variants)) {
+            return [];
+        }
+
+        $variantIds = array_column($variants, 'variant_id');
+        $extraByVariant = [];
+        $extraRows = $this->db->select('variant_id, variation_id')
+            ->from(PRODUCT_VARIANT_EXTRA_VALUES_TABLE)
+            ->where_in('variant_id', $variantIds)
+            ->order_by('variant_id, axis_order', 'ASC')
+            ->get()->result_array();
+        foreach ($extraRows as $er) {
+            $extraByVariant[(int) $er['variant_id']][] = (int) $er['variation_id'];
+        }
+
+        $allAxisIds = [];
+        foreach ($variants as $v) {
+            $allAxisIds[] = (int) $v['variation_id_1'];
+            if (!empty($v['variation_id_2'])) {
+                $allAxisIds[] = (int) $v['variation_id_2'];
+            }
+        }
+        foreach ($extraByVariant as $extraIds) {
+            foreach ($extraIds as $vid) {
+                $allAxisIds[] = $vid;
+            }
+        }
+        $allAxisIds = array_unique($allAxisIds);
+
+        $valueById = [];
+        if (!empty($allAxisIds)) {
+            $valueRows = $this->db->select('variation_id, variation_value')
+                ->from(PRODUCT_VARIATION_TABLE)
+                ->where_in('variation_id', $allAxisIds)
+                ->get()->result_array();
+            foreach ($valueRows as $vr) {
+                $valueById[(int) $vr['variation_id']] = $vr['variation_value'];
+            }
+        }
+
         $out = [];
         foreach ($variants as $v) {
-            $label = $v['type_2'] ? ($v['value_1'] . ' / ' . $v['value_2']) : $v['value_1'];
+            $axisIds = [(int) $v['variation_id_1']];
+            if (!empty($v['variation_id_2'])) {
+                $axisIds[] = (int) $v['variation_id_2'];
+            }
+            foreach ($extraByVariant[(int) $v['variant_id']] ?? [] as $vid) {
+                $axisIds[] = $vid;
+            }
+            $label = implode(' / ', array_filter(array_map(fn($vid) => $valueById[$vid] ?? NULL, $axisIds)));
             $branch_stock = $this->staff_branch_id ? StockService::getVariantBranchStock((int) $v['variant_id']) : [];
             $out[] = [
                 'variant_id' => (int) $v['variant_id'],

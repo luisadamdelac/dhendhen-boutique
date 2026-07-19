@@ -142,8 +142,9 @@ table.dataTable thead th.sorting:hover { color: var(--primary-pink); cursor: poi
             <div class="col-md-3 col-sm-6">
                 <label class="form-label small text-muted mb-1">Payment Method</label>
                 <select id="filterPaymentMethod" class="form-select form-select-sm">
-                    <option value="">All Payment Methods</option>
-                    <option value="GCash" selected>GCash</option>
+                    <option value="" selected>All Payment Methods</option>
+                    <option value="GCash">GCash</option>
+                    <option value="Cash">Cash</option>
                 </select>
             </div>
             <div class="col-md-2 col-sm-6">
@@ -211,10 +212,13 @@ table.dataTable thead th.sorting:hover { color: var(--primary-pink); cursor: poi
                                         $badgeColor = $ptStatus === 'completed' ? '#28a745' : ($ptStatus === 'failed' ? '#dc3545' : ($ptStatus === 'refunded' ? '#6c757d' : '#f57f17'));
                                         $badgeIcon = $ptStatus === 'completed' ? 'fa-check-circle' : ($ptStatus === 'failed' ? 'fa-times-circle' : ($ptStatus === 'refunded' ? 'fa-undo' : 'fa-clock'));
                                         $badgeLabel = ucfirst($ptStatus);
+                                        $isCash = $hasPayment && $order['payment_method'] === 'Cash';
+                                        $methodColor = $isCash ? '#28a745' : '#007DFF';
+                                        $methodIcon = $isCash ? 'fa-money-bill-wave' : 'fa-mobile-alt';
                                         if ($hasPayment):
                                     ?>
-                                        <span style="display:inline-flex; align-items:center; gap:4px; background:#007DFF15; color:#007DFF; padding:4px 10px; border-radius:15px; font-size:11px; font-weight:600;">
-                                            <i class="fas fa-mobile-alt"></i> <?= htmlspecialchars($order['payment_method']); ?>
+                                        <span style="display:inline-flex; align-items:center; gap:4px; background:<?= $methodColor; ?>15; color:<?= $methodColor; ?>; padding:4px 10px; border-radius:15px; font-size:11px; font-weight:600;">
+                                            <i class="fas <?= $methodIcon; ?>"></i> <?= htmlspecialchars($order['payment_method']); ?>
                                         </span>
                                         <br><span style="font-size:10px; color:<?= $badgeColor; ?>;"><i class="fas <?= $badgeIcon; ?>"></i> <?= $badgeLabel; ?></span>
                                     <?php else: ?>
@@ -629,9 +633,6 @@ $(function () {
         table.draw();
     });
 
-    // Payment Method defaults to GCash, so the table must redraw once on
-    // load to actually apply it (the filter fn above is registered after
-    // DataTables' own initial draw already ran).
     table.draw();
 
     $('#clearFiltersBtn').on('click', function () {

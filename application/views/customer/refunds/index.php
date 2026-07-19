@@ -63,8 +63,8 @@
                     <textarea name="reason" rows="2" maxlength="500" required placeholder="Why are you requesting a refund?"></textarea>
                 </div>
                 <div class="field">
-                    <label>Evidence (optional)</label>
-                    <input type="file" name="evidence" accept="image/*">
+                    <label>Evidence <span style="color:var(--gray); font-weight:400;">(photo required)</span></label>
+                    <input type="file" name="evidence" accept="image/*" required>
                 </div>
                 <div class="field" style="flex: 0;">
                     <button type="submit" class="btn">

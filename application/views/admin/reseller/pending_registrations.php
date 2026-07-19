@@ -169,6 +169,9 @@ $current_page = 'reseller';
             document.getElementById('remarksGroup').style.display = 'none';
             document.getElementById('modalHeader').style.background = 'linear-gradient(135deg, #28a745 0%, #218838 100%)';
             document.getElementById('modalHeader').style.color = '#fff';
+            // .modal-title has its own color rule that otherwise wins over
+            // the header's inherited white.
+            document.getElementById('modalTitle').style.color = '#fff';
             document.getElementById('btnConfirm').className   = 'btn btn-sm btn-success';
             resetConfirmBtn('Approve');
             openModal('confirmModal');
@@ -186,6 +189,7 @@ $current_page = 'reseller';
             document.getElementById('remarksGroup').style.display = 'block';
             document.getElementById('modalHeader').style.background = 'linear-gradient(135deg, #dc3545 0%, #c82333 100%)';
             document.getElementById('modalHeader').style.color = '#fff';
+            document.getElementById('modalTitle').style.color = '#fff';
             document.getElementById('btnConfirm').className   = 'btn btn-sm btn-danger';
             resetConfirmBtn('Reject');
             openModal('confirmModal');

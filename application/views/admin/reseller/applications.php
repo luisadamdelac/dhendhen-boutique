@@ -44,7 +44,7 @@ $current_page = 'reseller';
                     <tr>
                         <th class="ps-3">Customer</th>
                         <th>Business Name</th>
-                        <th>Qualified Spend</th>
+                        <th>Largest Order</th>
                         <th>Eligibility</th>
                         <th class="text-center">Completed Orders</th>
                         <th>Last Delivered</th>
@@ -191,6 +191,9 @@ $current_page = 'reseller';
             document.getElementById('appRemarksGroup').style.display = 'none';
             document.getElementById('appModalHeader').style.background = 'linear-gradient(135deg, #28a745 0%, #218838 100%)';
             document.getElementById('appModalHeader').style.color = '#fff';
+            // .modal-title has its own color rule that otherwise wins over
+            // the header's inherited white.
+            document.getElementById('appModalTitle').style.color = '#fff';
             document.getElementById('appBtnConfirm').className = 'btn btn-sm btn-success';
             resetConfirmBtn('Approve');
             openModal('appConfirmModal');
@@ -206,6 +209,7 @@ $current_page = 'reseller';
             document.getElementById('appRemarksGroup').style.display = 'block';
             document.getElementById('appModalHeader').style.background = 'linear-gradient(135deg, #dc3545 0%, #c82333 100%)';
             document.getElementById('appModalHeader').style.color = '#fff';
+            document.getElementById('appModalTitle').style.color = '#fff';
             document.getElementById('appBtnConfirm').className = 'btn btn-sm btn-danger';
             resetConfirmBtn('Reject');
             openModal('appConfirmModal');

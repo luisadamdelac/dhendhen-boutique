@@ -136,7 +136,28 @@
         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         margin-bottom: 20px;
     }
-    
+
+    .password-reqs {
+        background: #fff5f8;
+        border: 1px solid #ffccdc;
+        border-radius: 10px;
+        padding: 12px 14px;
+        margin-top: 10px;
+    }
+    .password-reqs .req {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 11.5px;
+        color: #8b8b8b;
+        margin-bottom: 5px;
+        transition: color 0.2s;
+    }
+    .password-reqs .req:last-child { margin-bottom: 0; }
+    .password-reqs .req i { font-size: 8px; }
+    .password-reqs .req.ok { color: #28a745; }
+    .password-reqs .req.ok i::before { content: "\f00c"; font-size: 10px; }
+
     .divider {
         height: 2px;
         background: var(--light-gray);
@@ -216,8 +237,8 @@
                     <form method="POST" action="<?php echo BASE_URL; ?>account/update_photo" enctype="multipart/form-data" id="photoForm">
                         <input type="file" id="photoInput" name="photo" accept="image/*" style="display:none;" onchange="previewAndUpload(this)">
                         <div style="display:flex; gap:10px; flex-wrap:wrap;">
-                            <button type="button" class="btn btn-outline" onclick="document.getElementById('photoInput').click();">
-                                <i class="fas fa-camera"></i> Change Photo
+                            <button type="button" class="btn btn-primary" onclick="document.getElementById('photoInput').click();">
+                                <i class="fas fa-upload"></i> Upload Photo
                             </button>
                             <?php if (!empty($avatarImage)): ?>
                             <a href="<?php echo BASE_URL; ?>account/delete_photo" class="btn btn-outline"
@@ -317,9 +338,9 @@
             </div>
 
         <?php else:
-            $is_eligible = ($total_spend ?? 0) >= ($minimum_spend ?? 0);
-            $remaining = max(0, ($minimum_spend ?? 0) - ($total_spend ?? 0));
-            $pct = ($minimum_spend ?? 0) > 0 ? min(100, (($total_spend ?? 0) / $minimum_spend) * 100) : 0;
+            $is_eligible = ($best_single_order ?? 0) >= ($minimum_spend ?? 0);
+            $remaining = max(0, ($minimum_spend ?? 0) - ($best_single_order ?? 0));
+            $pct = ($minimum_spend ?? 0) > 0 ? min(100, (($best_single_order ?? 0) / $minimum_spend) * 100) : 0;
         ?>
 
             <?php if (!empty($reseller_application) && $reseller_application['status'] !== 'rejected'): ?>
@@ -342,11 +363,11 @@
                 <!-- Eligibility progress -->
                 <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)); gap:14px; margin-bottom:12px;">
                     <div>
-                        <small class="text-muted d-block">Current Total Spend</small>
-                        <strong style="font-size:1.1rem;">₱<?php echo number_format($total_spend ?? 0, 2); ?></strong>
+                        <small class="text-muted d-block">Your Largest Single Order</small>
+                        <strong style="font-size:1.1rem;">₱<?php echo number_format($best_single_order ?? 0, 2); ?></strong>
                     </div>
                     <div>
-                        <small class="text-muted d-block">Remaining Amount</small>
+                        <small class="text-muted d-block">Needed in One Order</small>
                         <strong style="font-size:1.1rem;"><?php echo $is_eligible ? '₱0.00' : '₱' . number_format($remaining, 2); ?></strong>
                     </div>
                     <div>
@@ -367,7 +388,7 @@
                     <div style="width:<?php echo $pct; ?>%; height:100%; background:<?php echo $is_eligible ? '#16a34a' : '#f59e0b'; ?>; transition:width .3s ease;"></div>
                 </div>
                 <p style="font-size:0.8rem; color:var(--gray-600); margin-bottom:1.25rem;">
-                    ₱<?php echo number_format($total_spend ?? 0, 2); ?> of ₱<?php echo number_format($minimum_spend ?? 0, 2); ?> (based on delivered orders only)
+                    ₱<?php echo number_format($best_single_order ?? 0, 2); ?> of ₱<?php echo number_format($minimum_spend ?? 0, 2); ?> in a single delivered order — purchases across multiple orders don't add up
                 </p>
 
                 <form method="POST" action="<?php echo BASE_URL; ?>account/apply_reseller">
@@ -426,17 +447,24 @@
                 <div class="form-group">
                     <label for="new_password">New Password *</label>
                     <div class="has-toggle">
-                        <input type="password" id="new_password" name="new_password" required minlength="6">
+                        <input type="password" id="new_password" name="new_password" required minlength="12">
                         <button type="button" class="toggle-password" onclick="togglePwd('new_password', this)" tabindex="-1">
                             <i class="fas fa-eye"></i>
                         </button>
+                    </div>
+                    <div class="password-reqs" id="pwd-reqs">
+                        <div class="req" id="r-len"><i class="fas fa-circle"></i> At least 12 characters</div>
+                        <div class="req" id="r-upper"><i class="fas fa-circle"></i> Uppercase letter (A&ndash;Z)</div>
+                        <div class="req" id="r-lower"><i class="fas fa-circle"></i> Lowercase letter (a&ndash;z)</div>
+                        <div class="req" id="r-num"><i class="fas fa-circle"></i> Number (0&ndash;9)</div>
+                        <div class="req" id="r-special"><i class="fas fa-circle"></i> Special character (!@#$%^&amp;*)</div>
                     </div>
                 </div>
 
                 <div class="form-group">
                     <label for="confirm_password">Confirm Password *</label>
                     <div class="has-toggle">
-                        <input type="password" id="confirm_password" name="confirm_password" required minlength="6">
+                        <input type="password" id="confirm_password" name="confirm_password" required minlength="12">
                         <button type="button" class="toggle-password" onclick="togglePwd('confirm_password', this)" tabindex="-1">
                             <i class="fas fa-eye"></i>
                         </button>
@@ -466,20 +494,42 @@
         }
     }
 
+    // Live password requirements checklist, same policy as registration.
+    (function() {
+        var pwd = document.getElementById('new_password');
+        if (!pwd) return;
+
+        var checks = {
+            'r-len':     function(v) { return v.length >= 12; },
+            'r-upper':   function(v) { return /[A-Z]/.test(v); },
+            'r-lower':   function(v) { return /[a-z]/.test(v); },
+            'r-num':     function(v) { return /[0-9]/.test(v); },
+            'r-special': function(v) { return /[!@#$%^&*]/.test(v); }
+        };
+
+        pwd.addEventListener('input', function() {
+            var val = pwd.value;
+            Object.keys(checks).forEach(function(id) {
+                var el = document.getElementById(id);
+                if (el) el.classList.toggle('ok', checks[id](val));
+            });
+        });
+    })();
+
     // Form validation for password change
     document.querySelector('form[action*="change_password"]').addEventListener('submit', function(e) {
         const newPassword = document.getElementById('new_password').value;
         const confirmPassword = document.getElementById('confirm_password').value;
-        
+
         if (newPassword !== confirmPassword) {
             e.preventDefault();
             alert('New password and confirm password do not match!');
             return false;
         }
-        
-        if (newPassword.length < 6) {
+
+        if (!/^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[!@#$%^&*]).{12,}$/.test(newPassword)) {
             e.preventDefault();
-            alert('Password must be at least 6 characters long!');
+            alert('Password must be at least 12 characters and include an uppercase letter, lowercase letter, number, and special character (!@#$%^&*).');
             return false;
         }
     });

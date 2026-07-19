@@ -53,7 +53,7 @@
             <div class="card border-0 shadow-sm" style="border-radius:12px;">
                 <div class="card-body">
                     <h6 class="fw-bold mb-3"><i class="fas fa-chart-line text-muted me-1"></i> Eligibility</h6>
-                    <div style="font-size:14px;font-weight:600;">₱<?= number_format($spend, 2); ?> <span class="text-muted" style="font-weight:400;">of ₱<?= number_format($minSpend, 2); ?> required</span></div>
+                    <div style="font-size:14px;font-weight:600;">₱<?= number_format($spend, 2); ?> <span class="text-muted" style="font-weight:400;">of ₱<?= number_format($minSpend, 2); ?> required in a single order</span></div>
                     <div style="width:100%;height:8px;background:#eef0ff;border-radius:4px;overflow:hidden;margin:8px 0 12px;">
                         <div style="width:<?= $pct; ?>%;height:100%;background:<?= $isEligible ? '#28a745' : '#f0ad4e'; ?>;"></div>
                     </div>
@@ -143,6 +143,9 @@
             document.getElementById('appRemarksGroup').style.display = 'none';
             document.getElementById('appModalHeader').style.background = 'linear-gradient(135deg, #28a745 0%, #218838 100%)';
             document.getElementById('appModalHeader').style.color = '#fff';
+            // .modal-title has its own color rule that otherwise wins over
+            // the header's inherited white.
+            document.getElementById('appModalTitle').style.color = '#fff';
             document.getElementById('appBtnConfirm').className = 'btn btn-sm btn-success';
             resetConfirmBtn('Approve');
             openModal('appConfirmModal');
@@ -158,6 +161,7 @@
             document.getElementById('appRemarksGroup').style.display = 'block';
             document.getElementById('appModalHeader').style.background = 'linear-gradient(135deg, #dc3545 0%, #c82333 100%)';
             document.getElementById('appModalHeader').style.color = '#fff';
+            document.getElementById('appModalTitle').style.color = '#fff';
             document.getElementById('appBtnConfirm').className = 'btn btn-sm btn-danger';
             resetConfirmBtn('Reject');
             openModal('appConfirmModal');

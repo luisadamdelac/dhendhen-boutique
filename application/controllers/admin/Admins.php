@@ -240,7 +240,6 @@ class Admins extends Authenticated_Controller {
         $this->form_validation->set_rules('street', 'Street', 'trim');
         $this->form_validation->set_rules('barangay', 'Barangay', 'trim');
         $this->form_validation->set_rules('city', 'City', 'required|trim');
-        $this->form_validation->set_rules('municipality', 'Municipality', 'trim');
         if (!$admin_id) {
             $this->form_validation->set_rules('email', 'Email', 'required|valid_email|trim|is_unique[user_account_tbl.email]');
         }
@@ -262,7 +261,6 @@ class Admins extends Authenticated_Controller {
             'street' => $this->input->post('street', TRUE),
             'barangay' => $this->input->post('barangay', TRUE),
             'city' => $this->input->post('city', TRUE),
-            'municipality' => $this->input->post('municipality', TRUE) ?: NULL,
             'branch_id' => $this->input->post('branch_id', TRUE) ?: NULL,
         ];
 

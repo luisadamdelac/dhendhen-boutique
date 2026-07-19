@@ -618,23 +618,25 @@ function filterOtherAxes(changedAxisIndex) {
     const groups = axisGroups();
     if (groups.length < 2) return;
 
+    // A candidate is pairable if some combination simultaneously matches it
+    // AND every other axis currently selected (not just the axis that just
+    // changed) — required once there can be 3+ axes at once.
+    const otherPicks = groups
+        .map(g => parseInt(g.dataset.axis, 10))
+        .filter(idx => idx !== changedAxisIndex)
+        .map(idx => selectedAxisValues[idx])
+        .filter(Boolean);
+
     groups.forEach(group => {
         const axisIndex = parseInt(group.dataset.axis, 10);
         if (axisIndex === changedAxisIndex) return;
 
-        const otherSel = selectedAxisValues[changedAxisIndex];
         group.querySelectorAll('.variation-axis-btn').forEach(btn => {
-            if (!otherSel) {
-                btn.disabled = false;
-                btn.style.opacity = '1';
-                btn.style.cursor = 'pointer';
-                return;
-            }
             const candidateValue = btn.dataset.value;
             const candidateType = group.dataset.type;
+            const required = otherPicks.concat([{ type: candidateType, value: candidateValue }]);
             const pairable = COMBINATIONS.some(c =>
-                (c.type_1 === otherSel.type && c.value_1 === otherSel.value && c.type_2 === candidateType && c.value_2 === candidateValue) ||
-                (c.type_2 === otherSel.type && c.value_2 === otherSel.value && c.type_1 === candidateType && c.value_1 === candidateValue)
+                required.every(req => c.axes.some(a => a.type === req.type && a.value === req.value))
             );
             btn.disabled = !pairable;
             btn.style.opacity = pairable ? '1' : '0.35';
@@ -649,10 +651,8 @@ function findMatchingCombination() {
     if (picks.length !== groups.length) return null;
 
     return COMBINATIONS.find(c => {
-        const values = [{ type: c.type_1, value: c.value_1 }];
-        if (c.type_2) values.push({ type: c.type_2, value: c.value_2 });
-        return picks.every(p => values.some(v => v.type === p.type && v.value === p.value))
-            && values.every(v => picks.some(p => p.type === v.type && p.value === v.value));
+        return picks.every(p => c.axes.some(v => v.type === p.type && v.value === p.value))
+            && c.axes.every(v => picks.some(p => p.type === v.type && p.value === v.value));
     }) || null;
 }
 

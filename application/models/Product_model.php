@@ -257,24 +257,27 @@ class Product_model extends CI_Model {
      * changes through StockService's branch batch ledger.
      */
     public function update($product_id, $data) {
-        $update_data = array(
-            'sku'                  => $data['sku'] ?? NULL,
-            'product_name'         => $data['product_name'] ?? NULL,
-            'brand'                => $data['brand'] ?? NULL,
-            'description'          => $data['description'] ?? NULL,
-            'category_id'          => $data['category_id'] ?? NULL,
-            'price'                => isset($data['price']) ? (float) $data['price'] : NULL,
-            'cost_price'           => isset($data['cost_price']) ? (float) $data['cost_price'] : NULL,
-            'reseller_commission'  => isset($data['reseller_commission']) ? (float) $data['reseller_commission'] : NULL,
-            'min_stock_alert'      => isset($data['min_stock_alert']) ? (int) $data['min_stock_alert'] : NULL,
-            'expiry_date'          => $data['expiry_date'] ?? NULL,
-            'status'               => $data['status'] ?? NULL,
-            'tags'                 => $data['tags'] ?? NULL,
-            'updated_at'           => date('Y-m-d H:i:s'),
-        );
+        // Only touch a column when the caller actually passed it — that's
+        // what protects fields like `sku` (never included by the Edit
+        // controller) from being wiped. Previously this instead stripped
+        // any NULL *value* out of the update, which silently protected
+        // untouched fields but also meant nullable fields the caller
+        // explicitly clears (e.g. tags, expiry_date, brand) could never
+        // actually be cleared — the UPDATE just skipped that column and
+        // the old value stuck around forever.
+        $update_data = ['updated_at' => date('Y-m-d H:i:s')];
 
-        // Remove NULL values
-        $update_data = array_filter($update_data, function($v) { return $v !== NULL; });
+        foreach (['sku', 'product_name', 'brand', 'description', 'category_id', 'expiry_date', 'status', 'tags'] as $field) {
+            if (array_key_exists($field, $data)) {
+                $update_data[$field] = $data[$field];
+            }
+        }
+
+        foreach (['price' => 'float', 'cost_price' => 'float', 'reseller_commission' => 'float', 'min_stock_alert' => 'int'] as $field => $cast) {
+            if (isset($data[$field])) {
+                $update_data[$field] = $cast === 'float' ? (float) $data[$field] : (int) $data[$field];
+            }
+        }
 
         $this->db->where('product_id', $product_id);
         return $this->db->update($this->table, $update_data);

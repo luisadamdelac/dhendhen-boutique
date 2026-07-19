@@ -101,10 +101,10 @@ class Reseller extends Authenticated_Controller {
     }
 
     /**
-     * Attach each application's qualified spend, completed order count, and
-     * last delivered order date — computed from delivered orders only,
-     * matching the same eligibility rule used at
-     * customer/Account::apply_reseller().
+     * Attach each application's qualified spend (their single largest
+     * delivered order — purchases don't accumulate toward eligibility),
+     * completed order count, and last delivered order date, matching the
+     * same eligibility rule used at customer/Account::apply_reseller().
      */
     private function _attach_eligibility_stats(array &$applications, float $minimum_spend): void {
         if (empty($applications)) {
@@ -114,7 +114,7 @@ class Reseller extends Authenticated_Controller {
 
         $stats = $this->db
             ->select('customer_id,
-                SUM(total_amount) as qualified_spend,
+                MAX(total_amount) as qualified_spend,
                 COUNT(*) as completed_orders,
                 MAX(created_at) as last_delivered_at', FALSE)
             ->from(ORDER_TABLE)

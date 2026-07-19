@@ -82,12 +82,18 @@ class Checkout extends CI_Controller {
         $this->load->library('form_validation');
         $this->form_validation->set_rules('delivery_type', 'Delivery Method', 'required|in_list[pickup,pasabay_jeep]');
         $this->form_validation->set_rules('address_id', 'Delivery Address', 'required|numeric');
-        // Real GCash reference numbers are always exactly 13 digits — reject
-        // anything else outright rather than storing an unusable reference
-        // for admin to reconcile. The sender's GCash number/name is no
-        // longer collected here: the uploaded receipt already shows it.
-        $this->form_validation->set_rules('gcash_reference', 'GCash Reference Number', 'required|trim|regex_match[/^\d{13}$/]',
-            ['regex_match' => 'GCash Reference Number must be exactly 13 digits.']);
+
+        // Pick-up is paid in cash at the store — GCash proof is only
+        // required when the order is actually going out via Pasabay.
+        $is_pickup = $this->input->post('delivery_type', TRUE) === 'pickup';
+        if (!$is_pickup) {
+            // Real GCash reference numbers are always exactly 13 digits — reject
+            // anything else outright rather than storing an unusable reference
+            // for admin to reconcile. The sender's GCash number/name is no
+            // longer collected here: the uploaded receipt already shows it.
+            $this->form_validation->set_rules('gcash_reference', 'GCash Reference Number', 'required|trim|regex_match[/^\d{13}$/]',
+                ['regex_match' => 'GCash Reference Number must be exactly 13 digits.']);
+        }
 
         if (!$this->form_validation->run()) {
             echo json_encode(['success' => FALSE, 'message' => validation_errors(' ', ' ')]);
@@ -110,28 +116,34 @@ class Checkout extends CI_Controller {
             return;
         }
 
-        if (empty($_FILES['gcash_receipt']['name'])) {
-            echo json_encode(['success' => FALSE, 'message' => 'Please upload a screenshot of your GCash receipt.']);
-            return;
+        $receipt_image = NULL;
+        $gcash_reference = NULL;
+
+        if (!$is_pickup) {
+            if (empty($_FILES['gcash_receipt']['name'])) {
+                echo json_encode(['success' => FALSE, 'message' => 'Please upload a screenshot of your GCash receipt.']);
+                return;
+            }
+
+            $upload_path = FCPATH . 'public/uploads/receipts/';
+            if (!is_dir($upload_path)) {
+                mkdir($upload_path, 0755, TRUE);
+            }
+            $this->load->library('upload', [
+                'upload_path'   => $upload_path,
+                'allowed_types' => 'jpg|jpeg|png',
+                'max_size'      => 2048,
+                'encrypt_name'  => TRUE,
+            ]);
+            if (!$this->upload->do_upload('gcash_receipt')) {
+                echo json_encode(['success' => FALSE, 'message' => 'Receipt upload failed: ' . $this->upload->display_errors('', '')]);
+                return;
+            }
+            $receipt_image = 'public/uploads/receipts/' . $this->upload->data('file_name');
+            $gcash_reference = $this->input->post('gcash_reference', TRUE);
         }
 
-        $upload_path = FCPATH . 'public/uploads/receipts/';
-        if (!is_dir($upload_path)) {
-            mkdir($upload_path, 0755, TRUE);
-        }
-        $this->load->library('upload', [
-            'upload_path'   => $upload_path,
-            'allowed_types' => 'jpg|jpeg|png',
-            'max_size'      => 2048,
-            'encrypt_name'  => TRUE,
-        ]);
-        if (!$this->upload->do_upload('gcash_receipt')) {
-            echo json_encode(['success' => FALSE, 'message' => 'Receipt upload failed: ' . $this->upload->display_errors('', '')]);
-            return;
-        }
-        $receipt_image = 'public/uploads/receipts/' . $this->upload->data('file_name');
-
-        $delivery_method = $this->input->post('delivery_type', TRUE) === 'pickup' ? 'pickup' : 'pasabay';
+        $delivery_method = $is_pickup ? 'pickup' : 'pasabay';
         $delivery_fee_total = $delivery_method === 'pasabay'
             ? $this->settings_model->get_shipping_fee_for_municipality($address['municipality'])
             : 0.00;
@@ -139,7 +151,6 @@ class Checkout extends CI_Controller {
         // nearby order actually comes out of the branch that can fulfill it
         // fastest — falls back to any branch with stock if that one can't.
         $preferred_branch_id = $this->_preferred_branch_id($address['municipality']);
-        $gcash_reference = $this->input->post('gcash_reference', TRUE);
         $commission_rate = (float) $this->settings_model->get_commission_rate();
 
         $groups = [];
@@ -218,7 +229,7 @@ class Checkout extends CI_Controller {
                     'order_id' => $order_id,
                     'customer_id' => $customer_id,
                     'amount' => $group_subtotal + $fee_for_this_order,
-                    'payment_method' => 'GCash',
+                    'payment_method' => $is_pickup ? 'Cash' : 'GCash',
                     'payment_reference' => $gcash_reference,
                     'receipt_image' => $receipt_image,
                     'status' => 'pending',

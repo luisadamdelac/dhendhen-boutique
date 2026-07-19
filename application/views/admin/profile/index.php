@@ -32,6 +32,26 @@
 .toggle-password:hover {
     color: var(--primary-pink, #EC4899);
 }
+.password-reqs {
+    background: #fff5f8;
+    border: 1px solid #ffccdc;
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-top: 10px;
+}
+.password-reqs .req {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11.5px;
+    color: #8b8b8b;
+    margin-bottom: 5px;
+    transition: color 0.2s;
+}
+.password-reqs .req:last-child { margin-bottom: 0; }
+.password-reqs .req i { font-size: 8px; }
+.password-reqs .req.ok { color: #28a745; }
+.password-reqs .req.ok i::before { content: "\f00c"; font-size: 10px; }
 .profile-card {
     border-radius: 14px;
     border: 1px solid #eef0f8;
@@ -284,12 +304,18 @@
                                     </label>
                                     <div class="has-toggle">
                                         <input type="password" class="form-control" id="new_password" name="new_password"
-                                               placeholder="Enter new password" minlength="6">
+                                               placeholder="Enter new password" minlength="12">
                                         <button type="button" class="toggle-password" onclick="togglePassword('new_password')" tabindex="-1">
                                             <i class="fas fa-eye" id="new_password_icon"></i>
                                         </button>
                                     </div>
-                                    <small class="text-muted">Minimum 6 characters</small>
+                                    <div class="password-reqs" id="pwd-reqs">
+                                        <div class="req" id="r-len"><i class="fas fa-circle"></i> At least 12 characters</div>
+                                        <div class="req" id="r-upper"><i class="fas fa-circle"></i> Uppercase letter (A&ndash;Z)</div>
+                                        <div class="req" id="r-lower"><i class="fas fa-circle"></i> Lowercase letter (a&ndash;z)</div>
+                                        <div class="req" id="r-num"><i class="fas fa-circle"></i> Number (0&ndash;9)</div>
+                                        <div class="req" id="r-special"><i class="fas fa-circle"></i> Special character (!@#$%^&amp;*)</div>
+                                    </div>
                                 </div>
                             </div>
 
@@ -382,25 +408,47 @@ function togglePassword(fieldId) {
     }
 }
 
+// Live password requirements checklist, same policy as registration.
+(function() {
+    var pwd = document.getElementById('new_password');
+    if (!pwd) return;
+
+    var checks = {
+        'r-len':     function(v) { return v.length >= 12; },
+        'r-upper':   function(v) { return /[A-Z]/.test(v); },
+        'r-lower':   function(v) { return /[a-z]/.test(v); },
+        'r-num':     function(v) { return /[0-9]/.test(v); },
+        'r-special': function(v) { return /[!@#$%^&*]/.test(v); }
+    };
+
+    pwd.addEventListener('input', function() {
+        var val = pwd.value;
+        Object.keys(checks).forEach(function(id) {
+            var el = document.getElementById(id);
+            if (el) el.classList.toggle('ok', checks[id](val));
+        });
+    });
+})();
+
 // Form validation
 document.getElementById('profileForm').addEventListener('submit', function(e) {
     const newPassword = document.getElementById('new_password').value;
     const confirmPassword = document.getElementById('confirm_password').value;
-    
+
     if (newPassword || confirmPassword) {
-        if (newPassword.length < 6) {
+        if (!/^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[!@#$%^&*]).{12,}$/.test(newPassword)) {
             e.preventDefault();
-            alert('Password must be at least 6 characters');
+            alert('Password must be at least 12 characters and include an uppercase letter, lowercase letter, number, and special character (!@#$%^&*).');
             return false;
         }
-        
+
         if (newPassword !== confirmPassword) {
             e.preventDefault();
             alert('Passwords do not match');
             return false;
         }
     }
-    
+
     return true;
 });
 </script>

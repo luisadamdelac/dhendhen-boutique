@@ -33,10 +33,20 @@ $current_page = 'refund';
                     <?php endif; ?>
                 </div>
                 <div class="col col-4">
+                    <?php
+                        $refundStatus = $refund['status'] ?? 'pending';
+                        $statusBadgeClass = [
+                            'pending'   => 'badge-warning',
+                            'approved'  => 'badge-info',
+                            'completed' => 'badge-success',
+                            'rejected'  => 'badge-danger',
+                            'cancelled' => 'badge-danger',
+                        ][$refundStatus] ?? 'badge-warning';
+                    ?>
                     <div style="border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 15px;">
                         <small style="color: var(--gray);">Amount</small>
                         <h4 style="color: var(--success); margin: 5px 0;">₱<?= number_format($refund['amount'] ?? 0, 2); ?></h4>
-                        <span class="badge badge-warning"><?= ucfirst($refund['status'] ?? 'pending'); ?></span>
+                        <span class="badge <?= $statusBadgeClass; ?>"><?= ucfirst($refundStatus); ?></span>
                     </div>
                 </div>
             </div>
@@ -46,6 +56,37 @@ $current_page = 'refund';
                 <div style="display: flex; gap: 10px;">
                     <button type="button" class="btn btn-success" onclick="refundAction('approve')">Approve &amp; Restock</button>
                     <button type="button" class="btn btn-danger" onclick="refundAction('reject')">Reject</button>
+                </div>
+            <?php elseif (($refund['status'] ?? '') === 'approved'): ?>
+                <hr style="margin: 20px 0; border: none; border-top: 1px solid var(--border);">
+                <div class="card" style="box-shadow:none; border:1px solid var(--border);">
+                    <div style="padding:15px;">
+                        <p style="margin:0 0 12px; font-weight:600;">Mark as Refunded</p>
+                        <label style="display:flex; align-items:center; gap:8px; margin-bottom:12px; cursor:pointer;">
+                            <input type="checkbox" id="itemReceivedCheck" style="width:16px;height:16px;">
+                            Item received back in good condition
+                        </label>
+                        <div class="row" style="align-items: center;">
+                            <div class="col col-6">
+                                <input type="text" id="refund_payment_reference" class="form-control" placeholder="13-digit GCash reference number" inputmode="numeric" maxlength="13">
+                            </div>
+                            <div class="col col-6">
+                                <button type="button" class="btn btn-primary" onclick="refundAction('complete')">
+                                    <i class="fas fa-check-double"></i> Mark as Refunded
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            <?php elseif (($refund['status'] ?? '') === 'completed'): ?>
+                <hr style="margin: 20px 0; border: none; border-top: 1px solid var(--border);">
+                <div style="background:#d4edda; color:#155724; border-radius:var(--radius-lg); padding:15px;">
+                    <p style="margin:0 0 4px;"><i class="fas fa-check-circle"></i> <strong>Refunded</strong> — item received back and payment sent.</p>
+                    <p style="margin:0; font-size:13px;">GCash Reference: <strong><?= htmlspecialchars($refund['payment_reference'] ?? '-'); ?></strong>
+                        <?php if (!empty($refund['completed_at'])): ?>
+                            &middot; Paid on <?= date('F j, Y g:i A', strtotime($refund['completed_at'])); ?>
+                        <?php endif; ?>
+                    </p>
                 </div>
             <?php endif; ?>
         </div>
@@ -81,21 +122,47 @@ $current_page = 'refund';
 <script>
 let _pendingRefundAction = null;
 
-function refundAction(action) {
-    _pendingRefundAction = action;
-    const isApprove = action === 'approve';
+const REFUND_ACTION_META = {
+    approve:  { title: 'Approve & Restock', body: 'Approve this refund and restock the returned item(s)?', label: 'Approve', color: '#28a745' },
+    reject:   { title: 'Reject Refund', body: 'Reject this refund request?', label: 'Reject', color: '#dc3545' },
+    complete: { title: 'Mark as Refunded', body: 'Confirm the item was received back in good condition and the refund payment was sent via GCash?', label: 'Mark as Refunded', color: '#4361ee' }
+};
 
-    document.getElementById('refundActionModalTitle').textContent = isApprove ? 'Approve & Restock' : 'Reject Refund';
-    document.getElementById('refundActionModalBody').textContent = isApprove
-        ? 'Approve this refund and restock the returned item(s)?'
-        : 'Reject this refund request?';
-    document.getElementById('refundActionModalHeader').style.background = isApprove ? '#28a745' : '#dc3545';
+function refundAction(action) {
+    // Same 13-digit GCash reference format as checkout/withdrawal — and the
+    // item-received confirmation — required before this can even open the
+    // confirm modal, not just checked after the fact.
+    if (action === 'complete') {
+        if (!document.getElementById('itemReceivedCheck').checked) {
+            alert('Please confirm the item was received back in good condition.');
+            return;
+        }
+        if (!/^\d{13}$/.test(document.getElementById('refund_payment_reference').value)) {
+            alert('Please enter the 13-digit GCash Reference Number.');
+            return;
+        }
+    }
+
+    _pendingRefundAction = action;
+    const meta = REFUND_ACTION_META[action];
+
+    document.getElementById('refundActionModalTitle').textContent = meta.title;
+    document.getElementById('refundActionModalBody').textContent = meta.body;
+    document.getElementById('refundActionModalHeader').style.background = meta.color;
     document.getElementById('refundActionModalHeader').style.color = '#fff';
+    // .modal-title has its own color rule that otherwise wins over the
+    // header's inherited white, and the confirm button ships with no color
+    // class at all (just .btn.btn-sm) — both need to be set here explicitly
+    // or they render as barely-visible dark-on-light text.
+    document.getElementById('refundActionModalTitle').style.color = '#fff';
     document.getElementById('refundAdminRemarks').value = '';
-    document.getElementById('refundRemarksGroup').style.display = isApprove ? 'none' : 'block';
-    document.getElementById('refundActionBtnConfirmText').textContent = isApprove ? 'Approve' : 'Reject';
+    document.getElementById('refundRemarksGroup').style.display = action === 'reject' ? 'block' : 'none';
+    document.getElementById('refundActionBtnConfirmText').textContent = meta.label;
     document.getElementById('refundActionBtnConfirmSpinner').classList.add('d-none');
     document.getElementById('refundActionBtnConfirm').disabled = false;
+    document.getElementById('refundActionBtnConfirm').style.background = meta.color;
+    document.getElementById('refundActionBtnConfirm').style.borderColor = meta.color;
+    document.getElementById('refundActionBtnConfirm').style.color = '#fff';
     document.getElementById('refundActionBtnCancel').disabled = false;
     openModal('refundActionModal');
 }
@@ -110,6 +177,10 @@ document.getElementById('refundActionBtnConfirm').addEventListener('click', func
 
     const remarks = action === 'reject' ? document.getElementById('refundAdminRemarks').value : '';
     const params = new URLSearchParams({ admin_remarks: remarks });
+    if (action === 'complete') {
+        params.set('item_received', document.getElementById('itemReceivedCheck').checked ? '1' : '0');
+        params.set('payment_reference', document.getElementById('refund_payment_reference').value);
+    }
     fetch('<?= site_url('admin/refund/'); ?>' + action + '/<?= $refund['refund_id']; ?>', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -135,4 +206,13 @@ document.getElementById('refundActionBtnConfirm').addEventListener('click', func
             document.getElementById('refundActionBtnConfirmSpinner').classList.add('d-none');
         });
 });
+
+(function() {
+    const refInput = document.getElementById('refund_payment_reference');
+    if (!refInput) return;
+    refInput.addEventListener('input', function() {
+        const digitsOnly = this.value.replace(/\D/g, '').slice(0, 13);
+        if (digitsOnly !== this.value) this.value = digitsOnly;
+    });
+})();
 </script>

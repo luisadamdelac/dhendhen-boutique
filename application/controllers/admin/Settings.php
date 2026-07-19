@@ -275,36 +275,18 @@ class Settings extends Authenticated_Controller {
         $data['page_title'] = 'Activity Log';
         $data['current_page'] = 'settings';
 
-        $this->load->model('Activity_log_model');
-
-        $page = (int) ($this->input->get('page') ?? 1);
-        $search = trim((string) ($this->input->get('search') ?? ''));
-        $user_type = $this->input->get('user_type') ?? '';
-        $limit = (int) ($this->Settings_model->get('items_per_page') ?: 50);
-        $offset = ($page - 1) * $limit;
-
-        $apply_filters = function ($q) use ($search, $user_type) {
-            if ($search !== '') {
-                $q->group_start()
-                    ->like('action', $search)
-                    ->or_like('details', $search)
-                    ->group_end();
-            }
-            if (!empty($user_type)) {
-                $q->where('user_type', $user_type);
-            }
-            return $q;
-        };
-
-        $count_query = $apply_filters($this->db->select('COUNT(*) as count')->from(ACTIVITY_LOGS_TABLE));
-        $data['total'] = (int) ($count_query->get()->row()->count ?? 0);
-
-        $query = $apply_filters($this->db->select('*')->from(ACTIVITY_LOGS_TABLE));
-        $data['logs'] = $query->order_by('created_at', 'DESC')->limit($limit, $offset)->get()->result_array();
-        $data['pages'] = (int) ceil($data['total'] / $limit);
-        $data['page'] = $page;
-        $data['search'] = $search;
-        $data['user_type'] = $user_type;
+        // Every other admin list page (Orders, Products, Reseller
+        // Applications) fetches its full set once and filters/searches
+        // client-side via DataTables — this page was the only one still
+        // doing a server round-trip per keystroke via a "Filter" button,
+        // which felt broken/inconsistent next to those. Matches that
+        // pattern now instead. Capped well above realistic log volume so
+        // it stays a single fast query even as the table grows.
+        $data['logs'] = $this->db->select('*')
+            ->from(ACTIVITY_LOGS_TABLE)
+            ->order_by('created_at', 'DESC')
+            ->limit(2000)
+            ->get()->result_array();
 
         $this->load->view('admin/layout/header', $data);
         $this->load->view('admin/settings/activity_log', $data);

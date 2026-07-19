@@ -54,28 +54,22 @@
                 </div>
 
                 <div class="row">
-                    <div class="col col-3">
+                    <div class="col col-4">
                         <div class="form-group">
                             <label for="street">Street</label>
                             <input type="text" class="form-control" id="street" name="street" value="<?= set_value('street'); ?>">
                         </div>
                     </div>
-                    <div class="col col-3">
+                    <div class="col col-4">
                         <div class="form-group">
                             <label for="barangay">Barangay</label>
                             <input type="text" class="form-control" id="barangay" name="barangay" value="<?= set_value('barangay'); ?>">
                         </div>
                     </div>
-                    <div class="col col-3">
+                    <div class="col col-4">
                         <div class="form-group">
-                            <label for="city">City <span style="color:var(--danger);">*</span></label>
+                            <label for="city">City / Municipality <span style="color:var(--danger);">*</span></label>
                             <input type="text" class="form-control" id="city" name="city" value="<?= set_value('city'); ?>" required>
-                        </div>
-                    </div>
-                    <div class="col col-3">
-                        <div class="form-group">
-                            <label for="municipality">Municipality</label>
-                            <input type="text" class="form-control" id="municipality" name="municipality" value="<?= set_value('municipality'); ?>">
                         </div>
                     </div>
                 </div>

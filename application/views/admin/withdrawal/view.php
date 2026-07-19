@@ -81,7 +81,7 @@ $current_page = 'withdrawal';
                     <?php endif; ?>
                     <div class="row" style="align-items: center;">
                         <div class="col col-6">
-                            <input type="text" id="payment_reference" class="form-control" placeholder="GCash reference number">
+                            <input type="text" id="payment_reference" class="form-control" placeholder="13-digit GCash reference number" inputmode="numeric" maxlength="13">
                         </div>
                         <div class="col col-6">
                             <button type="button" class="btn btn-primary" <?= $isScheduleReached ? '' : 'disabled title="Not yet at the scheduled processing date"'; ?>
@@ -139,6 +139,14 @@ const WD_ACTION_META = {
 };
 
 function postWithdrawalAction(action, extra) {
+    // Same 13-digit GCash reference format as customer checkout — required
+    // before the admin can confirm a payout actually went out, not just
+    // optional bookkeeping text.
+    if (action === 'mark_processed' && !/^\d{13}$/.test((extra && extra.payment_reference) || '')) {
+        alert('Please enter the 13-digit GCash Reference Number before marking this withdrawal as completed.');
+        return;
+    }
+
     const meta = WD_ACTION_META[action] || { title: 'Confirm Action', body: 'Are you sure?', label: 'Confirm', color: '#4361ee' };
     _pendingWdAction = { action: action, extra: extra };
 
@@ -146,9 +154,17 @@ function postWithdrawalAction(action, extra) {
     document.getElementById('wdActionModalBody').textContent = meta.body;
     document.getElementById('wdActionModalHeader').style.background = meta.color;
     document.getElementById('wdActionModalHeader').style.color = '#fff';
+    // .modal-title has its own color rule that otherwise wins over the
+    // header's inherited white, and the confirm button ships with no
+    // color class at all (just .btn.btn-sm) — both need to be set here
+    // explicitly or they render as barely-visible dark-on-light text.
+    document.getElementById('wdActionModalTitle').style.color = '#fff';
     document.getElementById('wdActionBtnConfirmText').textContent = meta.label;
     document.getElementById('wdActionBtnConfirmSpinner').classList.add('d-none');
     document.getElementById('wdActionBtnConfirm').disabled = false;
+    document.getElementById('wdActionBtnConfirm').style.background = meta.color;
+    document.getElementById('wdActionBtnConfirm').style.borderColor = meta.color;
+    document.getElementById('wdActionBtnConfirm').style.color = '#fff';
     document.getElementById('wdActionBtnCancel').disabled = false;
     openModal('wdActionModal');
 }
@@ -186,4 +202,13 @@ document.getElementById('wdActionBtnConfirm').addEventListener('click', function
         document.getElementById('wdActionBtnConfirmSpinner').classList.add('d-none');
     });
 });
+
+(function() {
+    const paymentRefInput = document.getElementById('payment_reference');
+    if (!paymentRefInput) return;
+    paymentRefInput.addEventListener('input', function() {
+        const digitsOnly = this.value.replace(/\D/g, '').slice(0, 13);
+        if (digitsOnly !== this.value) this.value = digitsOnly;
+    });
+})();
 </script>

@@ -644,13 +644,13 @@
                     <hr>
                 </div>
 
-                <p class="text-muted" style="margin-top:-6px;font-size:.85rem;">Add at least one Variation Type (e.g. Shade, Finish — up to 2), give it a Value, then generate the combination(s) below to enter stock per branch.</p>
+                <p class="text-muted" style="margin-top:-6px;font-size:.85rem;">Add at least one Variation Type (e.g. Shade, Finish, Size — up to 5), give it a Value, then generate the combination(s) below to enter stock per branch.</p>
 
                 <div class="table-responsive">
                     <table class="table table-sm variation-values-table table-stack" id="variationTypesContainer">
                         <thead>
                             <tr>
-                                <th>Value</th><th>Default Price Adj.</th><th>Default Status</th><th class="text-center">Image</th><th class="text-center">Smart Apply</th><th class="text-center">Remove</th>
+                                <th>Value</th><th>Default Price Adj.</th><th>Default Status</th><th class="text-center">Smart Apply</th><th class="text-center">Remove</th>
                             </tr>
                         </thead>
                     </table>
@@ -664,7 +664,7 @@
                 </div>
 
                 <div class="field-feedback invalid" id="variationTypeCapError" style="display:none;margin-top:10px;">
-                    <i class="fas fa-exclamation-circle"></i> Only 2 variation types are supported per product (e.g. Shade × Finish).
+                    <i class="fas fa-exclamation-circle"></i> Up to 5 variation types are supported per product (e.g. Shade × Finish × Size).
                 </div>
 
                 <div style="margin-top:16px;" id="generateCombinationsWrap" hidden>
@@ -1357,12 +1357,62 @@ function initSmartSelect(opts) {
 
     function close() { dropdown.hidden = true; }
 
+    // Shared by the explicit "Create" modal and the auto-create-on-blur
+    // fallback below, so typing a new value and simply moving on (without
+    // remembering to click Create) still results in it actually existing
+    // and being selected — not just cosmetically sitting in the text box.
+    function createAndSelect(name, onDone) {
+        const alreadyAdded = items.some(it => labelOf(it).toLowerCase() === name.toLowerCase());
+        if (alreadyAdded) {
+            const match = items.find(it => labelOf(it).toLowerCase() === name.toLowerCase());
+            select(match);
+            onDone(true, null);
+            return;
+        }
+        fetch(opts.createUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'name=' + encodeURIComponent(name)
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                const newItem = opts.entity === 'brand'
+                    ? data.brand.brand
+                    : { id: data.category.category_id, label: data.category.category_name };
+                items.push(newItem);
+                items.sort((a, b) => labelOf(a).localeCompare(labelOf(b)));
+                select(newItem);
+                onDone(true, null);
+            } else {
+                onDone(false, data.message || 'Something went wrong.');
+            }
+        })
+        .catch(() => onDone(false, 'Network error. Please try again.'));
+    }
+
     input.addEventListener('focus', () => render(input.value));
     input.addEventListener('input', () => {
         if (hidden) hidden.value = '0';
         render(input.value);
     });
-    input.addEventListener('blur', () => setTimeout(close, 150));
+    input.addEventListener('blur', () => {
+        setTimeout(close, 150);
+        // Only meaningful for hidden-id-backed fields (Category) — Brand
+        // has no id to resolve, its typed text is the value as-is.
+        if (!hidden) return;
+        const typed = input.value.trim();
+        if (!typed || hidden.value !== '0') return;
+        const matched = items.find(it => labelOf(it).toLowerCase() === typed.toLowerCase());
+        if (matched) { select(matched); return; }
+        createAndSelect(typed, (ok, message) => {
+            if (ok) {
+                showSSToast((opts.entity === 'brand' ? 'Brand' : 'Category') + ' "' + typed + '" created and selected.', 'success');
+            } else {
+                showSSToast(message || ('Could not auto-create that ' + opts.entity + ' — please pick it from the list.'), 'error');
+            }
+        });
+    });
     input.addEventListener('keydown', (e) => {
         const options = dropdown.querySelectorAll('.smart-select-option');
         if (e.key === 'ArrowDown') {
@@ -1403,27 +1453,10 @@ function initSmartSelect(opts) {
                     done(false, 'This ' + opts.entity + ' already exists.');
                     return;
                 }
-                fetch(opts.createUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: 'name=' + encodeURIComponent(name)
-                })
-                .then(r => r.json())
-                .then(data => {
-                    if (data.success) {
-                        const newItem = opts.entity === 'brand'
-                            ? data.brand.brand
-                            : { id: data.category.category_id, label: data.category.category_name };
-                        items.push(newItem);
-                        items.sort((a, b) => labelOf(a).localeCompare(labelOf(b)));
-                        select(newItem);
-                        done(true, null);
-                        showSSToast((opts.entity === 'brand' ? 'Brand' : 'Category') + ' created and selected.', 'success');
-                    } else {
-                        done(false, data.message || 'Something went wrong.');
-                    }
-                })
-                .catch(() => done(false, 'Network error. Please try again.'));
+                createAndSelect(name, (ok, message) => {
+                    done(ok, message);
+                    if (ok) showSSToast((opts.entity === 'brand' ? 'Brand' : 'Category') + ' created and selected.', 'success');
+                });
             }
         });
     }
@@ -1550,7 +1583,10 @@ const VARIATION_BRANCHES = <?= json_encode(array_map(fn($b) => [
     'id' => (int) $b['branch_id'],
     'label' => explode(' ', trim($b['branch_name']))[0] . ' Stock',
 ], $branches)); ?>;
-const MAX_VARIATION_TYPES = 2;
+// Soft ceiling only — guards against runaway combination counts (an N-axis
+// cartesian product grows multiplicatively), not an artificial "2 types"
+// design limit. Raise it further if a real catalog ever needs more.
+const MAX_VARIATION_TYPES = 5;
 
 const variationTypesContainer = document.getElementById('variationTypesContainer');
 const addVariationTypeBtn = document.getElementById('addVariationTypeBtn');
@@ -1668,8 +1704,6 @@ function addVariationValueRow(block, value) {
     row.className = 'variation-value-row';
     row.dataset.rowId = String(variationRowIdSeq++);
 
-    const thumbSrc = value && value.image_path ? APP_BASE_URL + value.image_path : '';
-
     row.innerHTML =
         '<td><input type="text" class="form-control form-control-sm variation-value-input" placeholder="Value (e.g. Red)" value="' + escHtml(value ? value.variation_value : '') + '"></td>' +
         '<td><input type="number" step="0.01" class="form-control form-control-sm variation-default-price-input" placeholder="+/- Price" value="' + (value ? parseFloat(value.price_adjustment) : 0) + '"></td>' +
@@ -1677,11 +1711,6 @@ function addVariationValueRow(block, value) {
             '<option value="active"' + (!value || value.status !== 'inactive' ? ' selected' : '') + '>Active</option>' +
             '<option value="inactive"' + (value && value.status === 'inactive' ? ' selected' : '') + '>Inactive</option>' +
         '</select></td>' +
-        '<td class="text-center">' +
-            '<img class="variation-image-thumb" src="' + escHtml(thumbSrc) + '" style="width:34px;height:34px;object-fit:cover;border-radius:6px;border:1px solid #ddd;cursor:pointer;' + (thumbSrc ? '' : 'display:none;') + '" title="Click to change image">' +
-            '<button type="button" class="btn btn-sm btn-outline-secondary variation-image-btn"' + (thumbSrc ? ' style="display:none;"' : '') + ' title="Upload image for this value"><i class="fas fa-camera"></i></button>' +
-            '<input type="file" accept="image/*" class="variation-image-input" name="variation_images[' + row.dataset.rowId + ']" style="display:none">' +
-        '</td>' +
         '<td class="text-center"><button type="button" class="btn btn-sm btn-outline-primary smart-apply-btn" title="Apply Stock/Price/Status to every combination with this value"><i class="fas fa-bolt"></i></button></td>' +
         '<td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger remove-value-btn" title="Remove"><i class="fas fa-trash"></i></button></td>';
 
@@ -1704,25 +1733,13 @@ function addVariationValueRow(block, value) {
         openApplyModal({ scope: 'value', type: block.dataset.type, value: valueName });
     });
 
-    const imageInput = row.querySelector('.variation-image-input');
-    const imageThumb = row.querySelector('.variation-image-thumb');
-    const imageBtn = row.querySelector('.variation-image-btn');
-    imageThumb.addEventListener('click', () => imageInput.click());
-    imageBtn.addEventListener('click', () => imageInput.click());
-    imageInput.addEventListener('change', () => {
-        if (!imageInput.files || !imageInput.files[0]) return;
-        imageThumb.src = URL.createObjectURL(imageInput.files[0]);
-        imageThumb.style.display = '';
-        imageBtn.style.display = 'none';
-    });
-
     block.appendChild(row);
     onVariationStructureChanged();
 }
 
 function valueHasStock(type, value) {
     return Object.values(combinationRows).some(c => {
-        const matches = (c.type_1 === type && c.value_1 === value) || (c.type_2 === type && c.value_2 === value);
+        const matches = c.axes.some(a => a.type === type && a.value === value);
         if (!matches) return false;
         return Object.values(c.branch_stock || {}).some(q => (parseInt(q, 10) || 0) > 0);
     });
@@ -1802,36 +1819,37 @@ function mergeCombination(key, base) {
     combinationRows[key] = merged;
 }
 
+// Cartesian product across however many axes are defined (1..MAX_VARIATION_TYPES).
+function cartesianAxes(axes) {
+    let combos = [[]];
+    axes.forEach(axis => {
+        const next = [];
+        combos.forEach(prefix => {
+            axis.values.forEach(v => { next.push(prefix.concat([{ type: axis.type, value: v }])); });
+        });
+        combos = next;
+    });
+    return combos;
+}
+
 function generateCombinations() {
     const axes = currentTypeValueLists();
     const newKeys = new Set();
 
-    if (axes.length === 1) {
-        axes[0].values.forEach(v1 => {
-            const key = axes[0].type + ':' + v1.value + '|';
-            newKeys.add(key);
-            mergeCombination(key, {
-                type_1: axes[0].type, value_1: v1.value, type_2: '', value_2: '',
-                sku: '', barcode: '', price_adjustment: v1.price_adjustment, status: v1.status,
-                branch_stock: {},
-            });
+    cartesianAxes(axes).forEach(comboAxes => {
+        const key = comboAxes.map(a => a.type + ':' + a.value.value).join('|');
+        newKeys.add(key);
+        const totalPriceAdj = comboAxes.reduce((sum, a) => sum + a.value.price_adjustment, 0);
+        mergeCombination(key, {
+            axes: comboAxes.map(a => ({ type: a.type, value: a.value.value })),
+            sku: '', barcode: '',
+            price_adjustment: totalPriceAdj,
+            status: comboAxes.length === 1 ? comboAxes[0].value.status : 'active',
+            branch_stock: {},
         });
-    } else if (axes.length >= 2) {
-        const [a1, a2] = axes;
-        a1.values.forEach(v1 => {
-            a2.values.forEach(v2 => {
-                const key = a1.type + ':' + v1.value + '|' + a2.type + ':' + v2.value;
-                newKeys.add(key);
-                mergeCombination(key, {
-                    type_1: a1.type, value_1: v1.value, type_2: a2.type, value_2: v2.value,
-                    sku: '', barcode: '', price_adjustment: v1.price_adjustment + v2.price_adjustment, status: 'active',
-                    branch_stock: {},
-                });
-            });
-        });
-    }
+    });
 
-    // Drop combinations whose value pair no longer exists.
+    // Drop combinations whose value set no longer exists.
     Object.keys(combinationRows).forEach(key => {
         if (!newKeys.has(key)) delete combinationRows[key];
     });
@@ -1852,17 +1870,19 @@ function renderCombinationsTable() {
     }
 
     combinationsHeaderRow.innerHTML =
-        '<th></th><th>Variant Combination</th>' +
+        '<th></th><th>Variant Combination</th><th class="text-center">Image</th>' +
         VARIATION_BRANCHES.map(b => '<th>' + escHtml(b.label) + '</th>').join('') +
         '<th>Price Adj.</th><th>Status</th><th class="text-center">Actions</th>';
 
     combinationsBody.innerHTML = '';
     keys.forEach(key => {
         const c = combinationRows[key];
-        const label = c.type_2 ? (c.value_1 + ' / ' + c.value_2) : c.value_1;
+        const label = c.axes.map(a => a.value).join(' / ');
         const branchCells = VARIATION_BRANCHES.map(b =>
             '<td data-label="' + escHtml(b.label) + '"><input type="number" min="0" class="form-control form-control-sm combo-branch-stock-input" data-branch-id="' + b.id + '" value="' + (parseInt(c.branch_stock[b.id], 10) || 0) + '"></td>'
         ).join('');
+        const hasSavedImage = !c.pending_image_file && !!c.image_path;
+        const comboThumbSrc = c.pending_image_file ? '' : (c.image_path ? APP_BASE_URL + c.image_path : '');
 
         const tr = document.createElement('tr');
         tr.className = 'combination-row';
@@ -1870,6 +1890,11 @@ function renderCombinationsTable() {
         tr.innerHTML =
             '<td data-label="Select"><input type="checkbox" class="combo-select-checkbox"></td>' +
             '<td data-label="Variant Combination"><strong>' + escHtml(label) + '</strong></td>' +
+            '<td data-label="Image" class="text-center">' +
+                '<img class="combo-image-thumb" src="' + escHtml(comboThumbSrc) + '" style="width:34px;height:34px;object-fit:cover;border-radius:6px;border:1px solid #ddd;cursor:pointer;' + (hasSavedImage ? '' : 'display:none;') + '" title="View / change image">' +
+                '<button type="button" class="btn btn-sm btn-outline-secondary combo-image-btn" title="Upload image for this combination"' + (hasSavedImage ? ' style="display:none;"' : '') + '><i class="fas fa-camera"></i></button>' +
+                '<input type="file" accept="image/*" class="combo-image-input" name="variant_image[' + escHtml(c.row_key) + ']" style="display:none">' +
+            '</td>' +
             branchCells +
             '<td data-label="Price Adj."><input type="number" step="0.01" class="form-control form-control-sm combo-price-input" value="' + (parseFloat(c.price_adjustment) || 0) + '"></td>' +
             '<td data-label="Status"><select class="form-control form-control-sm combo-status-select">' +
@@ -1897,6 +1922,31 @@ function renderCombinationsTable() {
             }
         });
 
+        // A picked-but-unsaved file survives a table rebuild (e.g. typing in
+        // the Values section regenerates combinations) only in JS state —
+        // the DOM input itself is destroyed/recreated, so restore its
+        // FileList via DataTransfer or the pick would silently vanish.
+        const comboImageInput = tr.querySelector('.combo-image-input');
+        const comboImageThumb = tr.querySelector('.combo-image-thumb');
+        const comboImageBtn = tr.querySelector('.combo-image-btn');
+        if (c.pending_image_file) {
+            const dt = new DataTransfer();
+            dt.items.add(c.pending_image_file);
+            comboImageInput.files = dt.files;
+            comboImageThumb.src = URL.createObjectURL(c.pending_image_file);
+            comboImageThumb.style.display = '';
+            comboImageBtn.style.display = 'none';
+        }
+        comboImageThumb.addEventListener('click', () => openCombinationImageModal(tr, key, label));
+        comboImageBtn.addEventListener('click', () => openCombinationImageModal(tr, key, label));
+        comboImageInput.addEventListener('change', () => {
+            if (!comboImageInput.files || !comboImageInput.files[0]) return;
+            combinationRows[key].pending_image_file = comboImageInput.files[0];
+            comboImageThumb.src = URL.createObjectURL(comboImageInput.files[0]);
+            comboImageThumb.style.display = '';
+            comboImageBtn.style.display = 'none';
+        });
+
         combinationsBody.appendChild(tr);
     });
 
@@ -1918,7 +1968,7 @@ function syncCombinationRowFromDom(tr, key) {
 
 function syncCombinationsJson() {
     const combos = Object.values(combinationRows).map(c => ({
-        type_1: c.type_1, value_1: c.value_1, type_2: c.type_2, value_2: c.value_2,
+        axes: c.axes,
         sku: c.sku, barcode: c.barcode, price_adjustment: c.price_adjustment, status: c.status,
         branch_stock: c.branch_stock, row_key: c.row_key,
     }));
@@ -1944,9 +1994,23 @@ document.getElementById('bulkApplyBtn').addEventListener('click', function() {
 function openApplyModal(opts) {
     const isSmart = opts.scope === 'value';
     const action = isSmart ? null : opts.action;
-    const branchStockFields = () => VARIATION_BRANCHES.map(b =>
-        '<div class="d-flex align-items-center gap-2" style="margin-bottom:6px;"><span style="min-width:110px;">' + escHtml(b.label) + '</span><input type="number" min="0" class="form-control form-control-sm apply-modal-branch-stock" data-branch-id="' + b.id + '"></div>'
-    ).join('');
+    const targetRows = isSmart ? rowsMatchingValue(opts.type, opts.value) : opts.rows;
+    // Pre-fill each branch with its current stock so editing starts from
+    // what's already there instead of a blank box — but only when every
+    // targeted row agrees on that branch's value; otherwise leave it blank
+    // (still means "no change" on Apply) with a hint showing the range.
+    const branchStockFields = () => VARIATION_BRANCHES.map(b => {
+        const values = (targetRows || [])
+            .map(tr => combinationRows[tr.dataset.key])
+            .filter(Boolean)
+            .map(c => parseInt(c.branch_stock[b.id], 10) || 0);
+        const allSame = values.length > 0 && values.every(v => v === values[0]);
+        const valueAttr = allSame ? ' value="' + values[0] + '"' : '';
+        const placeholder = !allSame && values.length
+            ? ' placeholder="Mixed (' + Math.min(...values) + '–' + Math.max(...values) + ')"'
+            : '';
+        return '<div class="d-flex align-items-center gap-2" style="margin-bottom:6px;"><span style="min-width:110px;">' + escHtml(b.label) + '</span><input type="number" min="0" class="form-control form-control-sm apply-modal-branch-stock" data-branch-id="' + b.id + '"' + valueAttr + placeholder + '></div>';
+    }).join('');
     let title, bodyHtml;
 
     if (isSmart) {
@@ -2003,7 +2067,7 @@ function openApplyModal(opts) {
 function rowsMatchingValue(type, value) {
     return Array.from(combinationsBody.querySelectorAll('.combination-row')).filter(tr => {
         const c = combinationRows[tr.dataset.key];
-        return c && ((c.type_1 === type && c.value_1 === value) || (c.type_2 === type && c.value_2 === value));
+        return c && c.axes.some(a => a.type === type && a.value === value);
     });
 }
 
@@ -2044,15 +2108,16 @@ function applyToRows(rows, changes) {
 }
 
 /* Small reusable modal, matching the wizard's existing modal look (no new design system). */
-function showModal(title, bodyHtml, onConfirm) {
+function showModal(title, bodyHtml, onConfirm, confirmLabel, hideCancel) {
     let modal = document.getElementById('variantApplyModal');
     if (!modal) {
         modal = document.createElement('div');
         modal.id = 'variantApplyModal';
         modal.style.cssText = 'display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:10050;align-items:center;justify-content:center;';
         modal.innerHTML =
-            '<div style="background:#fff;border-radius:12px;max-width:480px;width:92%;padding:24px;box-shadow:0 10px 40px rgba(0,0,0,.2);max-height:85vh;overflow-y:auto;">' +
-                '<h5 style="margin-bottom:14px;" id="variantApplyModalTitle"></h5>' +
+            '<div style="background:#fff;border-radius:12px;max-width:480px;width:92%;padding:24px;box-shadow:0 10px 40px rgba(0,0,0,.2);max-height:85vh;overflow-y:auto;position:relative;">' +
+                '<button type="button" class="btn btn-outline-secondary btn-sm" id="variantApplyModalClose" style="position:absolute;top:14px;right:14px;width:30px;height:30px;padding:0;display:flex;align-items:center;justify-content:center;"><i class="fas fa-times"></i></button>' +
+                '<h5 style="margin-bottom:14px;padding-right:34px;" id="variantApplyModalTitle"></h5>' +
                 '<div id="variantApplyModalBody"></div>' +
                 '<div style="display:flex;gap:10px;justify-content:flex-end;margin-top:18px;">' +
                     '<button type="button" class="btn btn-outline-secondary btn-sm" id="variantApplyModalCancel">Cancel</button>' +
@@ -2063,12 +2128,44 @@ function showModal(title, bodyHtml, onConfirm) {
     }
     modal.querySelector('#variantApplyModalTitle').textContent = title;
     modal.querySelector('#variantApplyModalBody').innerHTML = bodyHtml;
+    modal.querySelector('#variantApplyModalConfirm').textContent = confirmLabel || 'Apply';
+    modal.querySelector('#variantApplyModalCancel').style.display = hideCancel ? 'none' : '';
     modal.style.display = 'flex';
 
     const close = () => { modal.style.display = 'none'; };
+    modal.querySelector('#variantApplyModalClose').onclick = close;
     modal.querySelector('#variantApplyModalCancel').onclick = close;
     modal.querySelector('#variantApplyModalConfirm').onclick = () => { onConfirm(); close(); };
     modal.onclick = (e) => { if (e.target === modal) close(); };
+}
+
+/* Per-combination image (product_variant_images), submitted as
+   variant_image[<row_key>] and handled server-side by
+   Product::_maybe_upload_variant_image(). This is the only place in the
+   wizard that manages images now — there's no separate per-value image. */
+function openCombinationImageModal(tr, key, label) {
+    const imageInput = tr.querySelector('.combo-image-input');
+    const imageThumb = tr.querySelector('.combo-image-thumb');
+    const hasImage = imageThumb.style.display !== 'none';
+
+    const bodyHtml =
+        '<div style="text-align:center;">' +
+            (hasImage
+                ? '<img src="' + escHtml(imageThumb.src) + '" style="max-width:100%;max-height:260px;border-radius:8px;border:1px solid #ddd;object-fit:contain;background:#f8f9fa;" alt="">'
+                : '<div style="color:var(--gray);padding:40px 0;"><i class="fas fa-image" style="font-size:28px;display:block;margin-bottom:8px;"></i>No image set yet.</div>') +
+            '<div style="margin-top:14px;">' +
+                '<button type="button" class="btn btn-outline-secondary btn-sm" id="variationImageModalChooseBtn"><i class="fas fa-folder-open"></i> Choose File</button>' +
+            '</div>' +
+            '<small style="color:var(--gray);display:block;margin-top:10px;">Only used for the &ldquo;' + escHtml(label) + '&rdquo; combination.</small>' +
+        '</div>';
+
+    showModal('Combination Image — ' + label, bodyHtml, () => {}, 'Done', true);
+
+    document.getElementById('variationImageModalChooseBtn').addEventListener('click', () => imageInput.click());
+
+    if (imageInput._modalCloseHandler) imageInput.removeEventListener('change', imageInput._modalCloseHandler);
+    imageInput._modalCloseHandler = () => { document.getElementById('variantApplyModal').style.display = 'none'; };
+    imageInput.addEventListener('change', imageInput._modalCloseHandler, { once: true });
 }
 
 /* ── Warn before losing unsaved changes (accidental back/refresh/close) ── */

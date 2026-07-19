@@ -83,6 +83,11 @@
 </div>
 
 <script>
+document.getElementById('gcash_reference').addEventListener('input', function() {
+    const digitsOnly = this.value.replace(/\D/g, '').slice(0, 13);
+    if (digitsOnly !== this.value) this.value = digitsOnly;
+});
+
 document.getElementById('resubmitForm').addEventListener('submit', function(e) {
     e.preventDefault();
 

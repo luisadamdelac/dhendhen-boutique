@@ -467,6 +467,14 @@ class Product extends Authenticated_Controller {
             return;
         }
 
+        // Redisplay what the admin just typed (not the stale DB row) after a
+        // validation-failure bounce-back — see the old_input flashdata set
+        // in _validate_and_save_product().
+        $old_input = $this->session->flashdata('old_input');
+        if (is_array($old_input)) {
+            $product = array_merge($product, array_intersect_key($old_input, $product));
+        }
+
         $data['product'] = $product;
         $data['categories'] = $this->db->select('*')->from(CATEGORY_TABLE)->get()->result_array();
         $data['branches'] = $this->db->select('*')->from(BRANCHES_TABLE)->get()->result_array();
@@ -495,14 +503,53 @@ class Product extends Authenticated_Controller {
         foreach ($data['variations'] as $v) {
             $valueById[(int) $v['variation_id']] = $v;
         }
+
+        // 3rd+ axis values (beyond variation_id_1/variation_id_2) for
+        // combinations with more than two variation types.
+        $variantIds = array_column($data['combinations'], 'variant_id');
+        $extraByVariant = [];
+        if (!empty($variantIds)) {
+            $extraRows = $this->db->select('variant_id, variation_id')
+                ->from(PRODUCT_VARIANT_EXTRA_VALUES_TABLE)
+                ->where_in('variant_id', $variantIds)
+                ->order_by('variant_id, axis_order', 'ASC')
+                ->get()->result_array();
+            foreach ($extraRows as $er) {
+                $extraByVariant[(int) $er['variant_id']][] = (int) $er['variation_id'];
+            }
+        }
+
+        // Primary per-combination image, so the wizard's Image column/modal
+        // can pre-populate a preview for combinations that already have one.
+        $imageByVariant = [];
+        if (!empty($variantIds)) {
+            $imageRows = $this->db->select('variant_id, image_path')
+                ->from(PRODUCT_VARIANT_IMAGES_TABLE)
+                ->where_in('variant_id', $variantIds)
+                ->where('is_primary', 1)
+                ->get()->result_array();
+            foreach ($imageRows as $ir) {
+                $imageByVariant[(int) $ir['variant_id']] = $ir['image_path'];
+            }
+        }
+
         foreach ($data['combinations'] as &$combo) {
-            $v1 = $valueById[(int) $combo['variation_id_1']] ?? NULL;
-            $v2 = $combo['variation_id_2'] ? ($valueById[(int) $combo['variation_id_2']] ?? NULL) : NULL;
-            $combo['type_1'] = $v1['variation_type'] ?? '';
-            $combo['value_1'] = $v1['variation_value'] ?? '';
-            $combo['type_2'] = $v2['variation_type'] ?? '';
-            $combo['value_2'] = $v2['variation_value'] ?? '';
+            $axisIds = [(int) $combo['variation_id_1']];
+            if (!empty($combo['variation_id_2'])) {
+                $axisIds[] = (int) $combo['variation_id_2'];
+            }
+            foreach ($extraByVariant[(int) $combo['variant_id']] ?? [] as $vid) {
+                $axisIds[] = $vid;
+            }
+            $combo['axes'] = [];
+            foreach ($axisIds as $vid) {
+                $v = $valueById[$vid] ?? NULL;
+                if ($v) {
+                    $combo['axes'][] = ['type' => $v['variation_type'], 'value' => $v['variation_value']];
+                }
+            }
             $combo['branch_stock'] = StockService::getVariantBranchStock((int) $combo['variant_id']);
+            $combo['image_path'] = $imageByVariant[(int) $combo['variant_id']] ?? NULL;
         }
         unset($combo);
 
@@ -704,6 +751,13 @@ class Product extends Authenticated_Controller {
 
         if ($this->form_validation->run() === FALSE) {
             $this->session->set_flashdata('error', validation_errors(' ', ' '));
+            // The bounce-back below is a fresh GET request, so $_POST is
+            // gone by the time edit() re-renders the form — without this,
+            // every field with no validation rule of its own (tags,
+            // category, description, expiry date, status) would silently
+            // revert to its old saved value, discarding whatever the admin
+            // had just typed.
+            $this->session->set_flashdata('old_input', $this->input->post());
             redirect($product_id ? "admin/product/edit/{$product_id}" : 'admin/product/add');
             return;
         }
@@ -721,6 +775,7 @@ class Product extends Authenticated_Controller {
         }
         if (!empty($errors)) {
             $this->session->set_flashdata('error', '<ul class="mb-0">' . implode('', array_map(fn($e) => '<li>' . $e . '</li>', $errors)) . '</ul>');
+            $this->session->set_flashdata('old_input', $this->input->post());
             redirect("admin/product/edit/{$product_id}");
             return;
         }
@@ -1105,22 +1160,39 @@ class Product extends Authenticated_Controller {
             ->group_end()
             ->where('stock >', 0)
             ->count_all_results();
-        return $count > 0;
+        if ($count > 0) {
+            return TRUE;
+        }
+        // Also cover 3rd+ axis values, which live in the extra-values table
+        // rather than the two fixed columns above.
+        $extraCount = $this->db
+            ->from(PRODUCT_VARIANT_EXTRA_VALUES_TABLE . ' pvev')
+            ->join(PRODUCT_VARIANTS_TABLE . ' v', 'v.variant_id = pvev.variant_id')
+            ->where('pvev.variation_id', $variation_id)
+            ->where('v.stock >', 0)
+            ->count_all_results();
+        return $extraCount > 0;
     }
 
     /**
      * Save the generated variant combinations (Section 3/4/5/6 of the
      * wizard) — each row is one actual purchasable/inventory item (SKU,
      * barcode, its own price adjustment/status, per-branch stock). Diffed
-     * against what already exists by natural key
-     * (product_id, variation_id_1, variation_id_2) so variant_id stays
+     * against what already exists by natural key so variant_id stays
      * stable across edits, and stock is adjusted by DELTA (not wiped and
      * re-added), so unchanged rows create zero new batches/movements and
      * FIFO history survives no-op edits.
      *
+     * A combination can have any number of axes (not just 2) — the natural
+     * key is every axis's variation_id, sorted ascending and joined with
+     * '-', so it's independent of the order axes were posted/stored in.
+     * The first two axes still populate variation_id_1/variation_id_2 (kept
+     * for the common 1-2 axis case and older fallback display logic); any
+     * 3rd+ axis is stored in product_variant_extra_values_tbl instead.
+     *
      * $valueIdMap: [type => [value => variation_id]] from
      * _save_variation_values(), used to resolve each posted combination's
-     * type/value names into real variation_id_1/variation_id_2.
+     * axis type/value names into real variation_ids.
      */
     private function _save_variant_combinations($product_id, array $valueIdMap) {
         $json = $this->input->post('combinations_json', TRUE);
@@ -1134,24 +1206,31 @@ class Product extends Authenticated_Controller {
 
         $postedKeyed = [];
         foreach ($posted as $c) {
-            $type1 = trim((string) ($c['type_1'] ?? ''));
-            $value1 = trim((string) ($c['value_1'] ?? ''));
-            $type2 = trim((string) ($c['type_2'] ?? ''));
-            $value2 = trim((string) ($c['value_2'] ?? ''));
-
-            if ($type1 === '' || $value1 === '' || !isset($valueIdMap[$type1][$value1])) {
+            $axes = is_array($c['axes'] ?? NULL) ? $c['axes'] : [];
+            $variationIds = [];
+            foreach ($axes as $axis) {
+                $type = trim((string) ($axis['type'] ?? ''));
+                $value = trim((string) ($axis['value'] ?? ''));
+                if ($type === '' || $value === '' || !isset($valueIdMap[$type][$value])) {
+                    // One unresolved axis invalidates the whole combination.
+                    $variationIds = [];
+                    break;
+                }
+                $variationIds[] = (int) $valueIdMap[$type][$value];
+            }
+            if (empty($variationIds)) {
                 continue;
             }
-            $variation_id_1 = (int) $valueIdMap[$type1][$value1];
-            $variation_id_2 = ($type2 !== '' && $value2 !== '' && isset($valueIdMap[$type2][$value2]))
-                ? (int) $valueIdMap[$type2][$value2]
-                : NULL;
+
+            $sortedIds = $variationIds;
+            sort($sortedIds, SORT_NUMERIC);
+            $comboKey = implode('-', $sortedIds);
 
             $status = $c['status'] ?? 'active';
-            $key = $variation_id_1 . '|' . ($variation_id_2 ?? '0');
-            $postedKeyed[$key] = [
-                'variation_id_1'   => $variation_id_1,
-                'variation_id_2'   => $variation_id_2,
+            $postedKeyed[$comboKey] = [
+                // Posted order preserved — first two become
+                // variation_id_1/variation_id_2, any rest are the extras.
+                'variation_ids'    => $variationIds,
                 'sku'              => trim((string) ($c['sku'] ?? '')) ?: NULL,
                 'barcode'          => trim((string) ($c['barcode'] ?? '')) ?: NULL,
                 'price_adjustment' => (float) ($c['price_adjustment'] ?? 0),
@@ -1167,15 +1246,39 @@ class Product extends Authenticated_Controller {
 
         $existing = $this->db->select('*')->from(PRODUCT_VARIANTS_TABLE)
             ->where('product_id', $product_id)->get()->result_array();
+        $existingVariantIds = array_column($existing, 'variant_id');
+        $extraByVariant = [];
+        if (!empty($existingVariantIds)) {
+            $extraRows = $this->db->select('variant_id, variation_id')
+                ->from(PRODUCT_VARIANT_EXTRA_VALUES_TABLE)
+                ->where_in('variant_id', $existingVariantIds)
+                ->order_by('variant_id, axis_order', 'ASC')
+                ->get()->result_array();
+            foreach ($extraRows as $er) {
+                $extraByVariant[(int) $er['variant_id']][] = (int) $er['variation_id'];
+            }
+        }
         $existingKeyed = [];
         foreach ($existing as $row) {
-            $key = $row['variation_id_1'] . '|' . ($row['variation_id_2'] ?? '0');
-            $existingKeyed[$key] = $row;
+            $ids = [(int) $row['variation_id_1']];
+            if (!empty($row['variation_id_2'])) {
+                $ids[] = (int) $row['variation_id_2'];
+            }
+            foreach ($extraByVariant[(int) $row['variant_id']] ?? [] as $vid) {
+                $ids[] = $vid;
+            }
+            sort($ids, SORT_NUMERIC);
+            $existingKeyed[implode('-', $ids)] = $row;
         }
 
         $now = date('Y-m-d H:i:s');
 
         foreach ($postedKeyed as $key => $row) {
+            $variationIds = $row['variation_ids'];
+            $variation_id_1 = $variationIds[0];
+            $variation_id_2 = $variationIds[1] ?? NULL;
+            $extraIds = array_slice($variationIds, 2);
+
             if (isset($existingKeyed[$key])) {
                 $variant_id = (int) $existingKeyed[$key]['variant_id'];
                 $this->db->where('variant_id', $variant_id)->update(PRODUCT_VARIANTS_TABLE, [
@@ -1188,8 +1291,9 @@ class Product extends Authenticated_Controller {
             } else {
                 $this->db->insert(PRODUCT_VARIANTS_TABLE, [
                     'product_id'       => $product_id,
-                    'variation_id_1'   => $row['variation_id_1'],
-                    'variation_id_2'   => $row['variation_id_2'],
+                    'variation_id_1'   => $variation_id_1,
+                    'variation_id_2'   => $variation_id_2,
+                    'combo_key'        => $key,
                     'sku'              => $row['sku'],
                     'barcode'          => $row['barcode'],
                     'price_adjustment' => $row['price_adjustment'],
@@ -1199,6 +1303,14 @@ class Product extends Authenticated_Controller {
                     'updated_at'       => $now,
                 ]);
                 $variant_id = $this->db->insert_id();
+
+                foreach ($extraIds as $axisOrder => $vid) {
+                    $this->db->insert(PRODUCT_VARIANT_EXTRA_VALUES_TABLE, [
+                        'variant_id'   => $variant_id,
+                        'variation_id' => $vid,
+                        'axis_order'   => $axisOrder,
+                    ]);
+                }
             }
 
             if ($row['row_key'] !== '') {

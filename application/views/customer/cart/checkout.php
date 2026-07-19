@@ -321,21 +321,44 @@
                     </button>
                 </div>
                 
-                <!-- Payment Method Section (GCash only) -->
+                <!-- Payment Method Section (depends on delivery method: Pick-up = Cash, Pasabay = GCash) -->
                 <div class="checkout-section" style="margin-top: 20px;">
                     <h2 class="section-title"><i class="fas fa-wallet"></i> Payment Method</h2>
-                    <div class="payment-options">
-                        <label class="payment-option selected">
-                            <input type="hidden" name="payment_method" value="gcash">
-                            <div class="payment-info">
-                                <div class="payment-name">
-                                    <i class="fas fa-mobile-alt" style="color: #007DFF;"></i>
-                                    GCash
+
+                    <input type="hidden" name="payment_method" id="payment_method_input" value="">
+
+                    <p id="paymentMethodPlaceholder" style="color:#888; font-size:13px; margin:0;">
+                        <i class="fas fa-info-circle"></i> Select a delivery method above to see your payment option.
+                    </p>
+
+                    <!-- Cash payment info (shown when Pick-up is selected) -->
+                    <div id="cashPaymentSection" style="display:none;">
+                        <div class="payment-options">
+                            <label class="payment-option selected">
+                                <div class="payment-info">
+                                    <div class="payment-name">
+                                        <i class="fas fa-money-bill-wave" style="color: #28a745;"></i>
+                                        Cash
+                                    </div>
+                                    <div style="font-size:12px; color:#888; margin-top:4px;">Pay in cash when you pick up your order at our store</div>
                                 </div>
-                                <div style="font-size:12px; color:#888; margin-top:4px;">Pay via GCash mobile wallet</div>
-                            </div>
-                        </label>
+                            </label>
+                        </div>
                     </div>
+
+                    <!-- GCash payment option (shown when Pasabay via Jeep is selected) -->
+                    <div id="gcashPaymentWrap" style="display:none;">
+                        <div class="payment-options">
+                            <label class="payment-option selected">
+                                <div class="payment-info">
+                                    <div class="payment-name">
+                                        <i class="fas fa-mobile-alt" style="color: #007DFF;"></i>
+                                        GCash
+                                    </div>
+                                    <div style="font-size:12px; color:#888; margin-top:4px;">Pay via GCash mobile wallet</div>
+                                </div>
+                            </label>
+                        </div>
 
                     <!-- GCash Payment Details (shown when GCash is selected) -->
                     <div id="gcashPaymentSection" style="margin-top:20px; background:linear-gradient(135deg, #007DFF10, #007DFF05); border:2px solid #007DFF40; border-radius:12px; padding:20px;">
@@ -425,6 +448,7 @@
                             </div>
                         </div>
 
+                    </div>
                     </div>
                 </div>
 
@@ -648,7 +672,6 @@
     let deliveryFee = 0;
     let selectedDeliveryType = '';
     let selectedMunicipality = <?php echo json_encode($addresses[0]['municipality']); ?>;
-    let selectedPayment = '';
 
     // --- Preserve checkout state across the trip to the GCash app and back.
     // Mobile browsers can suspend or even reload a backgrounded tab, so this
@@ -743,7 +766,27 @@
         selectedDeliveryType = type;
         deliveryFee = type === 'pasabay_jeep' ? feeForSelectedMunicipality() : 0;
         updateTotal();
+        updatePaymentMethodSection(type);
         saveCheckoutState();
+    }
+
+    // Payment method follows delivery method — Pick-up is always paid in
+    // cash at the store, Pasabay via Jeep is always paid via GCash, so
+    // there's nothing for the customer to separately choose here.
+    function updatePaymentMethodSection(type) {
+        const placeholder = document.getElementById('paymentMethodPlaceholder');
+        const cashSection = document.getElementById('cashPaymentSection');
+        const gcashWrap = document.getElementById('gcashPaymentWrap');
+        const paymentInput = document.getElementById('payment_method_input');
+
+        placeholder.style.display = type ? 'none' : 'block';
+        cashSection.style.display = type === 'pickup' ? 'block' : 'none';
+        gcashWrap.style.display = type === 'pasabay_jeep' ? 'block' : 'none';
+        paymentInput.value = type === 'pickup' ? 'cash' : (type === 'pasabay_jeep' ? 'gcash' : '');
+
+        if (type === 'pasabay_jeep') {
+            updateGcashAmount();
+        }
     }
 
     function selectAddress(element, municipality) {
@@ -757,21 +800,6 @@
             updateTotal();
         }
         saveCheckoutState();
-    }
-
-    function selectPayment(element, method) {
-        document.querySelectorAll('.payment-option').forEach(opt => opt.classList.remove('selected'));
-        element.classList.add('selected');
-        selectedPayment = method;
-
-        // Show/hide GCash payment section
-        const gcashSection = document.getElementById('gcashPaymentSection');
-        if (method === 'gcash') {
-            gcashSection.style.display = 'block';
-            updateGcashAmount();
-        } else {
-            gcashSection.style.display = 'none';
-        }
     }
 
     function updateTotal() {
@@ -809,6 +837,14 @@
     (function() {
         const gcashRefInput = document.getElementById('gcash_reference');
         if (gcashRefInput) {
+            // maxlength alone still lets letters/symbols through — strip
+            // anything non-numeric as the customer types, same pattern as
+            // the phone number field, so a mistyped letter never even shows
+            // up instead of only being caught at submit.
+            gcashRefInput.addEventListener('input', function() {
+                const digitsOnly = this.value.replace(/\D/g, '').slice(0, 13);
+                if (digitsOnly !== this.value) this.value = digitsOnly;
+            });
             const check = () => setGcashFieldState(gcashRefInput, /^\d{13}$/);
             gcashRefInput.addEventListener('input', check);
             gcashRefInput.addEventListener('blur', check);
@@ -862,16 +898,23 @@
 
     function showConfirmModal() {
         const deliveryTypeInput = document.querySelector('input[name="delivery_type"]:checked');
-        const paymentMethod = document.querySelector('input[name="payment_method"]');
+        const paymentMethod = document.getElementById('payment_method_input').value;
         const addressInput = document.querySelector('input[name="address_id"]:checked');
 
         if (!deliveryTypeInput) { showCheckoutNotice('Please select a delivery method'); return; }
-        if (!paymentMethod || paymentMethod.value !== 'gcash') { showCheckoutNotice('Payment method is not properly set to GCash. Please reload the page.'); return; }
         if (!addressInput) { showCheckoutNotice('Please select a delivery address'); return; }
 
-        // GCash validation — real GCash reference numbers are exactly 13
-        // digits. Reject anything else before it ever hits the server.
-        if (paymentMethod.value === 'gcash') {
+        const deliveryType = deliveryTypeInput.value;
+
+        if (deliveryType === 'pickup') {
+            // Pick-up is always paid in cash at the store — no GCash proof needed.
+            if (paymentMethod !== 'cash') { showCheckoutNotice('Payment method is not properly set to Cash. Please reload the page.'); return; }
+            document.getElementById('confirm-gcash-details').style.display = 'none';
+        } else {
+            if (paymentMethod !== 'gcash') { showCheckoutNotice('Payment method is not properly set to GCash. Please reload the page.'); return; }
+
+            // GCash validation — real GCash reference numbers are exactly 13
+            // digits. Reject anything else before it ever hits the server.
             if (document.getElementById('gcashConfirmationForm').style.display === 'none') {
                 showGcashConfirmationForm();
                 showCheckoutNotice('Please confirm your GCash payment first, then enter your reference number and receipt below.');
@@ -886,8 +929,6 @@
             // Show GCash details in confirm modal
             document.getElementById('confirm-gcash-details').style.display = 'block';
             document.getElementById('confirm-gcash-ref').textContent = gcashRef;
-        } else {
-            document.getElementById('confirm-gcash-details').style.display = 'none';
         }
 
         const deliveryLabels = {
@@ -895,11 +936,12 @@
             'pasabay_jeep': 'Pasabay via Jeep (₱' + deliveryFee.toFixed(2) + ')'
         };
         const paymentLabels = {
-            'gcash': 'GCash'
+            'gcash': 'GCash',
+            'cash': 'Cash (upon pick-up)'
         };
 
-        document.getElementById('confirm-delivery').textContent = deliveryLabels[deliveryTypeInput.value] || deliveryTypeInput.value;
-        document.getElementById('confirm-payment').textContent = paymentLabels[paymentMethod.value] || paymentMethod.value;
+        document.getElementById('confirm-delivery').textContent = deliveryLabels[deliveryType] || deliveryType;
+        document.getElementById('confirm-payment').textContent = paymentLabels[paymentMethod] || paymentMethod;
         document.getElementById('confirm-total').textContent = '₱' + (subtotal + deliveryFee).toFixed(2);
 
         document.getElementById('confirmModal').style.display = 'flex';

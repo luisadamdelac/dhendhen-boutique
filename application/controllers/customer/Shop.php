@@ -120,13 +120,46 @@ class Shop extends CI_Controller {
     private function _combinations_for_product($product_id) {
         require_once APPPATH . 'services/StockService.php';
 
-        $combos = $this->db->select('v.*, v1.variation_type as type_1, v1.variation_value as value_1, v1.image_path as value_1_image, v2.variation_type as type_2, v2.variation_value as value_2, v2.image_path as value_2_image', FALSE)
+        $combos = $this->db->select('v.*')
             ->from(PRODUCT_VARIANTS_TABLE . ' v')
-            ->join(PRODUCT_VARIATION_TABLE . ' v1', 'v1.variation_id = v.variation_id_1', 'left')
-            ->join(PRODUCT_VARIATION_TABLE . ' v2', 'v2.variation_id = v.variation_id_2', 'left')
             ->where('v.product_id', $product_id)
             ->where('v.status', 'active')
             ->get()->result_array();
+
+        if (empty($combos)) {
+            return [];
+        }
+
+        // Every axis value (type/value/image) referenced by any combo above —
+        // the first two axes via variation_id_1/variation_id_2, any 3rd+ via
+        // the extra-values table — looked up once instead of per-row.
+        $variantIds = array_column($combos, 'variant_id');
+        $variationIds = array_unique(array_filter(array_merge(
+            array_column($combos, 'variation_id_1'),
+            array_column($combos, 'variation_id_2')
+        )));
+        $extraByVariant = [];
+        $extraRows = $this->db->select('variant_id, variation_id')
+            ->from(PRODUCT_VARIANT_EXTRA_VALUES_TABLE)
+            ->where_in('variant_id', $variantIds)
+            ->order_by('variant_id, axis_order', 'ASC')
+            ->get()->result_array();
+        foreach ($extraRows as $er) {
+            $extraByVariant[(int) $er['variant_id']][] = (int) $er['variation_id'];
+            $variationIds[] = (int) $er['variation_id'];
+        }
+        $variationIds = array_unique($variationIds);
+
+        $valueById = [];
+        if (!empty($variationIds)) {
+            $valueRows = $this->db->select('variation_id, variation_type, variation_value, image_path')
+                ->from(PRODUCT_VARIATION_TABLE)
+                ->where_in('variation_id', $variationIds)
+                ->get()->result_array();
+            foreach ($valueRows as $vr) {
+                $valueById[(int) $vr['variation_id']] = $vr;
+            }
+        }
 
         foreach ($combos as &$c) {
             $variant_id = (int) $c['variant_id'];
@@ -134,22 +167,40 @@ class Shop extends CI_Controller {
             $c['price_adjustment'] = (float) $c['price_adjustment'];
             $c['total_stock'] = array_sum(StockService::getVariantBranchStock($variant_id));
 
+            $axisIds = [(int) $c['variation_id_1']];
+            if (!empty($c['variation_id_2'])) {
+                $axisIds[] = (int) $c['variation_id_2'];
+            }
+            foreach ($extraByVariant[$variant_id] ?? [] as $vid) {
+                $axisIds[] = $vid;
+            }
+
+            $c['axes'] = [];
+            $axisImage = NULL;
+            foreach ($axisIds as $vid) {
+                $v = $valueById[$vid] ?? NULL;
+                if (!$v) {
+                    continue;
+                }
+                $c['axes'][] = ['type' => $v['variation_type'], 'value' => $v['variation_value']];
+                // No dedicated variant photo — fall back to whichever axis
+                // value has its own image (e.g. "Volume: 50ml" has a bottle
+                // shot even though this combination is "50ml / Original Pink").
+                if ($axisImage === NULL && !empty($v['image_path'])) {
+                    $axisImage = $v['image_path'];
+                }
+            }
+
             $image = $this->db->select('image_path')->from(PRODUCT_VARIANT_IMAGES_TABLE)
                 ->where('variant_id', $variant_id)->where('is_primary', 1)->get()->row_array();
 
             if ($image) {
                 $c['image_url'] = base_url($image['image_path']);
-            } elseif (!empty($c['value_1_image'])) {
-                // No dedicated variant photo — fall back to whichever axis
-                // value has its own image (e.g. "Volume: 50ml" has a bottle
-                // shot even though this combination is "50ml / Original Pink").
-                $c['image_url'] = base_url($c['value_1_image']);
-            } elseif (!empty($c['value_2_image'])) {
-                $c['image_url'] = base_url($c['value_2_image']);
+            } elseif ($axisImage) {
+                $c['image_url'] = base_url($axisImage);
             } else {
                 $c['image_url'] = NULL;
             }
-            unset($c['value_1_image'], $c['value_2_image']);
         }
         unset($c);
 

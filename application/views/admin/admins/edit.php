@@ -54,28 +54,22 @@
                 </div>
 
                 <div class="row">
-                    <div class="col col-3">
+                    <div class="col col-4">
                         <div class="form-group">
                             <label>Street</label>
                             <input type="text" class="form-control" name="street" value="<?php echo htmlspecialchars($admin['street'] ?? ''); ?>">
                         </div>
                     </div>
-                    <div class="col col-3">
+                    <div class="col col-4">
                         <div class="form-group">
                             <label>Barangay</label>
                             <input type="text" class="form-control" name="barangay" value="<?php echo htmlspecialchars($admin['barangay'] ?? ''); ?>">
                         </div>
                     </div>
-                    <div class="col col-3">
+                    <div class="col col-4">
                         <div class="form-group">
-                            <label>City <span style="color:var(--danger);">*</span></label>
+                            <label>City / Municipality <span style="color:var(--danger);">*</span></label>
                             <input type="text" class="form-control" name="city" value="<?php echo htmlspecialchars($admin['city'] ?? ''); ?>" required>
-                        </div>
-                    </div>
-                    <div class="col col-3">
-                        <div class="form-group">
-                            <label>Municipality</label>
-                            <input type="text" class="form-control" name="municipality" value="<?php echo htmlspecialchars($admin['municipality'] ?? ''); ?>">
                         </div>
                     </div>
                 </div>

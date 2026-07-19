@@ -102,8 +102,8 @@ class Profile extends Authenticated_Controller {
             $this->session->set_flashdata('error', 'Current password is incorrect');
             redirect('reseller/profile');
         }
-        if (strlen((string) $new_password) < 6) {
-            $this->session->set_flashdata('error', 'New password must be at least 6 characters');
+        if (!preg_match('/^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[!@#$%^&*]).{12,}$/', (string) $new_password)) {
+            $this->session->set_flashdata('error', 'Password must be at least 12 characters and include an uppercase letter, lowercase letter, number, and special character (!@#$%^&*).');
             redirect('reseller/profile');
         }
         if ($new_password !== $confirm_password) {

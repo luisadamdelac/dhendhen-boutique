@@ -42,6 +42,27 @@
 }
 .toggle-password:hover { color: var(--ds-pink, #ff69b4); }
 
+.password-reqs {
+    background: #fff5f8;
+    border: 1px solid #ffccdc;
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-top: 10px;
+}
+.password-reqs .req {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11.5px;
+    color: #8b8b8b;
+    margin-bottom: 5px;
+    transition: color 0.2s;
+}
+.password-reqs .req:last-child { margin-bottom: 0; }
+.password-reqs .req i { font-size: 8px; }
+.password-reqs .req.ok { color: #28a745; }
+.password-reqs .req.ok i::before { content: "\f00c"; font-size: 10px; }
+
 input[type="password"] {
     -webkit-appearance: none;
     -moz-appearance: none;
@@ -196,10 +217,17 @@ input[type="password"]::-webkit-clear-button {
                                 <div class="form-group">
                                     <label for="new_password"><i class="fas fa-lock"></i> New Password</label>
                                     <div class="has-toggle">
-                                        <input type="password" id="new_password" name="new_password" class="form-control" required minlength="6">
+                                        <input type="password" id="new_password" name="new_password" class="form-control" required minlength="12">
                                         <button type="button" class="toggle-password" onclick="togglePwd('new_password', this)" tabindex="-1">
                                             <i class="fas fa-eye"></i>
                                         </button>
+                                    </div>
+                                    <div class="password-reqs" id="pwd-reqs">
+                                        <div class="req" id="r-len"><i class="fas fa-circle"></i> At least 12 characters</div>
+                                        <div class="req" id="r-upper"><i class="fas fa-circle"></i> Uppercase letter (A&ndash;Z)</div>
+                                        <div class="req" id="r-lower"><i class="fas fa-circle"></i> Lowercase letter (a&ndash;z)</div>
+                                        <div class="req" id="r-num"><i class="fas fa-circle"></i> Number (0&ndash;9)</div>
+                                        <div class="req" id="r-special"><i class="fas fa-circle"></i> Special character (!@#$%^&amp;*)</div>
                                     </div>
                                 </div>
                             </div>
@@ -207,7 +235,7 @@ input[type="password"]::-webkit-clear-button {
                                 <div class="form-group">
                                     <label for="confirm_password"><i class="fas fa-lock"></i> Confirm New Password</label>
                                     <div class="has-toggle">
-                                        <input type="password" id="confirm_password" name="confirm_password" class="form-control" required minlength="6">
+                                        <input type="password" id="confirm_password" name="confirm_password" class="form-control" required minlength="12">
                                         <button type="button" class="toggle-password" onclick="togglePwd('confirm_password', this)" tabindex="-1">
                                             <i class="fas fa-eye"></i>
                                         </button>
@@ -275,6 +303,28 @@ function previewAndUpload(input) {
     }
 }
 
+// Live password requirements checklist, same policy as registration.
+(function() {
+    var pwd = document.getElementById('new_password');
+    if (!pwd) return;
+
+    var checks = {
+        'r-len':     function(v) { return v.length >= 12; },
+        'r-upper':   function(v) { return /[A-Z]/.test(v); },
+        'r-lower':   function(v) { return /[a-z]/.test(v); },
+        'r-num':     function(v) { return /[0-9]/.test(v); },
+        'r-special': function(v) { return /[!@#$%^&*]/.test(v); }
+    };
+
+    pwd.addEventListener('input', function() {
+        var val = pwd.value;
+        Object.keys(checks).forEach(function(id) {
+            var el = document.getElementById(id);
+            if (el) el.classList.toggle('ok', checks[id](val));
+        });
+    });
+})();
+
 document.getElementById('changePasswordForm').addEventListener('submit', function (e) {
     e.preventDefault();
 
@@ -284,6 +334,11 @@ document.getElementById('changePasswordForm').addEventListener('submit', functio
 
     if (newPassword !== confirmPassword) {
         alertBox.innerHTML = '<div class="alert alert-danger"><i class="fas fa-exclamation-circle"></i> New password and confirmation do not match</div>';
+        return;
+    }
+
+    if (!/^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[!@#$%^&*]).{12,}$/.test(newPassword)) {
+        alertBox.innerHTML = '<div class="alert alert-danger"><i class="fas fa-exclamation-circle"></i> Password must be at least 12 characters and include an uppercase letter, lowercase letter, number, and special character (!@#$%^&*).</div>';
         return;
     }
 

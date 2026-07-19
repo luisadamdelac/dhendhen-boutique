@@ -115,6 +115,9 @@
                         <a href="<?php echo BASE_URL; ?>reseller/withdrawals" class="nav-link <?php echo (isset($page_title) && strpos($page_title, 'Withdrawal') !== false) ? 'active' : ''; ?>">
                             <i class="fas fa-money-bill-wave"></i>
                             <span>Withdrawals</span>
+                            <?php if (!empty($pending_withdrawals)): ?>
+                                <span class="badge"><?php echo $pending_withdrawals; ?></span>
+                            <?php endif; ?>
                         </a>
                     </li>
                     <li class="nav-item">

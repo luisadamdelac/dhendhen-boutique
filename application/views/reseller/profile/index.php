@@ -37,8 +37,8 @@
                     <form method="POST" action="<?php echo BASE_URL; ?>reseller/profile/update_photo" enctype="multipart/form-data" id="photoForm">
                         <input type="file" id="photoInput" name="photo" accept="image/*" style="display: none;" onchange="previewAndUpload(this)">
                         <div style="margin-top: 0.75rem; display: flex; gap: 10px;">
-                            <button type="button" class="btn btn-sm btn-outline" onclick="document.getElementById('photoInput').click();">
-                                <i class="fas fa-camera"></i> Change Photo
+                            <button type="button" class="btn btn-primary" onclick="document.getElementById('photoInput').click();">
+                                <i class="fas fa-upload"></i> Upload Photo
                             </button>
                             <?php if (!empty($avatarImage)): ?>
                             <a href="<?php echo BASE_URL; ?>reseller/profile/delete_photo" class="btn btn-sm btn-outline"
@@ -153,7 +153,7 @@
                 <h3><i class="fas fa-key"></i> Change Password</h3>
             </div>
             <div class="card-body">
-                <form method="POST" action="<?php echo BASE_URL; ?>reseller/profile/change_password">
+                <form method="POST" action="<?php echo BASE_URL; ?>reseller/profile/change_password" id="resellerChangePasswordForm">
                     <div class="form-group">
                         <label><i class="fas fa-lock"></i> Current Password</label>
                         <input type="password" name="current_password" class="form-control" 
@@ -162,18 +162,24 @@
 
                     <div class="form-group">
                         <label><i class="fas fa-lock"></i> New Password</label>
-                        <input type="password" name="new_password" class="form-control" 
-                               placeholder="Enter new password" required>
-                        <small style="color: var(--gray-600);">Minimum 8 characters</small>
+                        <input type="password" id="new_password" name="new_password" class="form-control"
+                               placeholder="Enter new password" required minlength="12">
+                        <div class="password-reqs" id="pwd-reqs">
+                            <div class="req" id="r-len"><i class="fas fa-circle"></i> At least 12 characters</div>
+                            <div class="req" id="r-upper"><i class="fas fa-circle"></i> Uppercase letter (A&ndash;Z)</div>
+                            <div class="req" id="r-lower"><i class="fas fa-circle"></i> Lowercase letter (a&ndash;z)</div>
+                            <div class="req" id="r-num"><i class="fas fa-circle"></i> Number (0&ndash;9)</div>
+                            <div class="req" id="r-special"><i class="fas fa-circle"></i> Special character (!@#$%^&amp;*)</div>
+                        </div>
                     </div>
 
                     <div class="form-group">
                         <label><i class="fas fa-lock"></i> Confirm New Password</label>
-                        <input type="password" name="confirm_password" class="form-control" 
-                               placeholder="Confirm new password" required>
+                        <input type="password" id="confirm_password" name="confirm_password" class="form-control"
+                               placeholder="Confirm new password" required minlength="12">
                     </div>
 
-                    <button type="submit" class="btn btn-primary w-100">
+                    <button type="submit" class="btn btn-primary w-100" id="resellerChangePasswordBtn">
                         <i class="fas fa-check"></i> Update Password
                     </button>
                 </form>
@@ -204,6 +210,27 @@
 </div>
 
 <style>
+.password-reqs {
+    background: #fff5f8;
+    border: 1px solid #ffccdc;
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-top: 10px;
+}
+.password-reqs .req {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11.5px;
+    color: #8b8b8b;
+    margin-bottom: 5px;
+    transition: color 0.2s;
+}
+.password-reqs .req:last-child { margin-bottom: 0; }
+.password-reqs .req i { font-size: 8px; }
+.password-reqs .req.ok { color: #28a745; }
+.password-reqs .req.ok i::before { content: "\f00c"; font-size: 10px; }
+
 .profile-container {
     display: grid;
     grid-template-columns: 1fr 350px;
@@ -415,4 +442,43 @@ function previewAndUpload(input) {
         } });
     }
 }
+
+// Live password requirements checklist, same policy as registration.
+(function() {
+    var pwd = document.getElementById('new_password');
+    if (!pwd) return;
+
+    var checks = {
+        'r-len':     function(v) { return v.length >= 12; },
+        'r-upper':   function(v) { return /[A-Z]/.test(v); },
+        'r-lower':   function(v) { return /[a-z]/.test(v); },
+        'r-num':     function(v) { return /[0-9]/.test(v); },
+        'r-special': function(v) { return /[!@#$%^&*]/.test(v); }
+    };
+
+    pwd.addEventListener('input', function() {
+        var val = pwd.value;
+        Object.keys(checks).forEach(function(id) {
+            var el = document.getElementById(id);
+            if (el) el.classList.toggle('ok', checks[id](val));
+        });
+    });
+})();
+
+document.getElementById('resellerChangePasswordForm').addEventListener('submit', function(e) {
+    const newPassword = document.getElementById('new_password').value;
+    const confirmPassword = document.getElementById('confirm_password').value;
+
+    if (!/^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[!@#$%^&*]).{12,}$/.test(newPassword)) {
+        e.preventDefault();
+        alert('Password must be at least 12 characters and include an uppercase letter, lowercase letter, number, and special character (!@#$%^&*).');
+        return false;
+    }
+
+    if (newPassword !== confirmPassword) {
+        e.preventDefault();
+        alert('New password and confirmation do not match');
+        return false;
+    }
+});
 </script>

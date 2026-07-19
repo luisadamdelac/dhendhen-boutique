@@ -158,7 +158,13 @@
                     <!-- Orders -->
                     <?php
                         $ordersActive = isset($page_title) && (strpos($page_title, 'Order') !== false || strpos($page_title, 'Refund') !== false || strpos($page_title, 'Review') !== false);
-                        $totalOrderBadge = (isset($pending_orders_notifications) ? (int)$pending_orders_notifications : 0);
+                        // This nav entry covers Orders, Refunds, and Reviews
+                        // (see order_tabs.php, which gives each its own
+                        // badge) — the sidebar shows their combined total
+                        // since there's only one link, not one per sub-tab.
+                        $totalOrderBadge = (isset($pending_orders_notifications) ? (int)$pending_orders_notifications : 0)
+                            + (isset($pending_refunds) ? (int)$pending_refunds : 0)
+                            + (isset($pending_reviews) ? (int)$pending_reviews : 0);
                     ?>
                     <li class="nav-item">
                         <a href="<?php echo site_url('admin/order'); ?>" class="nav-link <?php echo $ordersActive ? 'active' : ''; ?>">

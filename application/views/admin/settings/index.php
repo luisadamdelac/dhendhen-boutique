@@ -66,6 +66,7 @@
                                     <label for="minimum_spend">Minimum Spend to Apply as Reseller (₱)</label>
                                     <input type="number" step="0.01" class="form-control" id="minimum_spend" name="minimum_spend"
                                            value="<?php echo htmlspecialchars($settings['minimum_spend'] ?? '3000'); ?>" required>
+                                    <small class="text-muted">Must be reached in a single delivered order — purchases across multiple orders don't add up.</small>
                                 </div>
                             </div>
                             <div class="col col-6">

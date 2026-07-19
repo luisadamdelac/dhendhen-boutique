@@ -1,5 +1,9 @@
 <?php
 class Withdrawals extends Authenticated_Controller {
+    const OTP_MAX_ATTEMPTS = 3;
+    const OTP_LOCKOUT_MINUTES = 15;
+    const OTP_LOCKOUT_REASON = 'Too many incorrect OTP attempts';
+
     public function __construct() {
         parent::__construct();
         $this->require_role(ROLE_RESELLER);
@@ -45,6 +49,20 @@ class Withdrawals extends Authenticated_Controller {
         }
 
         $this->_expire_stale_otp_requests($this->user_id);
+
+        $lockout = $this->db->where('reseller_id', $this->user_id)
+            ->where('status', 'cancelled')
+            ->where('rejection_reason', self::OTP_LOCKOUT_REASON)
+            ->where('updated_at >', date('Y-m-d H:i:s', strtotime('-' . self::OTP_LOCKOUT_MINUTES . ' minutes')))
+            ->order_by('updated_at', 'DESC')
+            ->limit(1)
+            ->get(WITHDRAWAL_TABLE)->row_array();
+
+        if ($lockout) {
+            $minutes_left = max(1, (int) ceil((strtotime($lockout['updated_at']) + self::OTP_LOCKOUT_MINUTES * 60 - time()) / 60));
+            echo json_encode(['success' => FALSE, 'message' => "Too many incorrect OTP attempts on your last request. Please try again in {$minutes_left} minute(s)."]);
+            return;
+        }
 
         $this->form_validation->set_rules('amount', 'Amount', 'required|numeric|greater_than[0]');
         $this->form_validation->set_rules('gcash_number', 'GCash Number', 'required|trim|max_length[20]');
@@ -172,7 +190,27 @@ class Withdrawals extends Authenticated_Controller {
         }
 
         if (!hash_equals((string) $withdrawal['otp_code'], (string) $otp)) {
-            echo json_encode(['success' => FALSE, 'message' => 'Invalid OTP']);
+            $attempts = (int) $withdrawal['otp_attempts'] + 1;
+
+            if ($attempts >= self::OTP_MAX_ATTEMPTS) {
+                // No amount was ever held for an unverified request, so
+                // cancelling here (same as the expiry case above) costs the
+                // reseller nothing — it just closes off further guesses.
+                // request_withdrawal() checks for this exact reason/window
+                // to enforce the cooldown before a new OTP can be issued.
+                $this->db->where('withdrawal_id', $withdrawal_id)->update(WITHDRAWAL_TABLE, [
+                    'status' => 'cancelled',
+                    'otp_attempts' => $attempts,
+                    'rejection_reason' => self::OTP_LOCKOUT_REASON,
+                    'updated_at' => date('Y-m-d H:i:s'),
+                ]);
+                echo json_encode(['success' => FALSE, 'message' => 'Too many incorrect OTP attempts. This request was cancelled — please wait ' . self::OTP_LOCKOUT_MINUTES . ' minutes before submitting a new withdrawal request.']);
+                return;
+            }
+
+            $this->db->where('withdrawal_id', $withdrawal_id)->update(WITHDRAWAL_TABLE, ['otp_attempts' => $attempts]);
+            $remaining = self::OTP_MAX_ATTEMPTS - $attempts;
+            echo json_encode(['success' => FALSE, 'message' => "Invalid OTP. {$remaining} attempt(s) remaining."]);
             return;
         }
 
