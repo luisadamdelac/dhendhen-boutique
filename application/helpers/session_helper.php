@@ -144,6 +144,25 @@ if (!function_exists('is_logged_in')) {
     }
 
     /**
+     * Store/shop logo — the earliest-registered admin's profile_image.
+     * Used for branding surfaces (e.g. the staff sidebar) that should show
+     * the shop's logo regardless of which individual user is logged in,
+     * rather than get_user_profile_image()'s personal per-account photo.
+     */
+    function get_store_logo_image() {
+        $CI = &get_instance();
+        $CI->load->database();
+
+        $row = $CI->db->select('profile_image')
+            ->order_by('admin_id', 'ASC')
+            ->limit(1)
+            ->get(ADMIN_TABLE)
+            ->row_array();
+
+        return !empty($row['profile_image']) ? $row['profile_image'] : '';
+    }
+
+    /**
      * Default avatar path used everywhere a profile_image isn't set.
      */
     function default_avatar_url() {

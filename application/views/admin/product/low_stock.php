@@ -11,6 +11,28 @@ $current_page = 'product';
 }
 .inv-table td { padding: 10px 12px; vertical-align: middle; border-color: #f4f6fb; }
 .inv-table tbody tr:hover { background: #fafbff; }
+
+.admls-empty { text-align: center; padding: 30px 10px 22px; }
+.admls-empty-illustration { position: relative; width: 108px; height: 84px; margin: 0 auto 18px; }
+.admls-empty-box {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    font-size: 62px;
+    background: linear-gradient(135deg, #FF8CC5 0%, #FF4FA2 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    filter: drop-shadow(0 10px 14px rgba(255, 79, 162, .25));
+}
+.admls-empty-badge {
+    position: absolute; right: 2px; bottom: 2px; width: 30px; height: 30px; border-radius: 50%;
+    background: linear-gradient(135deg, #FF4FA2, #E0439A); color: #fff;
+    display: flex; align-items: center; justify-content: center; font-size: 13px;
+    box-shadow: 0 4px 10px rgba(255, 79, 162, .4); border: 3px solid #fff;
+}
+.admls-empty-spark { position: absolute; border-radius: 50%; background: #FFC1D9; }
+.admls-empty-spark.s1 { width: 6px; height: 6px; top: 2px; left: 16px; }
+.admls-empty-spark.s2 { width: 4px; height: 4px; top: 10px; right: 6px; }
+.admls-empty-spark.s3 { width: 5px; height: 5px; bottom: 16px; left: 2px; }
+.admls-empty-title { margin: 0; font-size: .92rem; font-weight: 600; color: #1a1a2e; }
+.admls-empty-sub { margin: 2px 0 0; font-size: .92rem; font-weight: 600; color: #8a94ad; }
 </style>
 
 <div class="container-fluid py-4">
@@ -78,9 +100,18 @@ $current_page = 'product';
                         <?php endforeach; ?>
                     <?php else: ?>
                         <tr>
-                            <td colspan="4" class="text-center py-5">
-                                <i class="fas fa-box-open fa-2x text-muted mb-2 d-block"></i>
-                                <span class="text-muted">No low stock products found</span>
+                            <td colspan="4">
+                                <div class="admls-empty">
+                                    <div class="admls-empty-illustration">
+                                        <i class="fas fa-box-open admls-empty-box"></i>
+                                        <span class="admls-empty-badge"><i class="fas fa-triangle-exclamation"></i></span>
+                                        <span class="admls-empty-spark s1"></span>
+                                        <span class="admls-empty-spark s2"></span>
+                                        <span class="admls-empty-spark s3"></span>
+                                    </div>
+                                    <p class="admls-empty-title">No low stock items right now.</p>
+                                    <p class="admls-empty-sub">You're all set!</p>
+                                </div>
                             </td>
                         </tr>
                     <?php endif; ?>

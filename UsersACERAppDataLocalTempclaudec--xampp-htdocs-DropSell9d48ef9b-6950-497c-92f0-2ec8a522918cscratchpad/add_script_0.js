@@ -1,640 +1,5 @@
-<?php defined('BASEPATH') OR exit('No direct script access allowed'); ?>
-<?php
-$page_title = 'Edit Product';
-$current_page = 'inventory';
-$current_image_path = !empty($primary_image['image_path']) ? $primary_image['image_path'] : '';
-?>
-<style>
-/* ── Image upload zone ─────────────────────────────────────── */
-.upload-zone {
-    border: 2px dashed #c0c0d0;
-    border-radius: 12px;
-    background: #F3F5FF;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 220px;
-    cursor: pointer;
-    transition: border-color .2s, background .2s;
-    position: relative;
-    overflow: hidden;
-}
-.upload-zone:hover, .upload-zone.dragover {
-    border-color: var(--primary-pink);
-    background: #FBCFE822;
-}
-.upload-zone .zone-icon { font-size: 2.4rem; color: #9ca3c8; margin-bottom: 10px; }
-.upload-zone .zone-label { font-size: .85rem; color: var(--gray); text-align: center; }
-.upload-zone .zone-label strong { color: var(--primary-pink); }
-.upload-zone .zone-hint { font-size: .75rem; color: #aaa; margin-top: 4px; }
-#imagePreviewWrap { display: none; }
-#imagePreview {
-    width: 100%; height: 220px;
-    object-fit: cover; border-radius: 10px;
-}
-.remove-image-btn {
-    position: absolute; top: 8px; right: 8px;
-    background: rgba(220,53,69,.9);
-    border: none; border-radius: 50%; width: 28px; height: 28px;
-    color: #fff; font-size: 12px; cursor: pointer; display: flex;
-    align-items: center; justify-content: center;
-}
 
-/* ── SKU field ─────────────────────────────────────────────── */
-.sku-field { font-family: monospace; font-weight: 600; letter-spacing: .05em; }
-.char-counter { font-size: .73rem; color: #aaa; float: right; }
-
-/* ── Tags input ────────────────────────────────────────────── */
-.tags-container {
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 6px 8px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 5px;
-    min-height: 42px;
-    cursor: text;
-    background: #fff;
-}
-.tags-container:focus-within {
-    border-color: var(--primary-pink);
-    box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.12);
-}
-.tag-chip {
-    display: inline-flex; align-items: center; gap: 4px;
-    background: var(--primary-pink-light); color: var(--primary-pink-dark);
-    border-radius: 20px; padding: 2px 10px;
-    font-size: .78rem; font-weight: 500; white-space: nowrap;
-}
-.tag-chip .remove-tag {
-    cursor: pointer; font-size: 11px; opacity: .6;
-    background: none; border: none; color: var(--primary-pink-dark); padding: 0; line-height: 1;
-}
-.tag-chip .remove-tag:hover { opacity: 1; }
-#tagInput {
-    border: none; outline: none; font-size: .875rem;
-    flex: 1; min-width: 100px; padding: 2px 4px;
-}
-
-/* ── Pricing hints ─────────────────────────────────────────── */
-.markup-badge {
-    background: rgba(40, 167, 69, 0.15); color: var(--success);
-    border-radius: 20px; padding: 2px 10px;
-    font-size: .78rem; font-weight: 600;
-    display: inline-flex; align-items: center; gap: 4px;
-}
-.markup-badge.negative { background: rgba(220, 53, 69, 0.15); color: var(--danger); }
-
-/* ── Status selector ───────────────────────────────────────── */
-.status-options { display: flex; gap: 8px; flex-wrap: wrap; }
-.status-opt input { display: none; }
-.status-opt label {
-    display: inline-flex; align-items: center; gap: 6px;
-    padding: 6px 14px; border-radius: 20px;
-    border: 1.5px solid var(--border);
-    font-size: .82rem; cursor: pointer;
-}
-.status-opt input:checked + label {
-    border-color: var(--opt-color);
-    background: var(--opt-bg);
-    color: var(--opt-color);
-    font-weight: 600;
-}
-.status-opt label i { font-size: 11px; }
-
-/* ── Smart select (searchable Brand/Category picker) ─────── */
-.smart-select { position: relative; }
-.smart-select-input-wrap { position: relative; display: flex; align-items: center; }
-.smart-select-input-wrap .smart-select-input { padding-right: 42px; }
-.smart-select-add-btn {
-    position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
-    width: 30px; height: 30px; border-radius: 50%; border: none;
-    background: var(--primary-pink-light); color: var(--primary-pink-dark);
-    display: flex; align-items: center; justify-content: center; cursor: pointer;
-    font-size: .8rem; transition: background .15s ease, color .15s ease;
-}
-.smart-select-add-btn:hover { background: var(--primary-pink); color: #fff; }
-.smart-select-dropdown {
-    position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 400;
-    background: #fff; opacity: 1; border: 1px solid var(--border); border-radius: var(--radius-md);
-    box-shadow: 0 8px 24px rgba(15, 23, 42, .18); max-height: 220px; overflow-y: auto; overflow-x: hidden; padding: 6px;
-}
-.smart-select-option {
-    padding: 8px 10px; border-radius: 8px; cursor: pointer; font-size: .88rem; color: var(--text);
-}
-.smart-select-option:hover, .smart-select-option.active { background: var(--primary-pink-light); color: var(--primary-pink-dark); }
-.smart-select-option mark { background: transparent; color: var(--primary-pink-dark); font-weight: 700; }
-.smart-select-empty { padding: 10px; font-size: .82rem; color: var(--gray); text-align: center; }
-.smart-select-create-hint {
-    display: flex; align-items: center; justify-content: space-between; gap: 8px;
-    padding: 8px 10px; margin-top: 4px; border-top: 1px dashed var(--border);
-    font-size: .82rem; color: var(--primary-pink-dark); cursor: pointer; border-radius: 8px;
-}
-.smart-select-create-hint:hover { background: var(--primary-pink-light); }
-
-/* ── Product Variations ───────────────────────────────────── */
-.variation-type-group-row td {
-    background: #fafbff; border-top: 2px solid var(--border); padding: 10px 12px; vertical-align: middle;
-}
-.variation-type-group-row .variation-type-label { font-weight: 600; font-size: .88rem; color: var(--primary-pink-dark); margin-right: 12px; }
-.variation-type-group-row .add-variation-value-btn { font-size: .78rem; padding: 4px 10px; }
-.variation-type-group-row .remove-type-btn { background: none; border: none; color: var(--danger); cursor: pointer; font-size: .82rem; float: right; }
-.variation-values-table { margin-bottom: 10px; }
-.variation-values-table th {
-    font-size: .72rem; color: var(--gray); font-weight: 600; text-transform: uppercase; letter-spacing: .03em;
-    border-top: none;
-}
-.variation-values-table th.text-center, .variation-values-table td.text-center { text-align: center; }
-.variation-values-table td { vertical-align: middle; }
-.variation-value-row input { font-size: .85rem; }
-.variant-combinations-table input, .variant-combinations-table select { font-size: .8rem; min-width: 90px; }
-.variant-combinations-table td { vertical-align: middle; }
-
-@media (max-width: 576px) {
-    /* Generated Variant Combinations: rows become stacked cards instead of
-       a horizontally-scrolled table. */
-    .variant-combinations-table thead { display: none; }
-    .variant-combinations-table, .variant-combinations-table tbody, .variant-combinations-table tr, .variant-combinations-table td {
-        display: block; width: 100%;
-    }
-    .variant-combinations-table tr {
-        border: 1px solid var(--border); border-radius: 10px; margin-bottom: 12px; padding: 10px;
-    }
-    .variant-combinations-table td {
-        display: flex; align-items: center; justify-content: space-between; gap: 10px;
-        border: none; padding: 6px 0;
-    }
-    .variant-combinations-table td[data-label]::before {
-        content: attr(data-label); font-weight: 600; font-size: .72rem; color: var(--gray); text-transform: uppercase; flex-shrink: 0;
-    }
-    .variant-combinations-table td input, .variant-combinations-table td select { max-width: 60%; }
-}
-
-/* ── Shared quick-create modal ───────────────────────────── */
-.ss-modal-overlay {
-    position: fixed; inset: 0; background: rgba(15,23,42,.45); z-index: 1000;
-    display: flex; align-items: center; justify-content: center; padding: 20px;
-    opacity: 0; pointer-events: none; transition: opacity .2s ease;
-}
-.ss-modal-overlay.open { opacity: 1; pointer-events: auto; }
-.ss-modal {
-    background: #fff; width: 100%; max-width: 420px; border-radius: 14px;
-    box-shadow: 0 8px 32px rgba(0,0,0,.18); padding: 24px;
-    transform: translateY(12px); transition: transform .2s ease;
-}
-.ss-modal-overlay.open .ss-modal { transform: translateY(0); }
-.ss-modal h4 { margin: 0 0 4px; font-size: 1.05rem; color: var(--text); display: flex; align-items: center; gap: 8px; }
-.ss-modal h4 i { color: var(--primary-pink); }
-.ss-modal p.hint { margin: 0 0 16px; font-size: .8rem; color: var(--gray); }
-.ss-modal-error {
-    color: var(--danger); font-size: .8rem; margin-top: 8px; display: none; align-items: center; gap: 5px;
-}
-.ss-modal-error.show { display: flex; }
-.ss-modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
-
-/* ── Toasts ───────────────────────────────────────────────── */
-.ss-toast-container {
-    position: fixed; bottom: 24px; right: 24px; z-index: 1100;
-    display: flex; flex-direction: column; gap: 10px;
-}
-.ss-toast {
-    background: #fff; border-left: 4px solid var(--success); box-shadow: var(--shadow-md);
-    border-radius: 10px; padding: 12px 16px; font-size: .85rem; color: var(--text);
-    display: flex; align-items: center; gap: 10px; min-width: 240px; max-width: 320px;
-    transform: translateX(20px); opacity: 0; transition: transform .25s ease, opacity .25s ease;
-}
-.ss-toast.show { transform: translateX(0); opacity: 1; }
-.ss-toast i { color: var(--success); }
-.ss-toast.error { border-left-color: var(--danger); }
-.ss-toast.error i { color: var(--danger); }
-@media (max-width: 576px) {
-    .ss-toast-container { left: 16px; right: 16px; bottom: 16px; }
-    .ss-toast { min-width: 0; max-width: none; }
-}
-
-/* ── Pricing stat tiles ───────────────────────────────────── */
-.pricing-stats { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 10px; }
-.pricing-stat {
-    flex: 1; min-width: 150px; background: #FDF2F8;
-    border: 1px solid var(--primary-pink-light); border-radius: 12px; padding: 14px 16px;
-}
-.pricing-stat .stat-lbl {
-    font-size: .72rem; color: var(--gray); font-weight: 600;
-    text-transform: uppercase; letter-spacing: .03em;
-}
-.pricing-stat .stat-val { font-size: 1.3rem; font-weight: 700; color: var(--text); margin-top: 2px; }
-.pricing-stat.negative .stat-val { color: var(--danger); }
-.pricing-stat.positive .stat-val { color: var(--success); }
-
-/* ── Inventory summary ────────────────────────────────────── */
-.stock-summary { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 6px; }
-.stock-summary .stat-tile {
-    flex: 1; min-width: 150px; background: #F3F5FF; border: 1px solid #dfe3ff;
-    border-radius: 12px; padding: 14px 16px;
-}
-.stock-summary .stat-tile .stat-lbl {
-    font-size: .72rem; color: var(--gray); font-weight: 600;
-    text-transform: uppercase; letter-spacing: .03em;
-}
-.stock-summary .stat-tile .stat-val { font-size: 1.3rem; font-weight: 700; color: var(--text); margin-top: 2px; }
-
-.branch-stock-msg {
-    font-size: .75rem; margin-top: 6px; display: none; align-items: center; gap: 6px;
-}
-.branch-stock-msg.ok   { display: flex; color: #2e7d32; }
-.branch-stock-msg.warn { display: flex; color: #8d6e00; }
-.branch-stock-msg.out  { display: flex; color: var(--danger); }
-
-/* ── Description guidelines ──────────────────────────────── */
-.desc-guidelines {
-    background: #F3F5FF; border: 1px solid #dfe3ff; border-radius: 10px;
-    padding: 12px 14px; font-size: .8rem; color: var(--text); margin-top: 10px;
-}
-.desc-guidelines ul { margin: 6px 0 0 18px; padding: 0; }
-</style>
-
-<div class="container-fluid py-4 fade-in">
-    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
-        <div>
-            <h2 class="page-title mb-1" style="margin:0;">Edit Product</h2>
-            <p class="text-muted" style="margin:0;">Update product details, pricing, and category.</p>
-        </div>
-        <div>
-            <a href="<?= site_url('admin/product/view/' . $product['product_id']); ?>" class="btn btn-outline-secondary btn-sm">
-                <i class="fas fa-arrow-left"></i> Back
-            </a>
-        </div>
-    </div>
-
-    <?php if (!empty($error)): ?>
-    <div class="alert alert-danger" role="alert">
-        <i class="fas fa-exclamation-circle"></i>
-        <div><?= $error; ?></div>
-    </div>
-    <?php endif; ?>
-
-    <form method="post" enctype="multipart/form-data" id="editProductForm" novalidate>
-        <div class="row">
-
-            <!-- LEFT COLUMN: Image + Status -->
-            <div class="col col-4">
-                <div class="card">
-                    <div class="card-body">
-                        <div class="page-section" style="margin-top:0;">
-                            <span class="section-title"><i class="fas fa-image me-2"></i>Product Image</span>
-                            <hr>
-                        </div>
-                        <input type="file" id="product_image" name="product_image" accept=".jpg,.jpeg,.png,.webp" style="display:none;">
-                        <div class="upload-zone" id="uploadZone" onclick="document.getElementById('product_image').click()">
-                            <div id="zonePlaceholder" style="<?= $current_image_path ? 'display:none;' : ''; ?>">
-                                <div class="zone-icon"><i class="fas fa-cloud-upload-alt"></i></div>
-                                <div class="zone-label"><strong>Click to upload</strong> or drag & drop</div>
-                                <div class="zone-hint">JPG, PNG, WebP — max 5 MB</div>
-                            </div>
-                            <div id="imagePreviewWrap" style="<?= $current_image_path ? 'display:block;' : ''; ?>">
-                                <img id="imagePreview" src="<?= $current_image_path ? htmlspecialchars(base_url($current_image_path)) : '#'; ?>" alt="Preview">
-                                <button type="button" class="remove-image-btn" onclick="removeImage(event)" title="Choose a different image">
-                                    <i class="fas fa-times"></i>
-                                </button>
-                            </div>
-                        </div>
-                        <div id="imageError" style="color: var(--danger); margin-top: 6px; font-size:.8rem;display:none;"></div>
-                        <small style="color: var(--gray); display:block; margin-top:6px;">Leave unchanged to keep the current image.</small>
-                    </div>
-                </div>
-
-                <div class="card" style="margin-top: 20px;">
-                    <div class="card-body">
-                        <div class="page-section" style="margin-top:0;">
-                            <span class="section-title"><i class="fas fa-toggle-on me-2"></i>Product Status</span>
-                            <hr>
-                        </div>
-                        <?php $currentStatus = set_value('status', $product['status'] ?? 'available'); ?>
-                        <div class="status-options">
-                            <div class="status-opt" style="--opt-color:#2e7d32;--opt-bg:#e8f5e9;">
-                                <input type="radio" name="status" id="st_available" value="available" <?= $currentStatus === 'available' ? 'checked' : ''; ?>>
-                                <label for="st_available"><i class="fas fa-circle-check"></i> Available</label>
-                            </div>
-                            <div class="status-opt" style="--opt-color:#6c757d;--opt-bg:#f8f9fa;">
-                                <input type="radio" name="status" id="st_not_available" value="not_available" <?= $currentStatus === 'not_available' ? 'checked' : ''; ?>>
-                                <label for="st_not_available"><i class="fas fa-ban"></i> Not Available</label>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div><!-- /col-4 -->
-
-            <!-- RIGHT COLUMN -->
-            <div class="col col-8">
-
-                <!-- Product Information -->
-                <div class="card">
-                    <div class="card-body">
-                        <div class="page-section" style="margin-top:0;">
-                            <span class="section-title"><i class="fas fa-box me-2"></i>Product Information</span>
-                            <hr>
-                        </div>
-                        <div class="row">
-                            <div class="col col-8">
-                                <div class="form-group">
-                                    <label for="product_name">Product Name *</label>
-                                    <input type="text" class="form-control" id="product_name" name="product_name"
-                                        maxlength="150" placeholder="e.g. Organic Coconut Oil 500ml"
-                                        value="<?= htmlspecialchars(set_value('product_name', $product['product_name'] ?? '')); ?>" required>
-                                    <div style="text-align:right;">
-                                        <span class="char-counter"><span id="nameCount">0</span>/150</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col col-4">
-                                <div class="form-group">
-                                    <label for="brand">Brand</label>
-                                    <div class="smart-select" id="brandSmartSelect">
-                                        <div class="smart-select-input-wrap">
-                                            <input type="text" class="form-control smart-select-input" id="brand" name="brand"
-                                                maxlength="100" placeholder="Select existing or type a brand"
-                                                value="<?= htmlspecialchars(set_value('brand', $product['brand'] ?? '')); ?>" autocomplete="off">
-                                            <button type="button" class="smart-select-add-btn" title="Add new brand" aria-label="Add new brand">
-                                                <i class="fas fa-plus"></i>
-                                            </button>
-                                        </div>
-                                        <div class="smart-select-dropdown" hidden></div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col col-6">
-                                <div class="form-group">
-                                    <label for="sku">SKU</label>
-                                    <input type="text" class="form-control sku-field" id="sku"
-                                        value="<?= htmlspecialchars($product['sku'] ?? ''); ?>" readonly>
-                                    <small style="color: var(--gray);">SKU is fixed after creation</small>
-                                </div>
-                            </div>
-                            <div class="col col-6">
-                                <div class="form-group">
-                                    <label for="category_search">Category</label>
-                                    <?php
-                                        $selected_category_id = set_value('category_id', $product['category_id'] ?? '');
-                                        $selected_category_label = '';
-                                        if (!empty($selected_category_id)) {
-                                            foreach ($categories as $cat) {
-                                                if ((string) $cat['category_id'] === (string) $selected_category_id) {
-                                                    $selected_category_label = $cat['category_name'];
-                                                    break;
-                                                }
-                                            }
-                                        }
-                                    ?>
-                                    <div class="smart-select" id="categorySmartSelect">
-                                        <div class="smart-select-input-wrap">
-                                            <input type="text" class="form-control smart-select-input" id="category_search"
-                                                maxlength="100" placeholder="Select existing or type a category"
-                                                value="<?= htmlspecialchars($selected_category_label); ?>" autocomplete="off">
-                                            <button type="button" class="smart-select-add-btn" title="Add new category" aria-label="Add new category">
-                                                <i class="fas fa-plus"></i>
-                                            </button>
-                                        </div>
-                                        <div class="smart-select-dropdown" hidden></div>
-                                    </div>
-                                    <input type="hidden" id="category_id" name="category_id" value="<?= htmlspecialchars($selected_category_id ?: '0'); ?>">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Pricing -->
-                <div class="card" style="margin-top: 20px;">
-                    <div class="card-body">
-                        <div class="page-section" style="margin-top:0;">
-                            <span class="section-title"><i class="fas fa-tag me-2"></i>Pricing</span>
-                            <hr>
-                        </div>
-                        <div class="row">
-                            <div class="col col-6">
-                                <div class="form-group">
-                                    <label for="cost_price">Cost Price *</label>
-                                    <input type="number" step="0.01" min="0.01" class="form-control" id="cost_price" name="cost_price"
-                                        placeholder="0.00" value="<?= set_value('cost_price', $product['cost_price'] ?? ''); ?>" required>
-                                    <small style="color: var(--gray);">What you paid per unit</small>
-                                </div>
-                            </div>
-                            <div class="col col-6">
-                                <div class="form-group">
-                                    <label for="price">Selling Price *</label>
-                                    <input type="number" step="0.01" min="0.01" class="form-control" id="price" name="price"
-                                        placeholder="0.00" value="<?= set_value('price', $product['price'] ?? ''); ?>" required>
-                                    <small style="color: var(--gray);">Customer selling price</small>
-                                </div>
-                            </div>
-                            <div class="col col-12">
-                                <label style="margin-bottom:6px;">Automatic Markup Calculation</label>
-                                <div class="pricing-stats">
-                                    <div class="pricing-stat" id="profitTile">
-                                        <div class="stat-lbl">Profit (per unit)</div>
-                                        <div class="stat-val" id="statProfit">₱0.00</div>
-                                    </div>
-                                    <div class="pricing-stat" id="markupPctTile">
-                                        <div class="stat-lbl">Markup Percentage</div>
-                                        <div class="stat-val" id="statMarkupPct">0%</div>
-                                    </div>
-                                    <div class="pricing-stat" id="diffTile">
-                                        <div class="stat-lbl">Price Difference</div>
-                                        <div class="stat-val" id="statDiff">₱0.00</div>
-                                    </div>
-                                </div>
-                                <div style="display:flex;align-items:center;gap:8px;margin-top:10px;">
-                                    <span style="color: var(--gray); font-size:.82rem;">Summary:</span>
-                                    <span id="markupBadge" class="markup-badge"><i class="fas fa-arrow-up"></i> ₱0.00</span>
-                                    <span id="marginBadge" style="color: var(--gray); font-size:.78rem;"></span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Inventory -->
-                <div class="card" style="margin-top: 20px;">
-                    <div class="card-body">
-                        <div class="page-section" style="margin-top:0;">
-                            <span class="section-title"><i class="fas fa-warehouse me-2"></i>Inventory</span>
-                            <hr>
-                        </div>
-                        <div class="row">
-                            <div class="col col-6">
-                                <div class="form-group">
-                                    <label for="min_stock_alert">Minimum Stock Alert *</label>
-                                    <input type="number" min="1" class="form-control" id="min_stock_alert" name="min_stock_alert"
-                                        placeholder="10" value="<?= set_value('min_stock_alert', $product['min_stock_alert'] ?? '10'); ?>" required>
-                                    <small style="color: var(--gray);">Trigger low-stock warning (applies to total across branches)</small>
-                                </div>
-                            </div>
-                            <div class="col col-6">
-                                <div class="form-group">
-                                    <label for="expiry_date">Expiry Date</label>
-                                    <input type="date" class="form-control" id="expiry_date" name="expiry_date"
-                                        value="<?= set_value('expiry_date', $product['expiry_date'] ?? ''); ?>">
-                                    <small style="color: var(--gray);">Leave blank if not applicable</small>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Product Variations -->
-                <div class="card" style="margin-top: 20px;">
-                    <div class="card-body">
-                        <div class="page-section" style="margin-top:0;">
-                            <span class="section-title"><i class="fas fa-layer-group me-2"></i>Product Variations &amp; Branch Stock</span>
-                            <hr>
-                        </div>
-                        <div style="background:#f0f4ff;border:1px solid #c7d2fe;border-radius:10px;padding:8px 14px;margin-bottom:16px;font-size:.82rem;color:var(--text);display:flex;gap:8px;align-items:center;">
-                            <i class="fas fa-circle-info" style="color:var(--primary-pink);"></i>
-                            <div>Numbers below are the <strong>current stock</strong> remaining per branch. Editing only adjusts the difference — existing stock history is preserved.</div>
-                        </div>
-
-                        <p class="text-muted" style="margin-top:0;font-size:.85rem;">Add at least one Variation Type (e.g. Shade, Finish, Size — up to 5), give it a Value, then generate the combination(s) below to enter stock per branch.</p>
-
-                        <div class="table-responsive">
-                            <table class="table table-sm variation-values-table table-stack" id="variationTypesContainer">
-                                <thead>
-                                    <tr>
-                                        <th>Value</th><th>Default Price Adj.</th><th>Default Status</th><th class="text-center">Smart Apply</th><th class="text-center">Remove</th>
-                                    </tr>
-                                </thead>
-                            </table>
-                        </div>
-
-                        <div class="smart-select" id="variationTypeSelect" style="max-width:280px;position:relative;">
-                            <button type="button" class="btn btn-outline-secondary btn-sm" id="addVariationTypeBtn">
-                                <i class="fas fa-plus"></i> Add Variation Type
-                            </button>
-                            <div class="smart-select-dropdown" id="variationTypeDropdown" hidden style="position:absolute;top:calc(100% + 4px);left:0;min-width:240px;"></div>
-                        </div>
-
-                        <div class="field-feedback invalid" id="variationTypeCapError" style="display:none;margin-top:10px;">
-                            <i class="fas fa-exclamation-circle"></i> Up to 5 variation types are supported per product (e.g. Shade × Finish × Size).
-                        </div>
-
-                        <div style="margin-top:16px;" id="generateCombinationsWrap" hidden>
-                            <button type="button" class="btn btn-primary btn-sm" id="generateCombinationsBtn"><i class="fas fa-cogs"></i> Generate Variant Combinations</button>
-                            <span class="text-muted" style="font-size:.8rem;margin-left:8px;">Regenerates automatically whenever you add, remove, or edit a value.</span>
-                        </div>
-
-                        <!-- Generated Variant Combinations -->
-                        <div class="card" id="combinationsCard" style="margin-top:20px;box-shadow:none;border:1px solid var(--border);" hidden>
-                            <div class="card-body">
-                                <div class="page-section" style="margin-top:0;">
-                                    <span class="section-title"><i class="fas fa-th-list me-2"></i>Generated Variant Combinations</span>
-                                    <hr>
-                                </div>
-
-                                <div class="d-flex flex-wrap align-items-center gap-2" style="margin-bottom:14px;">
-                                    <div class="form-check" style="margin-right:8px;">
-                                        <input type="checkbox" class="form-check-input" id="selectAllVariants">
-                                        <label class="form-check-label" for="selectAllVariants">Select All</label>
-                                    </div>
-                                    <select class="form-control form-control-sm" id="bulkActionSelect" style="max-width:200px;">
-                                        <option value="">Bulk Action…</option>
-                                        <option value="stock">Apply Stock</option>
-                                        <option value="price">Apply Price Adjustment</option>
-                                        <option value="status">Apply Status</option>
-                                        <option value="delete">Delete Selected</option>
-                                    </select>
-                                    <button type="button" class="btn btn-outline-secondary btn-sm" id="bulkApplyBtn">Apply</button>
-                                </div>
-
-                                <div class="table-responsive">
-                                    <table class="table table-sm variant-combinations-table" id="combinationsTable">
-                                        <thead><tr id="combinationsHeaderRow"></tr></thead>
-                                        <tbody id="combinationsBody"></tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div style="margin-top:20px;">
-                            <label style="margin-bottom:6px;">Automatic Stock Summary</label>
-                            <div class="stock-summary">
-                                <div class="stat-tile">
-                                    <div class="stat-lbl">Total Stock</div>
-                                    <div class="stat-val"><span id="totalStockDisplay">0</span> unit(s)</div>
-                                </div>
-                                <div class="stat-tile">
-                                    <div class="stat-lbl">Branches Stocked</div>
-                                    <div class="stat-val" id="branchesStockedDisplay">0</div>
-                                </div>
-                            </div>
-                            <small style="color: var(--gray); display:block; margin-top:8px;">Changing a branch quantity creates a stock adjustment batch for that branch (FIFO) — only the difference is applied, existing history is preserved.</small>
-                        </div>
-
-                        <input type="hidden" name="variations_json" id="variationsJson" value="">
-                        <input type="hidden" name="combinations_json" id="combinationsJson" value="">
-                    </div>
-                </div>
-
-                <!-- Product Details -->
-                <div class="card" style="margin-top: 20px;">
-                    <div class="card-body">
-                        <div class="page-section" style="margin-top:0;">
-                            <span class="section-title"><i class="fas fa-align-left me-2"></i>Product Details</span>
-                            <hr>
-                        </div>
-                        <div class="form-group">
-                            <label for="description">Product Description</label>
-                            <textarea class="form-control" id="description" name="description"
-                                rows="5" maxlength="1000"
-                                placeholder="Describe the product — ingredients, usage, benefits…"><?= htmlspecialchars(set_value('description', $product['description'] ?? '')); ?></textarea>
-                            <div style="text-align:right;">
-                                <span class="char-counter"><span id="descCount">0</span>/1000</span>
-                            </div>
-                            <div class="desc-guidelines">
-                                <strong><i class="fas fa-lightbulb"></i> Description Guidelines</strong>
-                                <ul>
-                                    <li>Mention key ingredients or materials.</li>
-                                    <li>Explain how to use the product.</li>
-                                    <li>Highlight the main benefits for the customer.</li>
-                                    <li>Keep it clear and concise — up to 1000 characters.</li>
-                                </ul>
-                            </div>
-                        </div>
-                        <div class="form-group" style="margin-top:20px;">
-                            <label for="tagInput">Tags <span style="color:var(--gray); font-weight:400;">(optional)</span></label>
-                            <div class="tags-container" id="tagsContainer" onclick="document.getElementById('tagInput').focus()">
-                                <input type="text" id="tagInput" placeholder="Type a tag and press Enter or comma…">
-                            </div>
-                            <input type="hidden" id="tagsHidden" name="tags" value="<?= htmlspecialchars(set_value('tags', $product['tags'] ?? '')); ?>">
-                            <small style="color: var(--gray);">Press Enter or comma to add a tag</small>
-                        </div>
-                    </div>
-                </div>
-
-            </div><!-- /col-8 -->
-        </div><!-- /row -->
-
-        <!-- Action bar -->
-        <div class="card mt-4">
-            <div class="card-body d-flex flex-column flex-sm-row align-items-start align-items-sm-center justify-content-between gap-3">
-                <div class="text-muted" style="font-size:.9rem;">
-                    <i class="fas fa-shield-alt text-success"></i>
-                    Changes are saved permanently on submission.
-                </div>
-                <div class="d-flex flex-wrap gap-2">
-                    <a href="<?= site_url('admin/product/view/' . $product['product_id']); ?>" class="btn btn-outline-secondary">
-                        Cancel
-                    </a>
-                    <button type="submit" class="btn btn-primary" id="saveBtn">
-                        <i class="fas fa-save"></i> Save Changes
-                    </button>
-                </div>
-            </div>
-        </div>
-    </form>
-</div>
-
-<script>
-/* ── Image upload (optional replace) ─────────────────────── */
+/* ── Image upload ────────────────────────────────────────── */
 const fileInput   = document.getElementById('product_image');
 const uploadZone  = document.getElementById('uploadZone');
 const placeholder = document.getElementById('zonePlaceholder');
@@ -676,16 +41,19 @@ function validateAndPreview(file) {
     }
     const reader = new FileReader();
     reader.onload = e => {
-        previewImg.src = e.target.result;
-        placeholder.style.display = 'none';
-        previewWrap.style.display = 'block';
+        previewImg.src     = e.target.result;
+        placeholder.style.display  = 'none';
+        previewWrap.style.display  = 'block';
     };
     reader.readAsDataURL(file);
 }
 
 function removeImage(e) {
     e.stopPropagation();
-    document.getElementById('product_image').click();
+    fileInput.value          = '';
+    previewImg.src           = '#';
+    previewWrap.style.display = 'none';
+    placeholder.style.display = 'block';
 }
 
 /* ── Markup calculator ───────────────────────────────────── */
@@ -727,12 +95,12 @@ function updateMarkup() {
 }
 costInput.addEventListener('input', updateMarkup);
 sellInput.addEventListener('input', updateMarkup);
-updateMarkup();
 
 /* ── Stock total, summed across every variation's per-branch inputs ── */
 const totalStockDisplay = document.getElementById('totalStockDisplay');
 const branchesStockedDisplay = document.getElementById('branchesStockedDisplay');
-const editMinStockInput = document.getElementById('min_stock_alert');
+const inventoryNotice = document.getElementById('inventoryNotice');
+const minStockInput = document.getElementById('min_stock_alert');
 
 function updateTotalStock() {
     // Combination rows are added/removed dynamically, so query fresh each
@@ -748,23 +116,42 @@ function updateTotalStock() {
     const stocked = Object.values(branchTotals).filter(qty => qty > 0).length;
     totalStockDisplay.textContent = total;
     branchesStockedDisplay.textContent = stocked;
+    updateInventoryNotice(total);
 }
-editMinStockInput.addEventListener('input', updateTotalStock);
+
+function updateInventoryNotice(total) {
+    const minAlert = parseInt(minStockInput.value, 10) || 0;
+    if (total > 0 && minAlert > total) {
+        inventoryNotice.className = 'inventory-notice warn';
+        inventoryNotice.innerHTML = '<i class="fas fa-triangle-exclamation" style="margin-top:2px;"></i>' +
+            '<div>Total stock (' + total + ') is below your minimum stock alert (' + minAlert + '). A low-stock notification will be generated after saving.</div>';
+    } else if (total === 0) {
+        inventoryNotice.className = 'inventory-notice warn';
+        inventoryNotice.innerHTML = '<i class="fas fa-circle-info" style="margin-top:2px;"></i>' +
+            '<div>No stock entered yet. Add a Variation Type, generate combinations, then enter a quantity for at least one branch.</div>';
+    } else {
+        inventoryNotice.className = 'inventory-notice ok';
+        inventoryNotice.innerHTML = '<i class="fas fa-check-circle" style="margin-top:2px;"></i>' +
+            '<div>Stock levels look good across your branches.</div>';
+    }
+}
+minStockInput.addEventListener('input', updateTotalStock);
 updateTotalStock();
 
 /* ── Character counters ──────────────────────────────────── */
 const nameInput = document.getElementById('product_name');
 const descInput = document.getElementById('description');
-function updateNameCount() { document.getElementById('nameCount').textContent = nameInput.value.length; }
-function updateDescCount() { document.getElementById('descCount').textContent = descInput.value.length; }
-nameInput.addEventListener('input', updateNameCount);
-descInput.addEventListener('input', updateDescCount);
-updateNameCount();
-updateDescCount();
+nameInput.addEventListener('input', () => {
+    document.getElementById('nameCount').textContent = nameInput.value.length;
+});
+descInput.addEventListener('input', () => {
+    document.getElementById('descCount').textContent = descInput.value.length;
+});
 
 /* ── Tags widget ─────────────────────────────────────────── */
 let tags = [];
 
+// Restore tags from hidden field on page reload (validation bounce-back)
 (function initTags() {
     const existing = document.getElementById('tagsHidden').value.trim();
     if (existing) {
@@ -811,6 +198,230 @@ function renderTags() {
 function escHtml(str) {
     return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
+
+/* ── Inline field validation helpers ─────────────────────── */
+function showFieldOk(id, msg) {
+    const fb = document.getElementById('fb_' + id);
+    const input = document.getElementById(id);
+    if (fb) { fb.className = 'field-feedback valid'; fb.innerHTML = '<i class="fas fa-check-circle"></i> ' + (msg || 'Looks good'); }
+    if (input) { input.classList.add('is-valid'); input.classList.remove('is-invalid'); }
+}
+function showFieldErr(id, msg) {
+    const fb = document.getElementById('fb_' + id);
+    const input = document.getElementById(id);
+    if (fb) { fb.className = 'field-feedback invalid'; fb.innerHTML = '<i class="fas fa-exclamation-circle"></i> ' + msg; }
+    if (input) { input.classList.add('is-invalid'); input.classList.remove('is-valid'); }
+}
+function clearField(id) {
+    const fb = document.getElementById('fb_' + id);
+    const input = document.getElementById(id);
+    if (fb) { fb.className = 'field-feedback'; fb.innerHTML = ''; }
+    if (input) { input.classList.remove('is-valid', 'is-invalid'); }
+}
+
+/* ── Step validators ──────────────────────────────────────── */
+function validateStep1(showErrors) {
+    let ok = true;
+
+    if (!fileInput.files.length) {
+        ok = false;
+        if (showErrors) {
+            imageError.textContent = 'Please select a product image before continuing.';
+            imageError.style.display = 'block';
+        }
+    } else if (showErrors) {
+        imageError.style.display = 'none';
+    }
+
+    const nameVal = nameInput.value.trim();
+    if (!nameVal) {
+        ok = false;
+        if (showErrors) showFieldErr('product_name', 'Product name is required.');
+    } else if (showErrors) {
+        showFieldOk('product_name');
+    }
+
+    return ok;
+}
+
+function validateStep2(showErrors) {
+    let ok = true;
+    const cost = parseFloat(costInput.value);
+    const sell = parseFloat(sellInput.value);
+
+    if (isNaN(cost) || cost <= 0) {
+        ok = false;
+        if (showErrors) showFieldErr('cost_price', 'Cost price is required and must be greater than 0.');
+    } else if (showErrors) {
+        showFieldOk('cost_price');
+    }
+
+    if (isNaN(sell) || sell <= 0) {
+        ok = false;
+        if (showErrors) showFieldErr('price', 'Selling price is required and must be greater than 0.');
+    } else if (!isNaN(cost) && cost > 0 && sell <= cost) {
+        ok = false;
+        if (showErrors) showFieldErr('price', 'Selling Price must be greater than Cost Price.');
+    } else if (showErrors) {
+        if (!isNaN(cost) && cost > 0) {
+            const markupPct = (((sell - cost) / cost) * 100).toFixed(1);
+            showFieldOk('price', 'Looks good — ' + markupPct + '% markup over cost.');
+        } else {
+            showFieldOk('price');
+        }
+    }
+
+    const fbRule = document.getElementById('fb_pricing_rule');
+    if (!isNaN(cost) && !isNaN(sell) && cost > 0 && sell > 0 && sell <= cost) {
+        ok = false;
+        if (showErrors) {
+            fbRule.className = 'field-feedback invalid';
+            fbRule.innerHTML = '<i class="fas fa-exclamation-circle"></i> Selling Price must be greater than Cost Price.';
+        }
+    } else if (showErrors) {
+        fbRule.className = 'field-feedback';
+        fbRule.innerHTML = '';
+    }
+
+    return ok;
+}
+
+function validateStep3(showErrors) {
+    let ok = true;
+    const minAlert = parseInt(minStockInput.value, 10);
+    if (isNaN(minAlert) || minAlert < 1) {
+        ok = false;
+        if (showErrors) showFieldErr('min_stock_alert', 'Minimum stock alert is required and must be at least 1.');
+    } else if (showErrors) {
+        showFieldOk('min_stock_alert');
+    }
+
+    // Stock now lives entirely in the Generated Variant Combinations table —
+    // at least one branch quantity above zero is required.
+    const variationError = document.getElementById('variationStepError');
+    const hasStock = Array.from(document.querySelectorAll('.combo-branch-stock-input'))
+        .some(inp => (parseInt(inp.value, 10) || 0) > 0);
+
+    if (!hasStock) {
+        ok = false;
+        if (showErrors && variationError) {
+            variationError.innerHTML = '<i class="fas fa-exclamation-circle"></i> Stock is required — click "Enter Branch Stock" above and enter a quantity for at least one branch.';
+            variationError.style.display = 'block';
+        }
+    } else if (showErrors && variationError) {
+        variationError.style.display = 'none';
+    }
+
+    return ok;
+}
+
+function runValidation(step, showErrors) {
+    switch (step) {
+        case 1: return validateStep1(showErrors);
+        case 2: return validateStep2(showErrors);
+        case 3: return validateStep3(showErrors);
+        default: return true;
+    }
+}
+
+/* ── Live validation while typing ────────────────────────── */
+nameInput.addEventListener('input', () => {
+    if (nameInput.value.trim()) showFieldOk('product_name'); else clearField('product_name');
+});
+costInput.addEventListener('input', () => validateStep2(true));
+sellInput.addEventListener('input', () => validateStep2(true));
+minStockInput.addEventListener('input', () => validateStep3(true));
+
+/* ── Wizard navigation — one step visible at a time ──────────────── */
+const STEP_NAMES = { 1: 'Product Information', 2: 'Pricing', 3: 'Inventory', 4: 'Product Details', 5: 'Review Product' };
+let currentStep = 1;
+
+function showStep(n) {
+    document.querySelectorAll('.wizard-step').forEach(el => el.classList.remove('active', 'wizard-fade-in'));
+    const target = document.querySelector('.wizard-step[data-step="' + n + '"]');
+    if (target) target.classList.add('active', 'wizard-fade-in');
+
+    document.querySelectorAll('.wizard-progress-step').forEach(el => {
+        const s = parseInt(el.dataset.progressStep, 10);
+        el.classList.toggle('active', s === n);
+        el.classList.toggle('completed', s < n);
+    });
+    document.querySelectorAll('.wizard-progress-line').forEach((el, i) => {
+        el.classList.toggle('completed', (i + 1) < n);
+    });
+
+    document.getElementById('wizardStepNum').textContent = n;
+    document.getElementById('wizardStepName').textContent = STEP_NAMES[n] || '';
+
+    currentStep = n;
+    if (n === 5) populateReview();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function nextStep() {
+    if (!runValidation(currentStep, true)) return;
+    if (currentStep < 5) showStep(currentStep + 1);
+}
+
+function prevStep() {
+    if (currentStep > 1) showStep(currentStep - 1);
+}
+
+/* ── Review step population ───────────────────────────────── */
+function populateReview() {
+    document.getElementById('rev_image').src = (previewImg.src && !previewImg.src.endsWith('#')) ? previewImg.src : '';
+
+    document.getElementById('rev_name').textContent = nameInput.value.trim() || '—';
+
+    const statusChecked = document.querySelector('input[name="status"]:checked');
+    document.getElementById('rev_status').textContent = statusChecked
+        ? (statusChecked.value === 'available' ? 'Available' : 'Not Available')
+        : '—';
+
+    document.getElementById('rev_sku').textContent = document.getElementById('sku').value;
+
+    const brand = document.getElementById('brand').value.trim();
+    document.getElementById('rev_brand').textContent = brand || '— None —';
+
+    const categoryIdField = document.getElementById('category_id');
+    const categoryLabel = document.getElementById('category_search').value.trim();
+    document.getElementById('rev_category').textContent = (categoryIdField.value && categoryIdField.value !== '0' && categoryLabel) ? categoryLabel : '— None —';
+
+    const cost = parseFloat(costInput.value) || 0;
+    const sell = parseFloat(sellInput.value) || 0;
+    document.getElementById('rev_cost').textContent = '₱' + cost.toFixed(2);
+    document.getElementById('rev_price').textContent = '₱' + sell.toFixed(2);
+    const markup = sell - cost;
+    const marginTxt = (cost > 0 && sell > 0) ? (((markup / sell) * 100).toFixed(1) + '% margin') : '—';
+    document.getElementById('rev_markup').textContent = '₱' + markup.toFixed(2) + ' (' + marginTxt + ')';
+
+    const revBranches = document.getElementById('rev_branches');
+    revBranches.innerHTML = '';
+    const branchTotals = {};
+    document.querySelectorAll('.combo-branch-stock-input').forEach(inp => {
+        const qty = parseInt(inp.value, 10) || 0;
+        branchTotals[inp.dataset.branchId] = (branchTotals[inp.dataset.branchId] || 0) + qty;
+    });
+    VARIATION_BRANCHES.forEach(b => {
+        const row = document.createElement('div');
+        row.className = 'review-branch-row';
+        row.innerHTML = '<span>' + escHtml(b.label) + '</span><strong>' + (branchTotals[b.id] || 0) + '</strong>';
+        revBranches.appendChild(row);
+    });
+
+    document.getElementById('rev_total_stock').textContent = totalStockDisplay.textContent + ' unit(s)';
+    document.getElementById('rev_min_stock').textContent = minStockInput.value || '—';
+    document.getElementById('rev_expiry').textContent = document.getElementById('expiry_date').value || 'No expiry';
+    document.getElementById('rev_description').textContent = descInput.value.trim() || 'No description provided.';
+}
+
+// The Summary section is always visible (single-page form, no wizard steps
+// anymore), so keep it in sync as the admin fills out the rest of the form
+// — including its initial state, since there's no "arrival at step 5" event
+// to populate it on anymore.
+document.getElementById('addProductForm').addEventListener('input', populateReview);
+document.getElementById('addProductForm').addEventListener('change', populateReview);
+populateReview();
 
 /* ── Smart select: searchable Brand/Category picker ──────── */
 const BRAND_LIST = <?= json_encode(
@@ -1120,7 +731,8 @@ const variationTypesContainer = document.getElementById('variationTypesContainer
 const addVariationTypeBtn = document.getElementById('addVariationTypeBtn');
 const variationTypeDropdown = document.getElementById('variationTypeDropdown');
 const generateCombinationsWrap = document.getElementById('generateCombinationsWrap');
-const combinationsCard = document.getElementById('combinationsCard');
+const combinationsCountLabel = document.getElementById('combinationsCountLabel');
+const combinationsModalOverlay = document.getElementById('combinationsModalOverlay');
 const combinationsBody = document.getElementById('combinationsBody');
 const combinationsHeaderRow = document.getElementById('combinationsHeaderRow');
 const variationTypeCapError = document.getElementById('variationTypeCapError');
@@ -1131,10 +743,6 @@ let combinationRowSeq = 0;
 // key ("Type:value|Type:value") -> row data, preserved across regenerations
 // so entered SKU/barcode/price/status/stock survive edits to other values.
 let combinationRows = {};
-// Suppressed while pre-populating from server data so intermediate
-// single-axis states (built one type block at a time) don't wipe the
-// already-seeded two-axis combination rows before the second type exists.
-let suppressCombinationRegen = false;
 
 /* ── Section 1 + 2: Variation Types & Values (+ optional defaults) ── */
 function addedVariationTypes() {
@@ -1279,12 +887,21 @@ function valueHasStock(type, value) {
 function onVariationStructureChanged() {
     updateGenerateButtonVisibility();
     syncVariationsJson();
-    if (!suppressCombinationRegen) generateCombinations();
+    generateCombinations();
     if (typeof initResponsiveTableStacking === 'function') initResponsiveTableStacking();
 }
 
 function updateGenerateButtonVisibility() {
-    generateCombinationsWrap.hidden = addedVariationTypes().length === 0;
+    // Always visible — even a product with zero Variation Types needs this
+    // button, since it's the only way to open the branch-stock table and
+    // enter stock for a simple (non-variant) product.
+    generateCombinationsWrap.hidden = false;
+    const btn = document.getElementById('generateCombinationsBtn');
+    if (addedVariationTypes().length === 0) {
+        btn.innerHTML = '<i class="fas fa-boxes-stacked"></i> Enter Branch Stock';
+    } else {
+        btn.innerHTML = '<i class="fas fa-cogs"></i> Generate Variant Combinations';
+    }
 }
 
 function syncVariationsJson() {
@@ -1307,7 +924,16 @@ function syncVariationsJson() {
 }
 
 /* ── Section 3: Generate Variant Combinations (Cartesian product) ── */
-document.getElementById('generateCombinationsBtn').addEventListener('click', generateCombinations);
+document.getElementById('generateCombinationsBtn').addEventListener('click', () => {
+    generateCombinations();
+    openCombinationsModal();
+});
+
+function openCombinationsModal() { combinationsModalOverlay.classList.add('open'); }
+function closeCombinationsModal() { combinationsModalOverlay.classList.remove('open'); }
+document.getElementById('combinationsModalCloseX').addEventListener('click', closeCombinationsModal);
+document.getElementById('combinationsModalCloseBtn').addEventListener('click', closeCombinationsModal);
+combinationsModalOverlay.addEventListener('mousedown', (e) => { if (e.target === combinationsModalOverlay) closeCombinationsModal(); });
 
 function currentTypeValueLists() {
     const blocks = Array.from(variationTypesContainer.querySelectorAll('.variation-type-block'));
@@ -1382,7 +1008,9 @@ function generateCombinations() {
 /* ── Section 4: Generated Variant Combinations table ────────── */
 function renderCombinationsTable() {
     const keys = Object.keys(combinationRows);
-    combinationsCard.hidden = keys.length === 0;
+    combinationsCountLabel.textContent = keys.length
+        ? keys.length + ' combination(s) generated — click to view/edit'
+        : '';
     if (!keys.length) {
         combinationsBody.innerHTML = '';
         updateTotalStock();
@@ -1437,9 +1065,9 @@ function renderCombinationsTable() {
             const doDelete = () => { delete combinationRows[key]; tr.remove(); syncCombinationsJson(); };
             if (stock > 0) {
                 customConfirm('This combination still has ' + stock + ' unit(s) of stock. Delete it anyway?', doDelete, { title: 'Delete Combination' });
-                return;
+            } else {
+                doDelete();
             }
-            doDelete();
         });
 
         // A picked-but-unsaved file survives a table rebuild (e.g. typing in
@@ -1494,6 +1122,7 @@ function syncCombinationsJson() {
     }));
     document.getElementById('combinationsJson').value = JSON.stringify(combos);
     updateTotalStock();
+    validateStep3(true);
 }
 
 /* ── Section 5 + 6: Bulk actions & per-value Smart Apply ────── */
@@ -1632,7 +1261,7 @@ function showModal(title, bodyHtml, onConfirm, confirmLabel, hideCancel) {
     if (!modal) {
         modal = document.createElement('div');
         modal.id = 'variantApplyModal';
-        modal.style.cssText = 'display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center;';
+        modal.style.cssText = 'display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:10050;align-items:center;justify-content:center;';
         modal.innerHTML =
             '<div style="background:#fff;border-radius:12px;max-width:480px;width:92%;padding:24px;box-shadow:0 10px 40px rgba(0,0,0,.2);max-height:85vh;overflow-y:auto;position:relative;">' +
                 '<button type="button" class="btn btn-outline-secondary btn-sm" id="variantApplyModalClose" style="position:absolute;top:14px;right:14px;width:30px;height:30px;padding:0;display:flex;align-items:center;justify-content:center;"><i class="fas fa-times"></i></button>' +
@@ -1687,43 +1316,48 @@ function openCombinationImageModal(tr, key, label) {
     imageInput.addEventListener('change', imageInput._modalCloseHandler, { once: true });
 }
 
-/* ── Pre-populate existing variation types/values + generated
-     combinations (with their real per-branch stock) from the server ── */
-(function initExistingVariations() {
-    const existingCombos = <?= json_encode($combinations ?? [], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
-    existingCombos.forEach(c => {
-        const key = c.axes.map(a => a.type + ':' + a.value).join('|');
-        combinationRows[key] = {
-            axes: c.axes,
-            sku: c.sku || '', barcode: c.barcode || '', price_adjustment: parseFloat(c.price_adjustment) || 0,
-            status: c.status || 'active', branch_stock: c.branch_stock || {},
-            row_key: 'existing_' + c.variant_id,
-            image_path: c.image_path || '',
-            // Already-saved real values, not freshly-generated defaults — so
-            // editing a value's default price/status later won't silently
-            // overwrite this combination's own price/status.
-            price_manually_set: true, status_manually_set: true,
-        };
-    });
+/* ── Seed a base (no-variation) row on load so a simple product can have
+   branch stock entered even before any Variation Type is added — without
+   this, Step 3 could never be satisfied for a product with no variations,
+   since stock is only ever entered through this combinations table. ── */
+generateCombinations();
+updateGenerateButtonVisibility();
 
-    const existingValues = <?= json_encode($variations ?? [], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
-    const byType = {};
-    existingValues.forEach(v => {
-        if (!byType[v.variation_type]) byType[v.variation_type] = [];
-        byType[v.variation_type].push(v);
-    });
+/* ── Warn before losing unsaved changes (accidental back/refresh/close) ── */
+let addProductFormDirty = false;
+const addProductFormEl = document.getElementById('addProductForm');
+addProductFormEl.addEventListener('input', function() { addProductFormDirty = true; });
+addProductFormEl.addEventListener('change', function() { addProductFormDirty = true; });
 
-    suppressCombinationRegen = true;
-    Object.keys(byType).forEach(type => addVariationTypeBlock(type, byType[type]));
-    suppressCombinationRegen = false;
+window.addEventListener('beforeunload', function(e) {
+    if (!addProductFormDirty) return;
+    e.preventDefault();
+    e.returnValue = '';
+});
 
-    generateCombinations();
-})();
-
-/* ── Form submit ─────────────────────────────────────────── */
-document.getElementById('editProductForm').addEventListener('submit', function() {
+/* ── Form submit — a safety net in case step 5 is ever reached with a
+   stale/invalid earlier step (e.g. browser back/forward), since Next
+   already gates on validation for normal forward navigation. ── */
+document.getElementById('addProductForm').addEventListener('submit', function(e) {
+    for (let s = 1; s <= 3; s++) {
+        if (!runValidation(s, true)) {
+            e.preventDefault();
+            showStep(s);
+            return;
+        }
+    }
+    addProductFormDirty = false; // actual save in progress — no need to warn anymore
     const btn = document.getElementById('saveBtn');
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving…';
 });
-</script>
+
+/* ── Resume at the first invalid step after a server-side validation bounce-back ── */
+<?php if (!empty($error)): ?>
+(function resumeAfterServerError() {
+    for (let s = 1; s <= 4; s++) {
+        if (!runValidation(s, false)) { showStep(s); return; }
+    }
+    showStep(5);
+})();
+<?php endif; ?>

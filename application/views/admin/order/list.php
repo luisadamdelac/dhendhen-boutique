@@ -16,13 +16,6 @@
 <link rel="stylesheet" href="<?php echo BASE_URL; ?>public/vendor/datatables/dataTables.bootstrap5.min.css">
 <link rel="stylesheet" href="<?php echo BASE_URL; ?>public/vendor/datatables/buttons.bootstrap5.min.css">
 <style>
-.dataTables_wrapper .dataTables_filter input {
-    border: 1px solid var(--border); border-radius: var(--radius-md);
-    padding: .4rem .75rem; font-size: .85rem; margin-left: .5rem;
-}
-.dataTables_wrapper .dataTables_filter input:focus { outline: none; border-color: var(--primary-pink); }
-table.dataTable thead th { position: relative; }
-table.dataTable thead th.sorting:hover { color: var(--primary-pink); cursor: pointer; }
 .dt-buttons .btn {
     background: #fff; border: 1px solid var(--border); color: var(--text);
     font-size: .82rem; padding: .45rem .9rem; margin-right: 6px;
@@ -31,103 +24,110 @@ table.dataTable thead th.sorting:hover { color: var(--primary-pink); cursor: poi
 </style>
 
 <div class="container-fluid py-4 fade-in">
-    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-4">
-        <div>
-            <h4 class="fw-bold mb-0" style="color:#1a1a2e;">Orders</h4>
-            <small class="text-muted">Review and manage customer orders.</small>
-        </div>
-    </div>
 
 <?php include __DIR__ . '/../partials/order_tabs.php'; ?>
 
-    <!-- Order Management -->
+    <!-- Hero + Stats + Orders header — merged into a single card -->
+    <div class="ds-hero-card">
 
-    <!-- Order Statistics -->
-    <div class="row g-3">
-        <div class="col-6 col-md-3">
-            <div class="stat-card">
-                <div class="stat-icon" style="background:#fff8e1;color:#f57f17;"><i class="fas fa-clock"></i></div>
-                <div>
-                    <div class="stat-label">Pending Orders</div>
-                    <div class="stat-value"><?php echo number_format($order_stats['pending_orders'] ?? 0); ?></div>
-                </div>
+        <div class="ds-hero-banner">
+            <svg class="ds-hero-wave" viewBox="0 0 1440 200" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M0,110 C240,170 480,50 720,90 C960,130 1200,50 1440,100 L1440,200 L0,200 Z" fill="rgba(255,105,180,0.16)"></path>
+                <path d="M0,140 C280,80 560,180 840,120 C1080,70 1280,140 1440,130 L1440,200 L0,200 Z" fill="rgba(233,30,99,0.22)"></path>
+            </svg>
+            <div class="ds-hero-banner-content">
+                <h4 class="fw-bold mb-0" style="color:#1a1a2e;">Orders</h4>
+                <small class="text-muted">Review and manage customer orders.</small>
             </div>
         </div>
-        <div class="col-6 col-md-3">
-            <div class="stat-card">
-                <div class="stat-icon" style="background:#e3f2fd;color:#1565c0;"><i class="fas fa-cog fa-spin"></i></div>
-                <div>
-                    <div class="stat-label">Processing</div>
-                    <div class="stat-value"><?php echo number_format($order_stats['processing_orders'] ?? 0); ?></div>
-                </div>
-            </div>
-        </div>
-        <div class="col-6 col-md-3">
-            <div class="stat-card">
-                <div class="stat-icon" style="background:#e8eaf6;color:#3949ab;"><i class="fas fa-truck"></i></div>
-                <div>
-                    <div class="stat-label">To Ship</div>
-                    <div class="stat-value"><?php echo number_format($order_stats['shipped_orders'] ?? 0); ?></div>
-                </div>
-            </div>
-        </div>
-        <div class="col-6 col-md-3">
-            <div class="stat-card">
-                <div class="stat-icon" style="background:#e8f5e9;color:#2e7d32;"><i class="fas fa-check-circle"></i></div>
-                <div>
-                    <div class="stat-label">Delivered</div>
-                    <div class="stat-value"><?php echo number_format($order_stats['delivered_orders'] ?? 0); ?></div>
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <!-- Additional Status & Payment Statistics -->
-    <div class="row g-3 mt-1">
-        <div class="col-md-4">
-            <div class="stat-card">
-                <div class="stat-icon" style="background:#e8f5e9;color:#2e7d32;"><i class="fas fa-wallet"></i></div>
-                <div>
-                    <div class="stat-label">Paid</div>
-                    <div class="stat-value"><?php echo number_format($order_stats['paid_orders'] ?? 0); ?></div>
+        <!-- Order Statistics -->
+        <div class="ds-hero-stats">
+            <div class="row g-3">
+                <div class="col-6 col-md-3">
+                    <div class="ds-stat-tile">
+                        <div class="ds-stat-tile-icon" style="background:#fff8e1;color:#f57f17;"><i class="fas fa-clock"></i></div>
+                        <div>
+                            <div class="ds-stat-tile-label">Pending Orders</div>
+                            <div class="ds-stat-tile-value"><?php echo number_format($order_stats['pending_orders'] ?? 0); ?></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="ds-stat-tile">
+                        <div class="ds-stat-tile-icon" style="background:#e3f2fd;color:#1565c0;"><i class="fas fa-cog fa-spin"></i></div>
+                        <div>
+                            <div class="ds-stat-tile-label">Processing</div>
+                            <div class="ds-stat-tile-value"><?php echo number_format($order_stats['processing_orders'] ?? 0); ?></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="ds-stat-tile">
+                        <div class="ds-stat-tile-icon" style="background:#e8eaf6;color:#3949ab;"><i class="fas fa-truck"></i></div>
+                        <div>
+                            <div class="ds-stat-tile-label">To Ship</div>
+                            <div class="ds-stat-tile-value"><?php echo number_format($order_stats['shipped_orders'] ?? 0); ?></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="ds-stat-tile">
+                        <div class="ds-stat-tile-icon" style="background:#e8f5e9;color:#2e7d32;"><i class="fas fa-check-circle"></i></div>
+                        <div>
+                            <div class="ds-stat-tile-label">Delivered</div>
+                            <div class="ds-stat-tile-value"><?php echo number_format($order_stats['delivered_orders'] ?? 0); ?></div>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
-        <div class="col-md-4">
-            <div class="stat-card">
-                <div class="stat-icon" style="background:#ffebee;color:#c62828;"><i class="fas fa-times-circle"></i></div>
-                <div>
-                    <div class="stat-label">Cancelled</div>
-                    <div class="stat-value"><?php echo number_format($order_stats['cancelled_orders'] ?? 0); ?></div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="stat-card">
-                <div class="stat-icon" style="background:#fff8e1;color:#f57f17;"><i class="fas fa-undo-alt"></i></div>
-                <div>
-                    <div class="stat-label">Refund/Return</div>
-                    <div class="stat-value"><?php echo number_format($order_stats['refund_return_orders'] ?? 0); ?></div>
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <!-- Orders Table -->
-    <div class="page-section">
-        <span class="section-title"><i class="fas fa-shopping-bag me-2"></i>All Orders</span>
-        <hr>
-        <span class="text-muted small" style="white-space:nowrap;"><?php echo number_format($total); ?> result<?php echo $total != 1 ? 's' : ''; ?></span>
-        <div class="section-actions">
-            <div id="ordersExportButtons" class="d-inline-block"></div>
+            <!-- Additional Status & Payment Statistics -->
+            <div class="row g-3 mt-1">
+                <div class="col-md-4">
+                    <div class="ds-stat-tile">
+                        <div class="ds-stat-tile-icon" style="background:#e8f5e9;color:#2e7d32;"><i class="fas fa-wallet"></i></div>
+                        <div>
+                            <div class="ds-stat-tile-label">Paid</div>
+                            <div class="ds-stat-tile-value"><?php echo number_format($order_stats['paid_orders'] ?? 0); ?></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="ds-stat-tile">
+                        <div class="ds-stat-tile-icon" style="background:#ffebee;color:#c62828;"><i class="fas fa-times-circle"></i></div>
+                        <div>
+                            <div class="ds-stat-tile-label">Cancelled</div>
+                            <div class="ds-stat-tile-value"><?php echo number_format($order_stats['cancelled_orders'] ?? 0); ?></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="ds-stat-tile">
+                        <div class="ds-stat-tile-icon" style="background:#fff8e1;color:#f57f17;"><i class="fas fa-undo-alt"></i></div>
+                        <div>
+                            <div class="ds-stat-tile-label">Refund/Return</div>
+                            <div class="ds-stat-tile-value"><?php echo number_format($order_stats['refund_return_orders'] ?? 0); ?></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-    </div>
 
-    <!-- Filter Bar -->
-    <div class="filter-bar">
-        <div class="row g-2 align-items-end">
-            <div class="col-md-3 col-sm-6">
-                <label class="form-label small text-muted mb-1">Status</label>
+        <!-- Orders header -->
+        <div class="ds-hero-section-row">
+            <span class="section-title"><i class="fas fa-shopping-bag me-2"></i>All Orders</span>
+            <div class="d-flex align-items-center gap-3">
+                <div id="ordersExportButtons" class="d-inline-block"></div>
+                <span class="text-muted small" style="white-space:nowrap;"><?php echo number_format($total); ?> result<?php echo $total != 1 ? 's' : ''; ?></span>
+            </div>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="filter-bar">
+            <div class="row g-2 align-items-end">
+                <div class="col-md-3 col-sm-6">
+                    <label class="form-label small text-muted mb-1">Status</label>
                 <select id="filterStatus" class="form-select form-select-sm">
                     <option value="">All Statuses</option>
                     <option value="pending">Pending</option>
@@ -156,17 +156,19 @@ table.dataTable thead th.sorting:hover { color: var(--primary-pink); cursor: poi
                 <input type="date" id="filterDateTo" class="form-control form-control-sm">
             </div>
             <div class="col-md-2 d-flex">
-                <button type="button" id="clearFiltersBtn" class="btn btn-sm btn-outline-secondary flex-fill">
+                <button type="button" id="clearFiltersBtn" class="btn btn-sm ds-clear-btn flex-fill">
                     <i class="fas fa-times"></i> Clear Filters
                 </button>
             </div>
         </div>
     </div>
 
-    <div class="card border-0 shadow-sm mb-2" style="border-radius:12px;overflow:hidden;">
+    </div>
+
+    <div class="card ds-pink-table-card mb-2">
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table inv-table mb-0 table-stack" id="ordersDataTable">
+                <table class="table inv-table ds-pink-table mb-0 table-stack" id="ordersDataTable">
                     <thead>
                         <tr>
                             <th>Order #</th>
@@ -274,37 +276,32 @@ table.dataTable thead th.sorting:hover { color: var(--primary-pink); cursor: poi
                                 <td>
                                     <div class="d-flex gap-1 justify-content-center">
                                         <a href="<?php echo site_url('admin/order/view/' . $orderId); ?>"
-                                           class="btn btn-sm btn-outline-info" title="View Order"
-                                           style="width:30px;height:30px;padding:0;display:flex;align-items:center;justify-content:center;">
+                                           class="ds-action-btn" title="View Order">
                                             <i class="fas fa-eye" style="font-size:11px;"></i>
                                         </a>
 
-                                        <button type="button" class="btn btn-sm btn-outline-primary"
+                                        <button type="button" class="ds-action-btn"
                                                 onclick="printInvoice(<?php echo $orderId; ?>)"
-                                                title="Print Invoice"
-                                                style="width:30px;height:30px;padding:0;display:flex;align-items:center;justify-content:center;">
+                                                title="Print Invoice">
                                             <i class="fas fa-print" style="font-size:11px;"></i>
                                         </button>
 
                                         <?php if ($orderStatus === 'delivered'): ?>
-                                            <button type="button" class="btn btn-sm btn-outline-success"
+                                            <button type="button" class="ds-action-btn"
                                                     onclick="openDetailsModal(<?php echo $orderId; ?>, 'commission')"
-                                                    title="Commission Details"
-                                                    style="width:30px;height:30px;padding:0;display:flex;align-items:center;justify-content:center;">
+                                                    title="Commission Details">
                                                 <i class="fas fa-hand-holding-dollar" style="font-size:11px;"></i>
                                             </button>
                                         <?php elseif ($orderStatus === 'return_refund'): ?>
-                                            <button type="button" class="btn btn-sm btn-outline-warning"
+                                            <button type="button" class="ds-action-btn"
                                                     onclick="openDetailsModal(<?php echo $orderId; ?>, 'refund')"
-                                                    title="Refund Details"
-                                                    style="width:30px;height:30px;padding:0;display:flex;align-items:center;justify-content:center;">
+                                                    title="Refund Details">
                                                 <i class="fas fa-undo-alt" style="font-size:11px;"></i>
                                             </button>
                                         <?php elseif ($orderStatus === 'cancelled'): ?>
-                                            <button type="button" class="btn btn-sm btn-outline-secondary"
+                                            <button type="button" class="ds-action-btn"
                                                     onclick="openDetailsModal(<?php echo $orderId; ?>, 'cancellation')"
-                                                    title="Cancellation Details"
-                                                    style="width:30px;height:30px;padding:0;display:flex;align-items:center;justify-content:center;">
+                                                    title="Cancellation Details">
                                                 <i class="fas fa-ban" style="font-size:11px;"></i>
                                             </button>
                                         <?php else:
@@ -318,11 +315,10 @@ table.dataTable thead th.sorting:hover { color: var(--primary-pink); cursor: poi
                                                 'paidAt'       => $order['paid_at'] ?? null,
                                             ];
                                         ?>
-                                            <button type="button" class="btn btn-sm btn-outline-success"
+                                            <button type="button" class="ds-action-btn"
                                                     data-payment-info="<?php echo htmlspecialchars(json_encode($paymentInfo), ENT_QUOTES); ?>"
                                                     onclick="openPaymentModal(this)"
-                                                    title="Update Payment Status"
-                                                    style="width:30px;height:30px;padding:0;display:flex;align-items:center;justify-content:center;">
+                                                    title="Update Payment Status">
                                                 <i class="fas fa-money-check-dollar" style="font-size:11px;"></i>
                                             </button>
                                         <?php endif; ?>

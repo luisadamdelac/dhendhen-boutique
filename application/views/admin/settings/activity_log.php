@@ -3,9 +3,14 @@
 
 <div class="container-fluid py-4 fade-in">
     <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-4">
-        <div>
-            <h4 class="fw-bold mb-0" style="color:#1a1a2e;">Activity Log</h4>
-            <small class="text-muted">History of actions taken by admins, staff, and resellers across the system.</small>
+        <div class="d-flex align-items-center gap-3">
+            <div style="width:46px;height:46px;border-radius:14px;background:var(--primary-pink-dark);color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;">
+                <i class="fas fa-cog"></i>
+            </div>
+            <div>
+                <h4 class="fw-bold mb-0" style="color:#1a1a2e;">Activity Log</h4>
+                <small class="text-muted">History of actions taken by admins, staff, and resellers across the system.</small>
+            </div>
         </div>
     </div>
 

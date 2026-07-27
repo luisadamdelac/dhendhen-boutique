@@ -1,7 +1,7 @@
 <?php
 /**
- * Forgot Password View — restyled to match the DropSell brand used on
- * login.php / register.php (same gradient, fonts, card, and button style).
+ * Forgot Password View — light fuchsia-pink brand theme, matching the
+ * Dhendhen Beauty logo card used on login.php.
  * File: application/views/auth/forgot_password.php
  */
 ?>
@@ -19,18 +19,18 @@
 
     <style>
         :root {
-            --ds-pink: #ff69b4;
-            --ds-pink-dark: #e0559c;
-            --ds-violet: #ee82ee;
-            --ds-purple: #9370db;
-            --ds-gradient: linear-gradient(135deg, var(--ds-pink) 0%, var(--ds-violet) 50%, var(--ds-purple) 100%);
+            --ds-pink: #FF4FA2;
+            --ds-pink-light: #FF8CC5;
+            --ds-pink-dark: #E0439A;
+            --ds-fuchsia-bg: #F8A8CE;
+            --ds-gradient: linear-gradient(135deg, var(--ds-pink-light) 0%, var(--ds-pink) 55%, var(--ds-pink-dark) 100%);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             font-family: 'Poppins', sans-serif;
-            background: linear-gradient(135deg, #fce4ec 0%, #f3e5f5 50%, #e1bee7 100%);
+            background: linear-gradient(135deg, #FFFFFF 0%, #FFE5F0 45%, #FFB8DD 75%, #FF9BCB 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -38,13 +38,15 @@
             padding: 20px;
         }
 
-        .forgot-wrapper { width: 100%; max-width: 440px; }
+        .forgot-wrapper { width: 100%; max-width: 460px; }
 
         .forgot-container {
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 24px 60px rgba(133, 49, 122, 0.18);
-            padding: 44px 40px;
+            position: relative;
+            overflow: hidden;
+            background: var(--ds-fuchsia-bg);
+            border-radius: 24px;
+            box-shadow: 0 24px 60px rgba(224, 67, 154, 0.18);
+            padding: 44px 40px 38px;
             animation: slideUp 0.5s ease-out;
         }
 
@@ -53,38 +55,66 @@
             to   { opacity: 1; transform: translateY(0); }
         }
 
-        .brand-header { text-align: center; margin-bottom: 26px; }
-        .brand-logo {
-            font-size: 44px;
-            margin-bottom: 8px;
-            display: inline-block;
-            animation: pulse 2.2s ease-in-out infinite;
+        /* Decorative soft wave glow (bottom-right) */
+        .forgot-container::after {
+            content: "";
+            position: absolute; right: -60px; bottom: -70px; width: 220px; height: 220px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255,79,162,.16) 0%, rgba(255,79,162,0) 70%);
+            z-index: 0;
+            pointer-events: none;
         }
-        @media (prefers-reduced-motion: reduce) { .brand-logo { animation: none; } }
-        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
-        .brand-name { font-size: 22px; font-weight: 700; color: #24202b; }
+        .forgot-container > * { position: relative; z-index: 1; }
 
+        .brand-header { text-align: center; margin-bottom: 22px; }
+        .brand-logo-wrap {
+            width: 130px;
+            height: 130px;
+            margin: 0 auto;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 3px solid #fff;
+            box-shadow: 0 10px 26px rgba(224, 67, 154, 0.28);
+        }
+        .brand-logo-img { display: block; width: 100%; height: 100%; object-fit: cover; }
+
+        .forgot-icon-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin: 22px 0 20px;
+        }
+        .forgot-icon-dots {
+            flex: 1;
+            max-width: 70px;
+            height: 6px;
+            background-image: radial-gradient(var(--ds-pink-light) 1.6px, transparent 1.6px);
+            background-size: 10px 6px;
+            opacity: .6;
+        }
         .forgot-icon {
-            width: 60px;
-            height: 60px;
-            margin: 0 auto 18px;
+            width: 58px;
+            height: 58px;
+            flex-shrink: 0;
             border-radius: 50%;
             background: var(--ds-gradient);
             display: flex;
             align-items: center;
             justify-content: center;
             color: #fff;
-            font-size: 24px;
-            box-shadow: 0 10px 24px rgba(255, 105, 180, 0.3);
+            font-size: 22px;
+            box-shadow: 0 10px 24px rgba(255, 79, 162, 0.35);
         }
 
         .forgot-container h2 {
-            font-size: 24px;
+            font-size: 25px;
             font-weight: 700;
             color: #24202b;
             margin-bottom: 8px;
             text-align: center;
         }
+        .forgot-container h2 .accent { color: var(--ds-pink); }
         .forgot-container p.subtitle {
             font-size: 13.5px;
             color: #6b7280;
@@ -124,7 +154,7 @@
         .form-group input {
             width: 100%;
             padding: 12px 15px 12px 40px;
-            border: 1.8px solid #e5e7eb;
+            border: 1.8px solid var(--ds-pink-light);
             border-radius: 10px;
             font-size: 14px;
             font-family: 'Poppins', sans-serif;
@@ -132,8 +162,8 @@
         }
         .form-group input:focus {
             outline: none;
-            border-color: #ff6ea5;
-            box-shadow: 0 0 0 3px rgba(255, 105, 180, 0.14);
+            border-color: var(--ds-pink);
+            box-shadow: 0 0 0 3px rgba(255, 79, 162, 0.14);
         }
 
         .btn-submit {
@@ -153,24 +183,47 @@
             justify-content: center;
             gap: 8px;
         }
-        .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(255, 105, 180, 0.3); }
+        .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(255, 79, 162, 0.35); }
         .btn-submit:active { transform: translateY(0); }
 
-        .back-link { text-align: center; margin-top: 22px; }
-        .back-link a {
-            color: var(--ds-pink-dark);
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 13.5px;
-            transition: color 0.2s;
-            display: inline-flex;
+        .or-divider {
+            display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 12px;
+            margin: 22px 0;
+            color: #7a3d5c;
+            font-size: 12px;
+            font-weight: 600;
         }
-        .back-link a:hover { color: var(--ds-violet); }
+        .or-divider::before,
+        .or-divider::after {
+            content: "";
+            flex: 1;
+            height: 1px;
+            background: rgba(122, 61, 92, 0.35);
+        }
+
+        .btn-back {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            padding: 12px 20px;
+            border-radius: 10px;
+            border: 1.8px solid var(--ds-pink);
+            background: #fff;
+            color: var(--ds-pink-dark);
+            font-weight: 600;
+            font-size: 14px;
+            text-decoration: none;
+            transition: background-color 0.2s, color 0.2s;
+        }
+        .btn-back:hover { background: var(--ds-pink); color: #fff; }
 
         @media (max-width: 480px) {
             .forgot-container { padding: 34px 24px; }
+            .brand-logo-wrap { width: 110px; height: 110px; }
         }
     </style>
 </head>
@@ -178,13 +231,18 @@
     <div class="forgot-wrapper">
         <div class="forgot-container">
             <div class="brand-header">
-                <div class="brand-logo">🛍️</div>
-                <div class="brand-name">DropSell</div>
+                <div class="brand-logo-wrap">
+                    <img class="brand-logo-img" src="<?php echo base_url('public/uploads/avatars/c6e87fc1363436e5468a05c9c2a59b26.png'); ?>" alt="Dhendhen Beauty Products and Boutique">
+                </div>
             </div>
 
-            <div class="forgot-icon"><i class="fas fa-key"></i></div>
+            <div class="forgot-icon-row">
+                <span class="forgot-icon-dots"></span>
+                <div class="forgot-icon"><i class="fas fa-key"></i></div>
+                <span class="forgot-icon-dots"></span>
+            </div>
 
-            <h2>Forgot Password?</h2>
+            <h2>Forgot <span class="accent">Password?</span></h2>
             <p class="subtitle">No worries — enter your email address and we'll send you a verification code to reset it.</p>
 
             <?php if (!empty($error)): ?>
@@ -217,9 +275,9 @@
                 </button>
             </form>
 
-            <div class="back-link">
-                <a href="<?php echo site_url('auth/login'); ?>"><i class="fas fa-arrow-left"></i> Back to Login</a>
-            </div>
+            <div class="or-divider">OR</div>
+
+            <a href="<?php echo site_url('auth/login'); ?>" class="btn-back">Sign In</a>
         </div>
     </div>
 

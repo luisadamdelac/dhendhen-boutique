@@ -145,9 +145,8 @@
     from { opacity: 0; transform: translateY(10px); }
     to   { opacity: 1; transform: translateY(0); }
 }
-.wizard-step { display: none; }
-.wizard-step.active { display: block; }
-.wizard-step.active.wizard-fade-in { animation: wizardFadeSlide .25s ease; }
+.wizard-step { display: block; margin-bottom: 20px; }
+.wizard-step.wizard-fade-in { animation: wizardFadeSlide .25s ease; }
 
 /* ── Step action bar ──────────────────────────────────────── */
 .wizard-actions {
@@ -351,42 +350,18 @@
 }
 </style>
 <div class="container-fluid py-4 fade-in">
-    <div class="wizard-header mb-2">
+    <div class="wizard-header mb-4">
         <div>
             <h2 class="page-title mb-1" style="margin:0;">Create Product</h2>
-            <p class="wizard-step-label">Step <strong id="wizardStepNum">1</strong> of 5 — <span id="wizardStepName">Product Information</span></p>
+            <p class="wizard-step-label">Fill in the product details below, then click Create Product.</p>
+            <!-- Kept for the submit-time validation JS, which scrolls to and
+                 labels the first invalid section — not shown to the admin. -->
+            <span style="display:none;">Step <strong id="wizardStepNum">1</strong> of 5 — <span id="wizardStepName">Product Information</span></span>
         </div>
         <div>
             <a href="<?= site_url('admin/inventory'); ?>" class="btn btn-outline-secondary btn-sm">
-                <i class="fas fa-arrow-left"></i> Back to Inventory
+                Back to Inventory
             </a>
-        </div>
-    </div>
-
-    <div class="wizard-progress" id="wizardProgress">
-        <div class="wizard-progress-step active" data-progress-step="1">
-            <div class="step-circle">1</div>
-            <div class="step-label">Product Info</div>
-        </div>
-        <div class="wizard-progress-line"></div>
-        <div class="wizard-progress-step" data-progress-step="2">
-            <div class="step-circle">2</div>
-            <div class="step-label">Pricing</div>
-        </div>
-        <div class="wizard-progress-line"></div>
-        <div class="wizard-progress-step" data-progress-step="3">
-            <div class="step-circle">3</div>
-            <div class="step-label">Inventory</div>
-        </div>
-        <div class="wizard-progress-line"></div>
-        <div class="wizard-progress-step" data-progress-step="4">
-            <div class="step-circle">4</div>
-            <div class="step-label">Details</div>
-        </div>
-        <div class="wizard-progress-line"></div>
-        <div class="wizard-progress-step" data-progress-step="5">
-            <div class="step-circle">5</div>
-            <div class="step-label">Review</div>
         </div>
     </div>
 
@@ -532,11 +507,6 @@
             </div><!-- /col-8 -->
         </div><!-- /row -->
 
-        <div class="wizard-actions">
-            <span></span>
-            <button type="button" class="btn btn-primary" onclick="nextStep()">Next <i class="fas fa-arrow-right"></i></button>
-        </div>
-
     </div><!-- /step 1 -->
 
     <!-- ============================================================ -->
@@ -594,11 +564,6 @@
                     </div>
                 </div>
             </div>
-        </div>
-
-        <div class="wizard-actions">
-            <button type="button" class="btn btn-outline-secondary" onclick="prevStep()"><i class="fas fa-arrow-left"></i> Back</button>
-            <button type="button" class="btn btn-primary" onclick="nextStep()">Next <i class="fas fa-arrow-right"></i></button>
         </div>
 
     </div><!-- /step 2 -->
@@ -709,11 +674,6 @@
             </div>
         </div>
 
-        <div class="wizard-actions">
-            <button type="button" class="btn btn-outline-secondary" onclick="prevStep()"><i class="fas fa-arrow-left"></i> Back</button>
-            <button type="button" class="btn btn-primary" onclick="nextStep()">Next <i class="fas fa-arrow-right"></i></button>
-        </div>
-
     </div><!-- /step 3 -->
 
     <!-- ============================================================ -->
@@ -756,11 +716,6 @@
             </div>
         </div>
 
-        <div class="wizard-actions">
-            <button type="button" class="btn btn-outline-secondary" onclick="prevStep()"><i class="fas fa-arrow-left"></i> Back</button>
-            <button type="button" class="btn btn-primary" onclick="nextStep()">Next <i class="fas fa-arrow-right"></i></button>
-        </div>
-
     </div><!-- /step 4 -->
 
     <!-- ============================================================ -->
@@ -770,10 +725,10 @@
         <div class="card">
             <div class="card-body">
                 <div class="page-section" style="margin-top:0;">
-                    <span class="section-title"><i class="fas fa-clipboard-check me-2"></i>Review Product</span>
+                    <span class="section-title"><i class="fas fa-clipboard-check me-2"></i>Product Summary</span>
                     <hr>
                 </div>
-                <p class="text-muted" style="margin-top:-6px;">Please review all details before creating this product.</p>
+                <p class="text-muted" style="margin-top:-6px;">Live summary of the details you've entered above — check everything before creating the product.</p>
                 <div class="row">
                     <div class="col col-4">
                         <div class="review-image-wrap">
@@ -814,8 +769,7 @@
             </div>
         </div>
 
-        <div class="wizard-actions">
-            <button type="button" class="btn btn-outline-secondary" onclick="prevStep()"><i class="fas fa-arrow-left"></i> Back</button>
+        <div class="wizard-actions" style="justify-content:flex-end;">
             <button type="submit" class="btn btn-primary" id="saveBtn">
                 <i class="fas fa-save"></i> Create Product
             </button>
@@ -1169,7 +1123,7 @@ function validateStep3(showErrors) {
     if (!hasStock) {
         ok = false;
         if (showErrors && variationError) {
-            variationError.innerHTML = '<i class="fas fa-exclamation-circle"></i> Stock is required — add a Variation Type, generate combinations, and enter a quantity for at least one branch.';
+            variationError.innerHTML = '<i class="fas fa-exclamation-circle"></i> Stock is required — click "Enter Branch Stock" above and enter a quantity for at least one branch.';
             variationError.style.display = 'block';
         }
     } else if (showErrors && variationError) {
@@ -1279,10 +1233,18 @@ function populateReview() {
     document.getElementById('rev_description').textContent = descInput.value.trim() || 'No description provided.';
 }
 
-// The Review section is always visible now (not just on arrival at "step
-// 5"), so keep it in sync as the admin fills out the rest of the form.
+// The Summary section is always visible (single-page form, no wizard steps
+// anymore), so keep it in sync as the admin fills out the rest of the form
+// — including its initial state, since there's no "arrival at step 5" event
+// to populate it on anymore.
 document.getElementById('addProductForm').addEventListener('input', populateReview);
 document.getElementById('addProductForm').addEventListener('change', populateReview);
+// NOTE: the initial populateReview() call itself lives at the very end of
+// this script, not here — it reads VARIATION_BRANCHES and other consts that
+// are only declared further down, and calling it this early threw an
+// uncaught "Cannot access before initialization" error that silently
+// stopped every script statement after it from ever running (including the
+// Add Variation Type button's click handler and the form's submit handler).
 
 /* ── Smart select: searchable Brand/Category picker ──────── */
 const BRAND_LIST = <?= json_encode(
@@ -1753,7 +1715,16 @@ function onVariationStructureChanged() {
 }
 
 function updateGenerateButtonVisibility() {
-    generateCombinationsWrap.hidden = addedVariationTypes().length === 0;
+    // Always visible — even a product with zero Variation Types needs this
+    // button, since it's the only way to open the branch-stock table and
+    // enter stock for a simple (non-variant) product.
+    generateCombinationsWrap.hidden = false;
+    const btn = document.getElementById('generateCombinationsBtn');
+    if (addedVariationTypes().length === 0) {
+        btn.innerHTML = '<i class="fas fa-boxes-stacked"></i> Enter Branch Stock';
+    } else {
+        btn.innerHTML = '<i class="fas fa-cogs"></i> Generate Variant Combinations';
+    }
 }
 
 function syncVariationsJson() {
@@ -1877,7 +1848,7 @@ function renderCombinationsTable() {
     combinationsBody.innerHTML = '';
     keys.forEach(key => {
         const c = combinationRows[key];
-        const label = c.axes.map(a => a.value).join(' / ');
+        const label = c.axes.length ? c.axes.map(a => a.value).join(' / ') : 'Base Product (No Variations)';
         const branchCells = VARIATION_BRANCHES.map(b =>
             '<td data-label="' + escHtml(b.label) + '"><input type="number" min="0" class="form-control form-control-sm combo-branch-stock-input" data-branch-id="' + b.id + '" value="' + (parseInt(c.branch_stock[b.id], 10) || 0) + '"></td>'
         ).join('');
@@ -2167,6 +2138,20 @@ function openCombinationImageModal(tr, key, label) {
     imageInput._modalCloseHandler = () => { document.getElementById('variantApplyModal').style.display = 'none'; };
     imageInput.addEventListener('change', imageInput._modalCloseHandler, { once: true });
 }
+
+/* ── Seed a base (no-variation) row on load so a simple product can have
+   branch stock entered even before any Variation Type is added — without
+   this, Step 3 could never be satisfied for a product with no variations,
+   since stock is only ever entered through this combinations table. ── */
+generateCombinations();
+updateGenerateButtonVisibility();
+
+/* ── Initial Summary population — must run down here, after VARIATION_BRANCHES
+   and every other const/function it reads have actually been declared
+   (calling it any earlier throws a temporal-dead-zone ReferenceError that
+   silently aborts every script statement after it, including the Add
+   Variation Type button's click handler and the form's submit handler). ── */
+populateReview();
 
 /* ── Warn before losing unsaved changes (accidental back/refresh/close) ── */
 let addProductFormDirty = false;

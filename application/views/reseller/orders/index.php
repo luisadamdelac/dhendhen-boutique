@@ -84,58 +84,119 @@ $showingTo = min($totalFiltered, $currentPage * $perPage);
     .orders-pagination .page-btn.active { background: var(--primary-pink); border-color: var(--primary-pink); color: #fff; }
     .orders-pagination .page-btn.disabled { opacity: .4; pointer-events: none; }
     .orders-pagination .page-ellipsis { display: inline-flex; align-items: center; justify-content: center; min-width: 24px; color: #9ca3af; }
+
+    .ord-empty { text-align: center; padding: 3rem 1rem 2.4rem; }
+    .ord-empty-illustration { position: relative; width: 170px; height: 150px; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; }
+    .ord-empty-blob {
+        position: absolute; inset: 0; border-radius: 50%;
+        background: radial-gradient(circle, rgba(255, 193, 217, .55) 0%, rgba(255, 247, 250, 0) 72%);
+    }
+    .ord-empty-clipboard { position: relative; font-size: 90px; color: #FFD6E8; z-index: 1; filter: drop-shadow(0 10px 14px rgba(255, 79, 162, .2)); }
+    .ord-empty-box {
+        position: absolute; bottom: 8px; left: 16px; font-size: 32px; color: #FF9EC7; z-index: 2;
+        transform: rotate(-8deg); filter: drop-shadow(0 6px 10px rgba(255, 79, 162, .25));
+    }
+    .ord-empty-badge {
+        position: absolute; right: 10px; bottom: 30px; width: 32px; height: 32px; border-radius: 50%;
+        background: linear-gradient(135deg, #FF8CC5, #FF4FA2); color: #fff;
+        display: flex; align-items: center; justify-content: center; font-size: 13px;
+        box-shadow: 0 6px 14px rgba(255, 79, 162, .4); border: 3px solid #fff; z-index: 3;
+    }
+    .ord-empty-spark { position: absolute; width: 6px; height: 6px; background: #FFC1D9; transform: rotate(45deg); }
+    .ord-empty-spark.s1 { top: 6px; left: 22px; }
+    .ord-empty-spark.s2 { width: 5px; height: 5px; top: 26px; right: 6px; }
+    .ord-empty-title { margin: 0 0 6px; font-size: 1.05rem; font-weight: 700; color: #1a1a2e; }
+    .ord-empty-sub { margin: 0 0 18px; font-size: .86rem; color: var(--gray); }
+    .ord-empty-btn { display: inline-flex; align-items: center; gap: 6px; }
 </style>
 
-<div class="filter-bar">
-    <form method="get" class="row g-2 align-items-center">
-        <div class="col-lg-3 col-md-6">
-            <div class="input-group">
-                <span class="input-group-text"><i class="fas fa-search"></i></span>
-                <input type="text" name="search" class="form-control" placeholder="Search by Order ID or Customer…" value="<?php echo htmlspecialchars($search); ?>">
+<div class="ds-hero-card mb-3">
+    <div class="ds-hero-banner">
+        <svg class="ds-hero-wave" viewBox="0 0 1440 200" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M0,110 C240,170 480,50 720,90 C960,130 1200,50 1440,100 L1440,200 L0,200 Z" fill="rgba(255,105,180,0.16)"></path>
+            <path d="M0,140 C280,80 560,180 840,120 C1080,70 1280,140 1440,130 L1440,200 L0,200 Z" fill="rgba(233,30,99,0.22)"></path>
+        </svg>
+        <div class="ds-hero-banner-content d-flex align-items-center gap-3">
+            <div style="width:46px;height:46px;border-radius:14px;background:var(--primary-pink-dark);color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;">
+                <i class="fas fa-receipt"></i>
             </div>
+            <h4 class="fw-bold mb-0" style="color:#1a1a2e;">My Orders</h4>
         </div>
-        <div class="col-lg-2 col-md-3 col-6">
-            <select name="status" class="form-select" onchange="this.form.submit()">
-                <option value="">All Status</option>
-                <?php foreach ($statusOptions as $val => $label): ?>
-                    <option value="<?php echo $val; ?>" <?php echo $statusFilter === $val ? 'selected' : ''; ?>><?php echo $label; ?></option>
-                <?php endforeach; ?>
-            </select>
-        </div>
-        <div class="col-lg-2 col-md-3 col-6">
-            <select name="payment" class="form-select" onchange="this.form.submit()">
-                <option value="">All Payment</option>
-                <?php foreach ($paymentOptions as $val => $label): ?>
-                    <option value="<?php echo $val; ?>" <?php echo $paymentFilter === $val ? 'selected' : ''; ?>><?php echo $label; ?></option>
-                <?php endforeach; ?>
-            </select>
-        </div>
-        <div class="col-lg-3 col-md-6">
-            <div class="input-group">
-                <span class="input-group-text"><i class="fas fa-calendar"></i></span>
-                <input type="date" name="start_date" class="form-control" value="<?php echo htmlspecialchars($startDate); ?>" title="Start Date">
-                <span class="input-group-text">–</span>
-                <input type="date" name="end_date" class="form-control" value="<?php echo htmlspecialchars($endDate); ?>" title="End Date">
+    </div>
+
+    <div class="ds-hero-section-row">
+        <span class="section-title"><i class="fas fa-receipt me-2 text-primary"></i>Orders</span>
+        <span class="text-muted small" style="white-space:nowrap;"><?php echo (int) $totalFiltered; ?> result<?php echo $totalFiltered == 1 ? '' : 's'; ?></span>
+    </div>
+
+    <div class="filter-bar">
+        <form method="get" class="row g-2 align-items-center">
+            <div class="col-lg-3 col-md-6">
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-search"></i></span>
+                    <input type="text" name="search" class="form-control" placeholder="Search by Order ID or Customer…" value="<?php echo htmlspecialchars($search); ?>">
+                </div>
             </div>
-        </div>
-        <div class="col-lg-2 col-md-6 d-flex gap-2">
-            <button type="submit" class="btn btn-primary flex-fill"><i class="fas fa-filter me-1"></i> Filter</button>
-            <?php if ($search || $statusFilter || $paymentFilter || $startDate || $endDate): ?>
-                <a href="<?php echo site_url('reseller/orders'); ?>" class="btn btn-outline-secondary" title="Reset filters">
-                    <i class="fas fa-rotate-left"></i>
-                </a>
-            <?php endif; ?>
-        </div>
-    </form>
+            <div class="col-lg-2 col-md-3 col-6">
+                <select name="status" class="form-select" onchange="this.form.submit()">
+                    <option value="">All Status</option>
+                    <?php foreach ($statusOptions as $val => $label): ?>
+                        <option value="<?php echo $val; ?>" <?php echo $statusFilter === $val ? 'selected' : ''; ?>><?php echo $label; ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="col-lg-2 col-md-3 col-6">
+                <select name="payment" class="form-select" onchange="this.form.submit()">
+                    <option value="">All Payment</option>
+                    <?php foreach ($paymentOptions as $val => $label): ?>
+                        <option value="<?php echo $val; ?>" <?php echo $paymentFilter === $val ? 'selected' : ''; ?>><?php echo $label; ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-calendar"></i></span>
+                    <input type="date" name="start_date" class="form-control" value="<?php echo htmlspecialchars($startDate); ?>" title="Start Date">
+                    <span class="input-group-text">–</span>
+                    <input type="date" name="end_date" class="form-control" value="<?php echo htmlspecialchars($endDate); ?>" title="End Date">
+                </div>
+            </div>
+            <div class="col-lg-2 col-md-6 d-flex gap-2">
+                <button type="submit" class="btn btn-primary flex-fill"><i class="fas fa-filter me-1"></i> Filter</button>
+                <?php if ($search || $statusFilter || $paymentFilter || $startDate || $endDate): ?>
+                    <a href="<?php echo site_url('reseller/orders'); ?>" class="btn ds-clear-btn" title="Reset filters">
+                        <i class="fas fa-rotate-left"></i>
+                    </a>
+                <?php endif; ?>
+            </div>
+        </form>
+    </div>
 </div>
 
-<div class="card">
+<div class="card ds-pink-table-card">
     <div class="card-body">
         <?php if (empty($orders)): ?>
-            <p style="text-align: center; color: var(--gray-500); padding: 2rem;">No orders found</p>
+            <?php $hasActiveFilters = $search || $statusFilter || $paymentFilter || $startDate || $endDate; ?>
+            <div class="ord-empty">
+                <div class="ord-empty-illustration">
+                    <div class="ord-empty-blob"></div>
+                    <i class="fas fa-clipboard-list ord-empty-clipboard"></i>
+                    <i class="fas fa-box ord-empty-box"></i>
+                    <span class="ord-empty-badge"><i class="fas fa-question"></i></span>
+                    <span class="ord-empty-spark s1"></span>
+                    <span class="ord-empty-spark s2"></span>
+                </div>
+                <h5 class="ord-empty-title">No orders found</h5>
+                <p class="ord-empty-sub"><?php echo $hasActiveFilters ? 'There are no orders matching your current filters.' : "You don't have any orders yet."; ?></p>
+                <?php if ($hasActiveFilters): ?>
+                    <a href="<?php echo site_url('reseller/orders'); ?>" class="btn btn-outline ord-empty-btn">
+                        <i class="fas fa-cart-shopping"></i> View All Orders
+                    </a>
+                <?php endif; ?>
+            </div>
         <?php else: ?>
             <div class="table-responsive">
-                <table class="table inv-table mb-0 table-stack">
+                <table class="table inv-table ds-pink-table mb-0 table-stack">
                     <thead>
                         <tr>
                             <th class="ps-3">Order ID</th>
@@ -215,8 +276,7 @@ $showingTo = min($totalFiltered, $currentPage * $perPage);
                                 <td class="pe-3">
                                     <div class="orders-actions">
                                         <a href="<?php echo site_url('reseller/orders/view/' . $order['order_id']); ?>"
-                                           class="btn btn-sm btn-outline-info" title="View Details"
-                                           style="width:30px;height:30px;padding:0;display:flex;align-items:center;justify-content:center;">
+                                           class="ds-action-btn" title="View Details">
                                             <i class="fas fa-eye" style="font-size:11px;"></i>
                                         </a>
                                     </div>

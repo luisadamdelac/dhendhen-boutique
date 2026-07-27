@@ -11,6 +11,7 @@
     --primary-pink: #EC4899;
     --primary-pink-light: #FCE7F3;
     --primary-pink-dark: #DB2777;
+    --primary-pink-deep: #9D174D;
     --primary-pink-soft: #FDF2F8;
 
     /* Aliases used throughout the customer views (product.php, etc.) */
@@ -23,10 +24,14 @@
     --secondary-lavender: #FCE7F3;
     --secondary-purple: #9333EA;
 
-    /* Gradients — pink → purple, used for the top bar, nav, and accent buttons */
-    --gradient-primary: linear-gradient(135deg, #EC4899 0%, #9333EA 100%);
-    --gradient-hover: linear-gradient(135deg, #DB2777 0%, #7E22CE 100%);
-    --gradient-card: linear-gradient(135deg, rgba(236, 72, 153, 0.06) 0%, rgba(147, 51, 234, 0.06) 100%);
+    /* Gradients — pink → blue (no purple/violet), used for accent buttons */
+    --gradient-primary: linear-gradient(135deg, #EC4899 0%, #2563EB 100%);
+    --gradient-hover: linear-gradient(135deg, #DB2777 0%, #1D4ED8 100%);
+    --gradient-card: linear-gradient(135deg, rgba(236, 72, 153, 0.06) 0%, rgba(37, 99, 235, 0.06) 100%);
+
+    /* Same colors as the admin sidebar's gradient (--sidebar-bg in admin-style.css),
+       just rotated to a horizontal direction for the header/footer bars */
+    --gradient-header-footer: linear-gradient(90deg, #d6006d 0%, #b8005c 100%);
 
     /* Neutral Colors */
     --white: #ffffff;
@@ -142,7 +147,7 @@ img {
    TOP BAR
    ============================================ */
 .top-bar {
-    background: var(--gradient-primary);
+    background: var(--gradient-header-footer);
     color: var(--white);
     padding: 9px 0;
     font-size: var(--font-size-xs);
@@ -216,7 +221,7 @@ img {
 .logo-badge {
     width: 40px;
     height: 40px;
-    border-radius: var(--radius-md);
+    border-radius: 50%;
     background: var(--primary-pink);
     color: var(--white);
     display: flex;
@@ -224,6 +229,13 @@ img {
     justify-content: center;
     font-size: 1.05rem;
     flex-shrink: 0;
+    overflow: hidden;
+}
+
+.logo-badge img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
 
 .search-bar {
@@ -330,7 +342,7 @@ img {
    NAVIGATION
    ============================================ */
 .nav {
-    background: var(--gradient-primary);
+    background: var(--gradient-header-footer);
     padding: 0;
 }
 
@@ -339,6 +351,7 @@ img {
     margin: 0 auto;
     padding: 0 24px;
     display: flex;
+    align-items: center;
     gap: 4px;
 }
 
@@ -356,10 +369,14 @@ img {
     border-radius: var(--radius-full);
 }
 
-.nav-link:hover,
-.nav-link.active {
+.nav-link:hover {
     color: var(--white);
-    background: rgba(255, 255, 255, 0.18);
+    background: rgba(255, 255, 255, 0.14);
+}
+
+.nav-link.active {
+    color: var(--primary-pink-deep);
+    background: var(--white);
 }
 
 .nav-link i {
@@ -612,9 +629,18 @@ img {
     gap: 32px;
 }
 
-.shop-hero-content {
+.shop-hero-content-frame {
     position: relative;
     z-index: 1;
+}
+
+.shop-hero-content {
+    display: none;
+}
+
+.shop-hero-content.active {
+    display: block;
+    animation: fadeIn 0.4s ease;
 }
 
 .shop-hero-eyebrow {
@@ -702,9 +728,9 @@ img {
 }
 
 .decor-star.s1 { top: 16%; left: 14%; font-size: 14px; animation-delay: 0.5s; }
-.decor-star.s2 { top: 80%; left: 15%; font-size: 12px; color: #9333EA; animation-delay: 1.3s; }
+.decor-star.s2 { top: 80%; left: 15%; font-size: 12px; color: #2563EB; animation-delay: 1.3s; }
 .decor-star.s3 { top: 55%; left: 37%; font-size: 12px; animation-delay: 0.9s; }
-.decor-star.s4 { top: 18%; left: 80%; font-size: 13px; color: #9333EA; animation-delay: 0.3s; }
+.decor-star.s4 { top: 18%; left: 80%; font-size: 13px; color: #2563EB; animation-delay: 0.3s; }
 .decor-star.s5 { top: 78%; left: 82%; font-size: 11px; animation-delay: 1.7s; }
 
 @keyframes heroFloat {
@@ -747,13 +773,22 @@ img {
     align-items: center;
 }
 
+.shop-hero-art-slide {
+    display: none;
+}
+
+.shop-hero-art-slide.active {
+    display: block;
+    animation: fadeIn 0.4s ease;
+}
+
 .shop-hero-art svg {
     width: 100%;
     max-width: 420px;
     height: auto;
 }
 
-/* Purely decorative — not a functional carousel, no click handlers */
+/* Clickable carousel dots — cycles the 3 hero slides via heroGoToSlide() */
 .hero-dots {
     display: flex;
     align-items: center;
@@ -767,6 +802,12 @@ img {
     height: 7px;
     border-radius: var(--radius-full);
     background: var(--gray-300);
+    cursor: pointer;
+    transition: var(--transition-base);
+}
+
+.hero-dot:hover {
+    background: var(--primary-pink-light);
 }
 
 .hero-dot.active {
@@ -781,7 +822,7 @@ img {
         text-align: center;
     }
 
-    .shop-hero-content {
+    .shop-hero-content-frame {
         order: 1;
     }
 
@@ -881,8 +922,8 @@ img {
 }
 
 .badge-category.cat-purple {
-    background: #F3E8FF;
-    color: #7E22CE;
+    background: #DBEAFE;
+    color: #1D4ED8;
 }
 
 .badge-category.cat-orange {
@@ -931,6 +972,10 @@ img {
 
 .stock-indicator.out-of-stock { color: #B91C1C; }
 .stock-indicator.out-of-stock::before { background: #DC2626; }
+.stock-indicator.in-stock { color: #15803D; }
+.stock-indicator.in-stock::before { background: #16A34A; }
+.stock-indicator.low-stock { color: #92400E; }
+.stock-indicator.low-stock::before { background: #D97706; }
 
 .product-info {
     padding: var(--spacing-lg);
@@ -1039,11 +1084,84 @@ img {
     font-size: var(--font-size-base);
     font-weight: 700;
     color: var(--dark-gray);
+    margin-bottom: 15px;
 }
 
 .filter-section > h3 i {
     color: var(--primary-pink);
     margin-right: 8px;
+}
+
+/* Shop page header row (Back to Landing) — .shop-header, .shop-title,
+   .shop-back and .landing-back-link are also defined in landing.css for the
+   landing page, but shop/index.php only loads this stylesheet, so it needs
+   its own copy here too. */
+.shop-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+}
+
+.shop-back {
+    flex: 0 0 auto;
+}
+
+.landing-back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 16px;
+    background: var(--white);
+    border: 1.5px solid var(--gray-200);
+    border-radius: var(--radius-full);
+    font-weight: 700;
+    font-size: 13.5px;
+    color: var(--gray-700);
+    transition: var(--transition-base);
+}
+
+.landing-back-link:hover {
+    border-color: var(--primary-pink);
+    color: var(--primary-pink-dark);
+    transform: translateY(-2px);
+}
+
+/* "Featured Products" heading row + View All Products button */
+.shop-title-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-bottom: 22px;
+}
+
+.shop-title {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: var(--font-size-xl);
+    font-weight: 700;
+    color: var(--dark-gray);
+}
+
+.shop-title i {
+    color: var(--primary-pink);
+}
+
+.shop-title-sub {
+    margin: 4px 0 0;
+    font-size: 13.5px;
+    color: var(--gray-500);
+    font-weight: 500;
+}
+
+.shop-viewall-btn {
+    flex-shrink: 0;
+    white-space: nowrap;
 }
 
 .category-filter {
@@ -1067,10 +1185,62 @@ img {
     font-weight: 600;
 }
 
-.category-btn:hover, .category-btn.active {
+.category-btn:hover,
+.category-btn.active {
     background: var(--gradient-primary);
     color: var(--white);
     border-color: transparent;
+}
+
+/* ============================================
+   TRUST BAR
+   ============================================ */
+.trust-bar {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    background: var(--white);
+    border: 1px solid var(--gray-100);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    padding: 26px 24px;
+    margin-top: 36px;
+}
+
+.trust-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.trust-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-full);
+    background: var(--primary-pink-soft);
+    color: var(--primary-pink);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 19px;
+    flex-shrink: 0;
+}
+
+.trust-title,
+.trust-sub {
+    display: block;
+}
+
+.trust-title {
+    font-weight: 700;
+    font-size: 13.5px;
+    color: var(--dark-gray);
+}
+
+.trust-sub {
+    font-size: 11.5px;
+    color: var(--gray-500);
+    margin-top: 2px;
 }
 
 /* ============================================
@@ -1490,7 +1660,7 @@ table td {
    FOOTER
    ============================================ */
 .footer {
-    background: var(--gradient-primary);
+    background: var(--gradient-header-footer);
     color: rgba(255, 255, 255, 0.75);
     margin-top: var(--spacing-2xl);
 }
@@ -1504,18 +1674,43 @@ table td {
     gap: var(--spacing-xl);
 }
 
+.footer-logo-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--white);
+    color: var(--primary-pink-deep);
+    font-size: 12px;
+    vertical-align: middle;
+    margin-right: 2px;
+    overflow: hidden;
+}
+
+.footer-logo-badge img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
 .footer-section h4 {
     color: var(--white);
     font-family: var(--font-heading);
     font-size: var(--font-size-base);
     font-weight: 700;
     margin-bottom: var(--spacing-lg);
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .footer-section p {
     margin-bottom: var(--spacing-sm);
     font-size: var(--font-size-sm);
     line-height: 1.7;
+    color: rgba(255, 255, 255, 0.75);
 }
 
 .footer-section a {
@@ -1527,7 +1722,7 @@ table td {
 }
 
 .footer-section a:hover {
-    color: var(--primary-pink-light);
+    color: var(--white);
     padding-left: 4px;
 }
 
@@ -1541,7 +1736,8 @@ table td {
     width: 38px;
     height: 38px;
     border-radius: var(--radius-full);
-    background: rgba(255, 255, 255, 0.08);
+    background: var(--white);
+    color: var(--dark-gray);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1550,8 +1746,8 @@ table td {
 }
 
 .footer-section .social-links a:hover {
-    background: var(--primary-pink);
-    color: var(--white);
+    background: var(--primary-pink-light);
+    color: var(--primary-pink-dark);
     transform: translateY(-3px);
 }
 
@@ -1561,14 +1757,14 @@ table td {
     margin-top: var(--spacing-md);
     border-radius: var(--radius-md);
     overflow: hidden;
-    border: 1px solid rgba(255, 255, 255, 0.15);
+    border: 1.5px solid rgba(255, 255, 255, 0.25);
 }
 
 .footer-newsletter-form input {
     flex: 1;
     padding: 11px 14px;
     border: none;
-    background: rgba(255, 255, 255, 0.06);
+    background: var(--gradient-header-footer);
     color: var(--white);
     font-size: var(--font-size-sm);
     font-family: var(--font-primary);
@@ -1576,13 +1772,13 @@ table td {
 }
 
 .footer-newsletter-form input::placeholder {
-    color: rgba(255, 255, 255, 0.4);
+    color: rgba(255, 255, 255, 0.7);
 }
 
 .footer-newsletter-form button {
     border: none;
-    background: var(--primary-pink);
-    color: var(--white);
+    background: var(--white);
+    color: var(--primary-pink-dark);
     padding: 0 18px;
     cursor: pointer;
     font-weight: 600;
@@ -1591,25 +1787,33 @@ table td {
 }
 
 .footer-newsletter-form button:hover {
-    background: var(--primary-pink-dark);
+    background: rgba(255, 255, 255, 0.85);
 }
 
 .footer-newsletter-note {
     font-size: 12px;
-    color: rgba(255, 255, 255, 0.4);
+    color: rgba(255, 255, 255, 0.55);
     margin-top: 10px;
 }
 
+/* Bottom strip — same fuchsia pink as the rest of the footer; the divider
+   line is what separates it, not a color change */
 .footer-bottom {
-    text-align: center;
-    padding: var(--spacing-lg) 20px;
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
-    font-size: var(--font-size-sm);
-    color: rgba(255, 255, 255, 0.5);
+    background: var(--gradient-header-footer);
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 0;
 }
 
-.footer-bottom .heart {
-    color: var(--primary-pink);
+.footer-bottom-inner {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: var(--spacing-lg) 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-size: var(--font-size-sm);
+    color: rgba(255, 255, 255, 0.9);
 }
 
 /* ============================================
@@ -1769,6 +1973,7 @@ table td {
 
     .nav-content {
         flex-direction: column;
+        align-items: stretch;
         display: none;
         padding: 8px 16px;
     }
@@ -1792,6 +1997,11 @@ table td {
     .category-btn {
         padding: 8px 14px;
         font-size: 13px;
+    }
+
+    .trust-bar {
+        grid-template-columns: 1fr 1fr;
+        padding: 20px;
     }
 
     .products-grid {
@@ -1839,6 +2049,15 @@ table td {
 
     .product-image {
         height: 130px;
+    }
+
+    .badge-category {
+        max-width: calc(100% - 20px);
+        font-size: 10px;
+        padding: 4px 10px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
     .product-info {
@@ -1893,12 +2112,17 @@ table td {
         padding: 14px;
     }
 
-    .filter-section > h3 {
-        font-size: 14px;
+    .trust-bar {
+        grid-template-columns: 1fr;
     }
 
     .footer-content {
         grid-template-columns: 1fr;
+    }
+
+    .footer-bottom-inner {
+        flex-direction: column;
+        text-align: center;
     }
 }
 

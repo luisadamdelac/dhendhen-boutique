@@ -908,6 +908,17 @@ class Product extends Authenticated_Controller {
             }
         }
 
+        $this->_apply_base_stock_diff($product_id, $posted);
+    }
+
+    /**
+     * Shared diff/adjust logic for base (variation_id = NULL) product stock —
+     * used both by the legacy base_stock_json field above and by the
+     * Generated Combinations table's own "no variation types" row (see
+     * _save_variant_combinations), so a simple product's stock is always
+     * actually persisted regardless of which posted field it arrived in.
+     */
+    private function _apply_base_stock_diff($product_id, array $posted) {
         $existingBranchStock = StockService::getBranchStock($product_id, NULL);
         $allBranchIds = array_unique(array_merge(
             array_keys($existingBranchStock),
@@ -1207,6 +1218,20 @@ class Product extends Authenticated_Controller {
         $postedKeyed = [];
         foreach ($posted as $c) {
             $axes = is_array($c['axes'] ?? NULL) ? $c['axes'] : [];
+
+            // No variation types on this product — the wizard still posts a
+            // single row here (its only way to collect branch stock for a
+            // simple product), but it isn't a real variant, so its stock
+            // belongs on the base product (variation_id = NULL) instead of
+            // product_variants. Previously this row was silently discarded,
+            // which meant stock entered for a variation-less product never
+            // actually saved anywhere.
+            if (empty($axes)) {
+                $branch_stock = is_array($c['branch_stock'] ?? NULL) ? $c['branch_stock'] : [];
+                $this->_apply_base_stock_diff($product_id, $branch_stock);
+                continue;
+            }
+
             $variationIds = [];
             foreach ($axes as $axis) {
                 $type = trim((string) ($axis['type'] ?? ''));

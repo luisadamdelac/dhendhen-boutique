@@ -65,9 +65,14 @@
 
         <!-- Sidebar -->
         <aside class="sidebar" id="sidebar">
+            <?php $sidebarLogoImage = get_store_logo_image(); ?>
             <div class="sidebar-header">
                 <div class="sidebar-logo">
-                    <i class="fas fa-cube"></i>
+                    <?php if (!empty($sidebarLogoImage)): ?>
+                        <img src="<?php echo BASE_URL . $sidebarLogoImage; ?>" alt="Store logo" class="sidebar-logo-img">
+                    <?php else: ?>
+                        <i class="fas fa-cube"></i>
+                    <?php endif; ?>
                 </div>
                 <div class="sidebar-brand">
                     <h2>DropSell Staff</h2>

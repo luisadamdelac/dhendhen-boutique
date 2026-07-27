@@ -7,89 +7,100 @@
     background: #f0f2f8; display: flex; align-items: center;
     justify-content: center; color: #b0b8d4; font-size: 16px; flex-shrink: 0;
 }
-.dataTables_wrapper .dataTables_filter input {
-    border: 1px solid var(--border); border-radius: var(--radius-md);
-    padding: .4rem .75rem; font-size: .85rem; margin-left: .5rem;
-}
-.dataTables_wrapper .dataTables_filter input:focus { outline: none; border-color: var(--primary-pink); }
-table.dataTable thead th { position: relative; }
-table.dataTable thead th.sorting:hover { color: var(--primary-pink); cursor: pointer; }
 </style>
 
 <div class="container-fluid py-4">
 
-    <!-- Page Header -->
-    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-4">
-        <div>
-            <h4 class="fw-bold mb-0" style="color:#1a1a2e;"><i class="fas fa-user-tie"></i> Staff Management</h4>
-            <small class="text-muted">Manage staff accounts and access for your store.</small>
-        </div>
-        <div class="d-flex gap-2 flex-wrap">
-            <a href="<?= site_url('admin/staff/add'); ?>" class="btn btn-primary btn-sm">
-                <i class="fas fa-plus me-1"></i> Add Staff
-            </a>
-        </div>
-    </div>
+    <!-- Hero + Stats + Staff header — merged into a single card -->
+    <div class="ds-hero-card">
 
-    <!-- Stat Cards -->
-    <div class="row g-3 mb-2">
-        <div class="col-6 col-md-4">
-            <div class="stat-card">
-                <div class="stat-icon" style="background:#eef0ff;color:#4361ee;"><i class="fas fa-user-tie"></i></div>
-                <div>
-                    <div class="stat-label">Total Staff</div>
-                    <div class="stat-value"><?= number_format($stat_total_staff); ?></div>
+        <div class="ds-hero-banner">
+            <svg class="ds-hero-wave" viewBox="0 0 1440 200" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M0,110 C240,170 480,50 720,90 C960,130 1200,50 1440,100 L1440,200 L0,200 Z" fill="rgba(255,105,180,0.16)"></path>
+                <path d="M0,140 C280,80 560,180 840,120 C1080,70 1280,140 1440,130 L1440,200 L0,200 Z" fill="rgba(233,30,99,0.22)"></path>
+            </svg>
+            <div class="ds-hero-banner-content d-flex flex-wrap align-items-center justify-content-between gap-2">
+                <div class="d-flex align-items-center gap-3">
+                    <div style="width:46px;height:46px;border-radius:14px;background:var(--primary-pink-dark);color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;">
+                        <i class="fas fa-user-tie"></i>
+                    </div>
+                    <div>
+                        <h4 class="fw-bold mb-0" style="color:#1a1a2e;">Staff Management</h4>
+                        <small class="text-muted">Manage staff accounts and access for your store.</small>
+                    </div>
+                </div>
+                <div class="d-flex gap-2 flex-wrap">
+                    <a href="<?= site_url('admin/staff/add'); ?>" class="btn btn-primary btn-sm">
+                        <i class="fas fa-plus me-1"></i> Add Staff
+                    </a>
                 </div>
             </div>
         </div>
-        <div class="col-6 col-md-4">
-            <div class="stat-card">
-                <div class="stat-icon" style="background:#e8f5e9;color:#2e7d32;"><i class="fas fa-check-circle"></i></div>
-                <div>
-                    <div class="stat-label">Active</div>
-                    <div class="stat-value" style="color:#2e7d32;"><?= number_format($stat_active_staff); ?></div>
+
+        <!-- Stat Cards -->
+        <div class="ds-hero-stats">
+            <div class="row g-3">
+                <div class="col-6 col-md-4">
+                    <div class="ds-stat-tile">
+                        <div class="ds-stat-tile-icon" style="background:#eef0ff;color:#4361ee;"><i class="fas fa-user-tie"></i></div>
+                        <div>
+                            <div class="ds-stat-tile-label">Total Staff</div>
+                            <div class="ds-stat-tile-value"><?= number_format($stat_total_staff); ?></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-4">
+                    <div class="ds-stat-tile">
+                        <div class="ds-stat-tile-icon" style="background:#e8f5e9;color:#2e7d32;"><i class="fas fa-check-circle"></i></div>
+                        <div>
+                            <div class="ds-stat-tile-label">Active</div>
+                            <div class="ds-stat-tile-value" style="color:#2e7d32;"><?= number_format($stat_active_staff); ?></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-4">
+                    <div class="ds-stat-tile">
+                        <div class="ds-stat-tile-icon" style="background:#f0f0f8;color:#5a5a7a;"><i class="fas fa-ban"></i></div>
+                        <div>
+                            <div class="ds-stat-tile-label">Inactive</div>
+                            <div class="ds-stat-tile-value" style="color:#5a5a7a;"><?= number_format($stat_inactive_staff); ?></div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-        <div class="col-6 col-md-4">
-            <div class="stat-card">
-                <div class="stat-icon" style="background:#f0f0f8;color:#5a5a7a;"><i class="fas fa-ban"></i></div>
-                <div>
-                    <div class="stat-label">Inactive</div>
-                    <div class="stat-value" style="color:#5a5a7a;"><?= number_format($stat_inactive_staff); ?></div>
+
+        <!-- Staff header -->
+        <div class="ds-hero-section-row">
+            <span class="section-title"><i class="fas fa-user-tie me-2 text-primary"></i>Staff</span>
+            <span class="text-muted small" style="white-space:nowrap;"><?= number_format($total ?? 0); ?> result<?= ($total ?? 0) != 1 ? 's' : ''; ?></span>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="filter-bar">
+            <div class="row g-2 align-items-end">
+                <div class="col-md-3 col-sm-6">
+                    <label class="form-label small text-muted mb-1">Status</label>
+                    <select id="filterStaffStatus" class="form-select form-select-sm">
+                        <option value="">All Statuses</option>
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex">
+                    <button type="button" id="clearStaffFiltersBtn" class="btn btn-sm ds-clear-btn flex-fill">
+                        <i class="fas fa-times"></i> Clear Filters
+                    </button>
                 </div>
             </div>
         </div>
+
     </div>
 
-    <!-- ===================== STAFF SECTION ===================== -->
-    <div class="page-section">
-        <span class="section-title"><i class="fas fa-user-tie me-2 text-primary"></i>Staff</span>
-        <hr>
-        <span class="text-muted small" style="white-space:nowrap;"><?= number_format($total ?? 0); ?> result<?= ($total ?? 0) != 1 ? 's' : ''; ?></span>
-    </div>
-
-    <div class="filter-bar">
-        <div class="row g-2 align-items-end">
-            <div class="col-md-3 col-sm-6">
-                <label class="form-label small text-muted mb-1">Status</label>
-                <select id="filterStaffStatus" class="form-select form-select-sm">
-                    <option value="">All Statuses</option>
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
-                </select>
-            </div>
-            <div class="col-md-2 d-flex">
-                <button type="button" id="clearStaffFiltersBtn" class="btn btn-sm btn-outline-secondary flex-fill">
-                    <i class="fas fa-times"></i> Clear Filters
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <div class="card border-0 shadow-sm mb-2" style="border-radius:12px;overflow:hidden;">
-        <div class="table-responsive">
-            <table class="table inv-table mb-0" id="staffTable">
+    <div class="card ds-pink-table-card mb-2">
+        <div class="card-body">
+            <div class="table-responsive">
+            <table class="table inv-table ds-pink-table mb-0" id="staffTable">
                 <thead>
                     <tr>
                         <th class="ps-3">Staff Member</th>
@@ -133,17 +144,17 @@ table.dataTable thead th.sorting:hover { color: var(--primary-pink); cursor: poi
                             <td class="text-center pe-3">
                                 <div class="d-flex gap-1 justify-content-center">
                                     <a href="<?= site_url('admin/staff/view/' . $staff['staff_id']); ?>"
-                                       class="btn btn-sm btn-outline-info" title="View" style="width:30px;height:30px;padding:0;display:flex;align-items:center;justify-content:center;">
+                                       class="ds-action-btn" title="View">
                                         <i class="fas fa-eye" style="font-size:11px;"></i>
                                     </a>
                                     <a href="<?= site_url('admin/staff/edit/' . $staff['staff_id']); ?>"
-                                       class="btn btn-sm btn-outline-warning" title="Edit" style="width:30px;height:30px;padding:0;display:flex;align-items:center;justify-content:center;">
+                                       class="ds-action-btn" title="Edit">
                                         <i class="fas fa-edit" style="font-size:11px;"></i>
                                     </a>
-                                    <button type="button" class="btn btn-sm btn-outline-danger delete-staff"
+                                    <button type="button" class="ds-action-btn delete-staff"
                                             data-id="<?= $staff['staff_id']; ?>"
                                             data-name="<?= htmlspecialchars(trim(($staff['first_name'] ?? '') . ' ' . ($staff['last_name'] ?? ''))); ?>"
-                                            title="Delete" style="width:30px;height:30px;padding:0;display:flex;align-items:center;justify-content:center;">
+                                            title="Delete">
                                         <i class="fas fa-trash" style="font-size:11px;"></i>
                                     </button>
                                 </div>
@@ -152,6 +163,7 @@ table.dataTable thead th.sorting:hover { color: var(--primary-pink); cursor: poi
                         <?php endforeach; ?>
                 </tbody>
             </table>
+            </div>
         </div>
     </div>
 

@@ -26,23 +26,28 @@
     <div class="top-bar">
         <div class="container" style="margin: 0 auto;">
             <div>
-                <i class="fas fa-phone"></i> +63 123 456 7890
-                <span style="margin-left: 20px;"><i class="fas fa-envelope"></i> info@dhendhen.com</span>
+                <i class="fas fa-phone"></i> +63 912 345 6789
+                <span style="margin-left: 20px;"><i class="fas fa-envelope"></i> info@dropsell.com</span>
             </div>
             <div class="top-bar-promo">
-                <i class="fas fa-star"></i> New Arrivals Every Week
+                <i class="fas fa-star"></i> New Arrivals Every Week!
+            </div>
+            <div class="top-bar-social">
+                <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                <a href="#" aria-label="TikTok"><i class="fab fa-tiktok"></i></a>
             </div>
         </div>
     </div>
-    
+
     <!-- Header -->
     <header class="header">
         <div class="header-content">
             <a href="<?php echo BASE_URL; ?>shop" class="logo">
-                <span class="logo-badge"><i class="fas fa-shopping-bag"></i></span>
+                <span class="logo-badge"><img src="<?php echo base_url('public/uploads/avatars/c6e87fc1363436e5468a05c9c2a59b26.png'); ?>" alt="<?php echo SITE_NAME; ?>"></span>
                 <?php echo SITE_NAME; ?>
             </a>
-            
+
             <div class="search-bar">
                 <form action="<?php echo BASE_URL; ?>shop" method="GET">
                     <input type="text" name="search" placeholder="Search products..." value="<?php echo $_GET['search'] ?? ''; ?>">
@@ -51,7 +56,7 @@
                     </button>
                 </form>
             </div>
-            
+
             <div class="header-actions">
                 <?php if (isset($_SESSION['user_account_id']) && (($_SESSION['user_type'] ?? '') === 'customer')): ?>
                     <?php
@@ -61,7 +66,7 @@
                             : BASE_URL . default_avatar_url();
                     ?>
                     <a href="<?php echo BASE_URL; ?>account" class="header-btn">
-                        <img src="<?php echo $headerAvatarSrc; ?>" alt="" style="width:22px;height:22px;border-radius:50%;object-fit:cover;flex-shrink:0;">
+                        <img src="<?php echo $headerAvatarSrc; ?>" alt="" style="width:26px;height:26px;border-radius:50%;object-fit:cover;flex-shrink:0;">
                         <span><?php echo $_SESSION['full_name'] ?? $_SESSION['email'] ?? 'Account'; ?></span>
                     </a>
                     <a href="<?php echo BASE_URL; ?>cart" class="header-btn">
@@ -81,13 +86,13 @@
                     </a>
                 <?php endif; ?>
             </div>
-            
+
             <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
                 <i class="fas fa-bars"></i>
             </button>
         </div>
     </header>
-    
+
     <!-- Navigation -->
     <nav class="nav">
         <div class="nav-content">

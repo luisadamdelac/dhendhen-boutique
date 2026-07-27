@@ -55,12 +55,76 @@ $statusBreakdown = [
 
 .perf-legend-row { display: flex; align-items: center; justify-content: space-between; padding: 7px 0; font-size: var(--font-size-sm); }
 .perf-legend-row .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; margin-right: 8px; }
+
+/* ── Hero: decorative shopping bags + leaves, faded into the banner ── */
+.rdb-hero-text { position: relative; z-index: 1; max-width: 62%; }
+.rdb-hero-illustration {
+    position: absolute; right: 2rem; top: 50%; transform: translateY(-50%);
+    width: 260px; height: 150px; z-index: 1; pointer-events: none;
+    -webkit-mask-image: linear-gradient(to left, #000 40%, transparent 92%);
+            mask-image: linear-gradient(to left, #000 40%, transparent 92%);
+}
+.rdb-hero-leaves { position: absolute; top: -8px; right: 6px; width: 110px; height: 110px; opacity: .55; }
+.rdb-bag {
+    position: absolute; border-radius: 6px 6px 10px 10px;
+    clip-path: polygon(12% 0%, 88% 0%, 100% 100%, 0% 100%);
+    box-shadow: 0 12px 20px rgba(43, 22, 38, .12);
+}
+.rdb-bag::before {
+    content: ""; position: absolute; top: -18px; left: 50%; transform: translateX(-50%);
+    width: 26px; height: 22px; border: 3px solid; border-bottom: none; border-radius: 50% 50% 0 0;
+}
+.rdb-bag--a { width: 80px; height: 94px; right: 18px; bottom: 4px; background: linear-gradient(160deg, #FFD6E8, #FF8CC5); }
+.rdb-bag--a::before { border-color: #FF4FA2; }
+.rdb-bag--b { width: 60px; height: 72px; right: 92px; bottom: 0; background: linear-gradient(160deg, #FFFFFF, #FFE6F0); }
+.rdb-bag--b::before { border-color: #FFB8D9; }
+
+@media (max-width: 767px) {
+    .rdb-hero-text { max-width: 100%; }
+    .rdb-hero-illustration { display: none; }
+}
+
+/* ── Illustrated empty states (Recent Orders / Top Selling Products) ── */
+.rdb-empty { text-align: center; padding: 2.2rem 1rem 1.4rem; }
+.rdb-empty-illustration { position: relative; width: 96px; height: 80px; margin: 0 auto 16px; }
+.rdb-empty-icon {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    font-size: 56px;
+    background: linear-gradient(135deg, #FF8CC5 0%, #FF4FA2 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    filter: drop-shadow(0 8px 12px rgba(255, 79, 162, .22));
+}
+.rdb-empty-spark { position: absolute; width: 6px; height: 6px; background: #FFC1D9; transform: rotate(45deg); }
+.rdb-empty-spark.s1 { top: 0; left: 14px; }
+.rdb-empty-spark.s2 { width: 4px; height: 4px; top: 10px; right: 4px; }
+.rdb-empty-spark.s3 { width: 5px; height: 5px; bottom: 8px; left: 0; }
+.rdb-empty-title { margin: 0 0 4px; font-size: .92rem; font-weight: 700; color: #1a1a2e; }
+.rdb-empty-sub { margin: 0; font-size: .8rem; color: var(--gray); }
 </style>
 
-<div class="page-header-section">
-    <div>
-        <h1 class="page-title">Welcome back, <?php echo htmlspecialchars(get_user_first_name() ?: 'Reseller'); ?>! <span aria-hidden="true">👋</span></h1>
-        <p class="text-muted mb-0" style="font-size:.9rem;">Here's what's happening with your store today.</p>
+<div class="ds-hero-card mb-3">
+    <div class="ds-hero-banner">
+        <svg class="ds-hero-wave" viewBox="0 0 1440 200" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M0,110 C240,170 480,50 720,90 C960,130 1200,50 1440,100 L1440,200 L0,200 Z" fill="rgba(255,105,180,0.16)"></path>
+            <path d="M0,140 C280,80 560,180 840,120 C1080,70 1280,140 1440,130 L1440,200 L0,200 Z" fill="rgba(233,30,99,0.22)"></path>
+        </svg>
+        <div class="rdb-hero-illustration" aria-hidden="true">
+            <svg class="rdb-hero-leaves" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <g fill="#E0559C" opacity="0.18">
+                    <path d="M10 10 C40 0 60 20 50 50 C25 45 5 30 10 10 Z"></path>
+                    <path d="M55 5 C75 0 90 18 82 38 C62 35 48 20 55 5 Z"></path>
+                </g>
+            </svg>
+            <div class="rdb-bag rdb-bag--b"></div>
+            <div class="rdb-bag rdb-bag--a"></div>
+        </div>
+
+        <div class="ds-hero-banner-content">
+            <div class="rdb-hero-text">
+                <h4 class="fw-bold mb-0" style="color:#1a1a2e;">Welcome back, <?php echo htmlspecialchars(get_user_first_name() ?: 'Reseller'); ?>! <span aria-hidden="true">👋</span></h4>
+                <small class="text-muted">Here's what's happening with your store today.</small>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -163,7 +227,16 @@ $statusBreakdown = [
                         </div>
                     <?php endforeach; ?>
                 <?php else: ?>
-                    <p class="text-center text-muted" style="padding:20px 0;">No orders yet.</p>
+                    <div class="rdb-empty">
+                        <div class="rdb-empty-illustration">
+                            <i class="fas fa-box-open rdb-empty-icon"></i>
+                            <span class="rdb-empty-spark s1"></span>
+                            <span class="rdb-empty-spark s2"></span>
+                            <span class="rdb-empty-spark s3"></span>
+                        </div>
+                        <p class="rdb-empty-title">No orders yet.</p>
+                        <p class="rdb-empty-sub">You don't have any recent orders.</p>
+                    </div>
                 <?php endif; ?>
             </div>
         </div>
@@ -230,7 +303,16 @@ $statusBreakdown = [
                         </div>
                     <?php endforeach; ?>
                 <?php else: ?>
-                    <p class="text-center text-muted" style="padding:20px 0;">No sales yet.</p>
+                    <div class="rdb-empty">
+                        <div class="rdb-empty-illustration">
+                            <i class="fas fa-bag-shopping rdb-empty-icon"></i>
+                            <span class="rdb-empty-spark s1"></span>
+                            <span class="rdb-empty-spark s2"></span>
+                            <span class="rdb-empty-spark s3"></span>
+                        </div>
+                        <p class="rdb-empty-title">No sales yet.</p>
+                        <p class="rdb-empty-sub">You haven't sold any products yet.</p>
+                    </div>
                 <?php endif; ?>
             </div>
         </div>

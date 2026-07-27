@@ -1,12 +1,8 @@
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap5.min.css">
 <style>
-.dataTables_wrapper .dataTables_filter input {
-    border: 1px solid var(--border); border-radius: var(--radius-md);
-    padding: .4rem .75rem; font-size: .85rem; margin-left: .5rem;
-}
-.dataTables_wrapper .dataTables_filter input:focus { outline: none; border-color: var(--primary-pink); }
-table.dataTable thead th { position: relative; }
-table.dataTable thead th.sorting:hover { color: var(--primary-pink); cursor: pointer; }
+.hdr-pill { display:inline-flex; align-items:center; gap:6px; padding:7px 14px; border-radius:20px; font-size:12.5px; font-weight:600; background:#fff; border:1px solid #fbc02d; color:#a66a00; text-decoration:none; transition:box-shadow .15s; }
+.hdr-pill:hover { color:#a66a00; box-shadow:0 2px 8px rgba(0,0,0,.08); }
+.hdr-pill .badge { margin-left:2px; }
 
 .btn-icon-sm {
     width: 30px; height: 30px; padding: 0; border-radius: 8px;
@@ -35,66 +31,80 @@ table.dataTable thead th.sorting:hover { color: var(--primary-pink); cursor: poi
 .staff-modal-actions { display: flex; gap: 10px; margin-top: 20px; }
 </style>
 
-<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-4">
-    <div>
-        <h4 class="fw-bold mb-0" style="color:#1a1a2e;">Inventory</h4>
-        <small class="text-muted">Welcome back, <strong><?php echo htmlspecialchars($user_full_name ?? 'Staff'); ?></strong> — stock levels across branches.</small>
-    </div>
-    <div class="d-flex gap-2">
-        <a href="<?php echo site_url('staff/inventory/low_stock'); ?>" class="btn btn-outline-warning btn-sm" style="position:relative;">
-            <i class="fas fa-exclamation-triangle me-1"></i> Low Stock
-            <?php if (!empty($product_stats['low_stock_products'])): ?>
-                <span class="badge bg-danger ms-1"><?php echo (int) $product_stats['low_stock_products']; ?></span>
-            <?php endif; ?>
-        </a>
-        <a href="<?php echo site_url('staff/inventory/expiring'); ?>" class="btn btn-outline-warning btn-sm" style="position:relative;">
-            <i class="fas fa-calendar-times me-1"></i> Expiring
-            <?php if (!empty($product_stats['expiring_products'])): ?>
-                <span class="badge bg-danger ms-1"><?php echo (int) $product_stats['expiring_products']; ?></span>
-            <?php endif; ?>
-        </a>
-    </div>
-</div>
+<div class="ds-hero-card mb-3">
 
-<div class="row g-3 mb-3">
-    <div class="col-6 col-md-4">
-        <div class="stat-card">
-            <div class="stat-icon" style="background:#eef0ff;color:#4361ee;"><i class="fas fa-boxes"></i></div>
+    <div class="ds-hero-banner">
+        <svg class="ds-hero-wave" viewBox="0 0 1440 200" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M0,110 C240,170 480,50 720,90 C960,130 1200,50 1440,100 L1440,200 L0,200 Z" fill="rgba(255,105,180,0.16)"></path>
+            <path d="M0,140 C280,80 560,180 840,120 C1080,70 1280,140 1440,130 L1440,200 L0,200 Z" fill="rgba(233,30,99,0.22)"></path>
+        </svg>
+        <div class="ds-hero-banner-content d-flex flex-wrap align-items-center justify-content-between gap-2">
             <div>
-                <div class="stat-label">Total Products</div>
-                <div class="stat-value"><?php echo number_format($product_stats['total_products'] ?? 0); ?></div>
+                <h4 class="fw-bold mb-0" style="color:#1a1a2e;">Inventory</h4>
+                <small class="text-muted">Welcome back, <strong><?php echo htmlspecialchars($user_full_name ?? 'Staff'); ?></strong></small>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="<?php echo site_url('staff/inventory/low_stock'); ?>" class="hdr-pill">
+                    <i class="fas fa-exclamation-triangle"></i> Low Stock
+                    <?php if (!empty($product_stats['low_stock_products'])): ?>
+                        <span class="badge bg-danger"><?php echo (int) $product_stats['low_stock_products']; ?></span>
+                    <?php endif; ?>
+                </a>
+                <a href="<?php echo site_url('staff/inventory/expiring'); ?>" class="hdr-pill">
+                    <i class="fas fa-calendar-times"></i> Expiring
+                    <?php if (!empty($product_stats['expiring_products'])): ?>
+                        <span class="badge bg-danger"><?php echo (int) $product_stats['expiring_products']; ?></span>
+                    <?php endif; ?>
+                </a>
             </div>
         </div>
     </div>
-    <div class="col-6 col-md-4">
-        <div class="stat-card">
-            <div class="stat-icon" style="background:#fff8e1;color:#f57f17;"><i class="fas fa-exclamation-triangle"></i></div>
-            <div>
-                <div class="stat-label">Low Stock</div>
-                <div class="stat-value" style="<?php echo !empty($product_stats['low_stock_products']) ? 'color:#f57f17;' : ''; ?>"><?php echo number_format($product_stats['low_stock_products'] ?? 0); ?></div>
+
+    <div class="ds-hero-stats">
+        <div class="row g-3">
+            <div class="col-6 col-md-4">
+                <div class="ds-stat-tile">
+                    <div class="ds-stat-tile-icon" style="background:#eef0ff;color:#4361ee;"><i class="fas fa-boxes"></i></div>
+                    <div>
+                        <div class="ds-stat-tile-label">Total Products</div>
+                        <div class="ds-stat-tile-value"><?php echo number_format($product_stats['total_products'] ?? 0); ?></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-4">
+                <div class="ds-stat-tile">
+                    <div class="ds-stat-tile-icon" style="background:#fff8e1;color:#f57f17;"><i class="fas fa-exclamation-triangle"></i></div>
+                    <div>
+                        <div class="ds-stat-tile-label">Low Stock</div>
+                        <div class="ds-stat-tile-value" style="<?php echo !empty($product_stats['low_stock_products']) ? 'color:#f57f17;' : ''; ?>"><?php echo number_format($product_stats['low_stock_products'] ?? 0); ?></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-4">
+                <div class="ds-stat-tile">
+                    <div class="ds-stat-tile-icon" style="background:#fdecea;color:#c62828;"><i class="fas fa-times-circle"></i></div>
+                    <div>
+                        <div class="ds-stat-tile-label">Out of Stock</div>
+                        <div class="ds-stat-tile-value"><?php echo number_format($product_stats['out_of_stock_products'] ?? 0); ?></div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-    <div class="col-6 col-md-4">
-        <div class="stat-card">
-            <div class="stat-icon" style="background:#fdecea;color:#c62828;"><i class="fas fa-times-circle"></i></div>
-            <div>
-                <div class="stat-label">Out of Stock</div>
-                <div class="stat-value"><?php echo number_format($product_stats['out_of_stock_products'] ?? 0); ?></div>
-            </div>
-        </div>
+
+    <div class="ds-hero-section-row">
+        <span class="section-title"><i class="fas fa-boxes me-2 text-primary"></i>Products</span>
+        <span class="text-muted small" style="white-space:nowrap;"><?php echo number_format(count($products)); ?> result<?php echo count($products) != 1 ? 's' : ''; ?></span>
     </div>
+
 </div>
 
 <div class="row">
     <div class="col col-12">
-        <div class="card">
-            <div class="card-header bg-primary text-white">
-                <h5 class="mb-0"><i class="fas fa-list"></i> Products</h5>
-            </div>
+        <div class="card ds-pink-table-card mb-2">
             <div class="card-body">
                 <div class="table-responsive">
-                    <table class="table table-striped table-stack" id="staffInventoryTable">
+                    <table class="table inv-table ds-pink-table table-stack" id="staffInventoryTable">
                         <thead>
                             <tr><th></th><th>Product</th><th>SKU</th><th>Branch</th><th>Category</th><th>Stock</th><th>Expiry</th><th>Status</th><th>Actions</th></tr>
                         </thead>
@@ -146,11 +156,11 @@ table.dataTable thead th.sorting:hover { color: var(--primary-pink); cursor: poi
                                     </td>
                                     <td>
                                         <div class="d-flex align-items-center gap-1">
-                                            <button type="button" class="btn-icon-sm btn-icon-info" title="View" data-product="<?php echo $productJson; ?>" onclick="openViewModal(this)">
-                                                <i class="fas fa-eye"></i>
+                                            <button type="button" class="ds-action-btn" title="View" data-product="<?php echo $productJson; ?>" onclick="openViewModal(this)">
+                                                <i class="fas fa-eye" style="font-size:11px;"></i>
                                             </button>
-                                            <button type="button" class="btn-icon-sm btn-icon-warning" title="Edit Stock" data-product="<?php echo $productJson; ?>" onclick="openEditStockModal(this)">
-                                                <i class="fas fa-edit"></i>
+                                            <button type="button" class="ds-action-btn" title="Edit Stock" data-product="<?php echo $productJson; ?>" onclick="openEditStockModal(this)">
+                                                <i class="fas fa-edit" style="font-size:11px;"></i>
                                             </button>
                                         </div>
                                     </td>

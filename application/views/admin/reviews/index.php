@@ -5,97 +5,97 @@
     $avgRating     = $stats['average_rating'] ?? 0;
 ?>
 <link rel="stylesheet" href="<?php echo BASE_URL; ?>public/vendor/datatables/dataTables.bootstrap5.min.css">
-<style>
-.dataTables_wrapper .dataTables_filter input {
-    border: 1px solid var(--border); border-radius: var(--radius-md);
-    padding: .4rem .75rem; font-size: .85rem; margin-left: .5rem;
-}
-.dataTables_wrapper .dataTables_filter input:focus { outline: none; border-color: var(--primary-pink); }
-table.dataTable thead th { position: relative; }
-table.dataTable thead th.sorting:hover { color: var(--primary-pink); cursor: pointer; }
-</style>
 <div class="container-fluid py-4 fade-in">
-
-    <!-- Page Header -->
-    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-4">
-        <div>
-            <h4 class="fw-bold mb-0" style="color:#1a1a2e;">Reviews</h4>
-            <small class="text-muted">Manage customer reviews and approval status.</small>
-        </div>
-    </div>
 
     <?php include __DIR__ . '/../partials/order_tabs.php'; ?>
 
-    <!-- Stat Cards -->
-    <div class="row g-3 mb-2">
-        <div class="col-6 col-md-3">
-            <div class="stat-card">
-                <div class="stat-icon" style="background:#eef0ff;color:#4361ee;"><i class="fas fa-comments"></i></div>
-                <div>
-                    <div class="stat-label">Total Reviews</div>
-                    <div class="stat-value"><?php echo number_format($totalReviews); ?></div>
-                </div>
-            </div>
-        </div>
-        <div class="col-6 col-md-3">
-            <div class="stat-card">
-                <div class="stat-icon" style="background:#fff8e1;color:#f57f17;"><i class="fas fa-clock"></i></div>
-                <div>
-                    <div class="stat-label">Pending Reviews</div>
-                    <div class="stat-value"><?php echo number_format($pendingCount); ?></div>
-                </div>
-            </div>
-        </div>
-        <div class="col-6 col-md-3">
-            <div class="stat-card">
-                <div class="stat-icon" style="background:#e8f5e9;color:#2e7d32;"><i class="fas fa-check-circle"></i></div>
-                <div>
-                    <div class="stat-label">Approved Reviews</div>
-                    <div class="stat-value"><?php echo number_format($approvedCount); ?></div>
-                </div>
-            </div>
-        </div>
-        <div class="col-6 col-md-3">
-            <div class="stat-card">
-                <div class="stat-icon" style="background:#ede7f6;color:#5e35b1;"><i class="fas fa-star"></i></div>
-                <div>
-                    <div class="stat-label">Average Rating</div>
-                    <div class="stat-value"><?php echo number_format($avgRating, 1); ?></div>
-                </div>
-            </div>
-        </div>
-    </div>
+    <!-- Hero + Stats + Reviews header — merged into a single card -->
+    <div class="ds-hero-card">
 
-    <!-- ===================== REVIEWS SECTION ===================== -->
-    <div class="page-section">
-        <span class="section-title"><i class="fas fa-comments me-2 text-primary"></i>All Reviews</span>
-        <hr>
-        <span class="text-muted small" style="white-space:nowrap;"><?php echo number_format($totalReviews); ?> result<?php echo $totalReviews != 1 ? 's' : ''; ?></span>
-    </div>
-
-    <!-- Filter Bar -->
-    <div class="filter-bar">
-        <div class="row g-2 align-items-end">
-            <div class="col-md-3 col-sm-6">
-                <label class="form-label small text-muted mb-1" for="filterReviewStatus">Filter by status</label>
-                <select id="filterReviewStatus" class="form-select form-select-sm">
-                    <option value="">All Status</option>
-                    <option value="pending">Pending</option>
-                    <option value="approved">Approved</option>
-                </select>
-            </div>
-            <div class="col-md-2 d-flex">
-                <button type="button" id="clearReviewFiltersBtn" class="btn btn-sm btn-outline-secondary flex-fill">
-                    <i class="fas fa-times"></i> Clear Filters
-                </button>
+        <div class="ds-hero-banner">
+            <svg class="ds-hero-wave" viewBox="0 0 1440 200" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M0,110 C240,170 480,50 720,90 C960,130 1200,50 1440,100 L1440,200 L0,200 Z" fill="rgba(255,105,180,0.16)"></path>
+                <path d="M0,140 C280,80 560,180 840,120 C1080,70 1280,140 1440,130 L1440,200 L0,200 Z" fill="rgba(233,30,99,0.22)"></path>
+            </svg>
+            <div class="ds-hero-banner-content">
+                <h4 class="fw-bold mb-0" style="color:#1a1a2e;">Reviews</h4>
+                <small class="text-muted">Manage customer reviews and approval status.</small>
             </div>
         </div>
+
+        <!-- Stat Cards -->
+        <div class="ds-hero-stats">
+            <div class="row g-3">
+                <div class="col-6 col-md-3">
+                    <div class="ds-stat-tile">
+                        <div class="ds-stat-tile-icon" style="background:#eef0ff;color:#4361ee;"><i class="fas fa-comments"></i></div>
+                        <div>
+                            <div class="ds-stat-tile-label">Total Reviews</div>
+                            <div class="ds-stat-tile-value"><?php echo number_format($totalReviews); ?></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="ds-stat-tile">
+                        <div class="ds-stat-tile-icon" style="background:#fff8e1;color:#f57f17;"><i class="fas fa-clock"></i></div>
+                        <div>
+                            <div class="ds-stat-tile-label">Pending Reviews</div>
+                            <div class="ds-stat-tile-value"><?php echo number_format($pendingCount); ?></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="ds-stat-tile">
+                        <div class="ds-stat-tile-icon" style="background:#e8f5e9;color:#2e7d32;"><i class="fas fa-check-circle"></i></div>
+                        <div>
+                            <div class="ds-stat-tile-label">Approved Reviews</div>
+                            <div class="ds-stat-tile-value"><?php echo number_format($approvedCount); ?></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="ds-stat-tile">
+                        <div class="ds-stat-tile-icon" style="background:#ede7f6;color:#5e35b1;"><i class="fas fa-star"></i></div>
+                        <div>
+                            <div class="ds-stat-tile-label">Average Rating</div>
+                            <div class="ds-stat-tile-value"><?php echo number_format($avgRating, 1); ?></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reviews header -->
+        <div class="ds-hero-section-row">
+            <span class="section-title"><i class="fas fa-comments me-2 text-primary"></i>All Reviews</span>
+            <span class="text-muted small" style="white-space:nowrap;"><?php echo number_format($totalReviews); ?> result<?php echo $totalReviews != 1 ? 's' : ''; ?></span>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="filter-bar">
+            <div class="row g-2 align-items-end">
+                <div class="col-md-3 col-sm-6">
+                    <label class="form-label small text-muted mb-1" for="filterReviewStatus">Filter by status</label>
+                    <select id="filterReviewStatus" class="form-select form-select-sm">
+                        <option value="">All Status</option>
+                        <option value="pending">Pending</option>
+                        <option value="approved">Approved</option>
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex">
+                    <button type="button" id="clearReviewFiltersBtn" class="btn btn-sm ds-clear-btn flex-fill">
+                        <i class="fas fa-times"></i> Clear Filters
+                    </button>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <!-- Reviews Table -->
-    <div class="card border-0 shadow-sm mb-2" style="border-radius:12px;overflow:hidden;">
+    <div class="card ds-pink-table-card mb-2">
         <div class="table-responsive">
-            <table class="table inv-table mb-0 table-stack" id="reviewsDataTable">
+            <table class="table inv-table ds-pink-table mb-0 table-stack" id="reviewsDataTable">
                 <thead>
                     <tr>
                         <th class="ps-3">ID</th>
@@ -149,25 +149,25 @@ table.dataTable thead th.sorting:hover { color: var(--primary-pink); cursor: poi
                             <td class="text-center pe-3">
                                 <div class="d-flex gap-1 justify-content-center">
                                     <?php if (!$isApproved): ?>
-                                    <button class="btn btn-sm btn-outline-success"
+                                    <button class="ds-action-btn"
                                             onclick="approveReview(<?php echo $review['review_id']; ?>)"
-                                            title="Approve" style="width:30px;height:30px;padding:0;display:flex;align-items:center;justify-content:center;">
+                                            title="Approve">
                                         <i class="fas fa-check" style="font-size:11px;"></i>
                                     </button>
-                                    <button class="btn btn-sm btn-outline-danger"
+                                    <button class="ds-action-btn"
                                             onclick="rejectReview(<?php echo $review['review_id']; ?>)"
-                                            title="Reject" style="width:30px;height:30px;padding:0;display:flex;align-items:center;justify-content:center;">
+                                            title="Reject">
                                         <i class="fas fa-times" style="font-size:11px;"></i>
                                     </button>
                                     <?php endif; ?>
                                     <a href="<?php echo BASE_URL; ?>admin/reviews/view/<?php echo $review['review_id']; ?>"
-                                       class="btn btn-sm btn-outline-info"
-                                       title="View Details" style="width:30px;height:30px;padding:0;display:flex;align-items:center;justify-content:center;">
+                                       class="ds-action-btn"
+                                       title="View Details">
                                         <i class="fas fa-eye" style="font-size:11px;"></i>
                                     </a>
-                                    <button class="btn btn-sm btn-outline-danger"
+                                    <button class="ds-action-btn"
                                             onclick="deleteReview(<?php echo $review['review_id']; ?>)"
-                                            title="Delete" style="width:30px;height:30px;padding:0;display:flex;align-items:center;justify-content:center;">
+                                            title="Delete">
                                         <i class="fas fa-trash" style="font-size:11px;"></i>
                                     </button>
                                 </div>

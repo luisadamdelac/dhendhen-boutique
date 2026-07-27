@@ -6,7 +6,7 @@
         <div class="footer-content">
             <div class="footer-section">
                 <h4>
-                    <i class="fas fa-heart"></i> <?php echo SITE_NAME; ?>
+                    <span class="footer-logo-badge"><img src="<?php echo base_url('public/uploads/avatars/c6e87fc1363436e5468a05c9c2a59b26.png'); ?>" alt="<?php echo SITE_NAME; ?>"></span> <?php echo SITE_NAME; ?>
                 </h4>
                 <p>
                     Your trusted online beauty products and boutique shop.
@@ -15,20 +15,20 @@
                 <?php
                     $CI =& get_instance();
                     $CI->load->model('Settings_model');
+                    // Always show the icon set (falling back to "#" when a URL isn't
+                    // configured yet in Settings) instead of hiding the whole row —
+                    // the footer should always display Facebook/Instagram/TikTok.
                     $socialLinks = [
-                        'facebook-f' => $CI->Settings_model->get('social_facebook'),
-                        'instagram' => $CI->Settings_model->get('social_instagram'),
-                        'tiktok' => $CI->Settings_model->get('social_tiktok'),
+                        'facebook-f' => $CI->Settings_model->get('social_facebook') ?: '#',
+                        'instagram' => $CI->Settings_model->get('social_instagram') ?: '#',
+                        'tiktok' => $CI->Settings_model->get('social_tiktok') ?: '#',
                     ];
-                    $socialLinks = array_filter($socialLinks);
                 ?>
-                <?php if (!empty($socialLinks)): ?>
                 <div class="social-links">
                     <?php foreach ($socialLinks as $icon => $url): ?>
                         <a href="<?php echo htmlspecialchars($url); ?>" target="_blank" rel="noopener"><i class="fab fa-<?php echo $icon; ?>"></i></a>
                     <?php endforeach; ?>
                 </div>
-                <?php endif; ?>
             </div>
 
             <div class="footer-section">
@@ -77,7 +77,9 @@
         </div>
 
         <div class="footer-bottom">
-            <p>&copy; <?php echo date('Y'); ?> <?php echo SITE_NAME; ?>. Made with <span class="heart"><i class="fas fa-heart"></i></span> All rights reserved.</p>
+            <div class="footer-bottom-inner">
+                <p>&copy; <?php echo date('Y'); ?> <?php echo SITE_NAME; ?>. All rights reserved.</p>
+            </div>
         </div>
     </footer>
 
@@ -227,6 +229,7 @@
                             if (cartBtn) {
                                 const newBadge = document.createElement('span');
                                 newBadge.className = 'cart-badge';
+                                newBadge.id = 'cartBadgeCount';
                                 newBadge.textContent = data.count;
                                 cartBtn.appendChild(newBadge);
                             }

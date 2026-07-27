@@ -10,14 +10,22 @@
 ?>
 
 <!-- Page Header -->
-<div class="page-header-section">
-    <div>
-        <h1 class="page-title"><i class="fas fa-clock"></i> Availability History</h1>
-        <p class="page-subtitle"><?php echo $productName; ?></p>
+<div class="ds-hero-card mb-3">
+    <div class="ds-hero-banner">
+        <svg class="ds-hero-wave" viewBox="0 0 1440 200" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M0,110 C240,170 480,50 720,90 C960,130 1200,50 1440,100 L1440,200 L0,200 Z" fill="rgba(255,105,180,0.16)"></path>
+            <path d="M0,140 C280,80 560,180 840,120 C1080,70 1280,140 1440,130 L1440,200 L0,200 Z" fill="rgba(233,30,99,0.22)"></path>
+        </svg>
+        <div class="ds-hero-banner-content d-flex flex-wrap align-items-center justify-content-between gap-2">
+            <div>
+                <h4 class="fw-bold mb-0" style="color:#1a1a2e;"><i class="fas fa-clock"></i> Availability History</h4>
+                <small class="text-muted"><?php echo $productName; ?></small>
+            </div>
+            <a href="<?php echo BASE_URL; ?>reseller/inventory" class="btn btn-outline">
+                <i class="fas fa-arrow-left"></i> Back
+            </a>
+        </div>
     </div>
-    <a href="<?php echo BASE_URL; ?>reseller/inventory" class="btn btn-outline">
-        <i class="fas fa-arrow-left"></i> Back
-    </a>
 </div>
 
 <div class="card">
@@ -35,7 +43,7 @@
     </div>
 </div>
 
-<div class="card" style="margin-top: 20px;">
+<div class="card ds-pink-table-card" style="margin-top: 20px;">
     <div class="card-header">
         <h3 style="margin:0;"><i class="fas fa-list"></i> Change Log</h3>
     </div>
@@ -44,7 +52,7 @@
             <p style="color: var(--gray-500); margin:0;">No history found for this product yet.</p>
         <?php else: ?>
             <div class="table-responsive">
-                <table class="table table-striped">
+                <table class="table table-striped ds-pink-table">
                     <thead>
                         <tr>
                             <th>Date</th>

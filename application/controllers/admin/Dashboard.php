@@ -40,6 +40,12 @@ class Dashboard extends Authenticated_Controller {
         $data['product_stats'] = ['total_products' => $this->product_model->count_all()];
         $data['reseller_stats'] = ['approved_count' => $this->db->from(RESELLER_TABLE)->where('status', 'active')->count_all_results()];
         $data['refund_stats'] = ['pending_requests' => $this->db->from(REFUND_REQUEST_TABLE)->where('status', 'pending')->count_all_results()];
+
+        $trend = $this->_get_30_day_trend();
+        $data['order_stats']['sales_change_pct'] = $trend['sales_change_pct'];
+        $data['order_stats']['orders_change_pct'] = $trend['orders_change_pct'];
+        $data['reseller_stats']['change_pct'] = $this->_get_reseller_30_day_trend($data['reseller_stats']['approved_count']);
+
         $data['commission_stats'] = $this->_get_commission_stats();
         $data['daily_sales'] = $this->_get_daily_sales($period);
         $data['top_products'] = $this->_get_top_products();
@@ -67,6 +73,65 @@ class Dashboard extends Authenticated_Controller {
             'paid_orders' => $this->db->from(ORDER_TABLE)->where('order_status', 'paid')->count_all_results(),
             'cancelled_orders' => $this->db->from(ORDER_TABLE)->where('order_status', 'cancelled')->count_all_results(),
         ];
+    }
+
+    /**
+     * Sales/orders change vs the prior 30-day window, for the dashboard's
+     * stat-card trend lines.
+     */
+    private function _get_30_day_trend() {
+        $period_start = date('Y-m-d H:i:s', strtotime('-30 days'));
+        $prev_period_start = date('Y-m-d H:i:s', strtotime('-60 days'));
+
+        $current = $this->_get_sales_and_orders_since($period_start);
+        $previous = $this->_get_sales_and_orders_since($prev_period_start, $period_start);
+
+        return [
+            'sales_change_pct' => $this->_calc_change_pct($current['sales'], $previous['sales']),
+            'orders_change_pct' => $this->_calc_change_pct($current['orders'], $previous['orders']),
+        ];
+    }
+
+    private function _get_sales_and_orders_since($start, $end = null) {
+        $this->db->select_sum('total_amount')->from(ORDER_TABLE)->where('created_at >=', $start);
+        if ($end) {
+            $this->db->where('created_at <', $end);
+        }
+        $sales_row = $this->db->get()->row();
+
+        $this->db->from(ORDER_TABLE)->where('created_at >=', $start);
+        if ($end) {
+            $this->db->where('created_at <', $end);
+        }
+        $orders = $this->db->count_all_results();
+
+        return ['sales' => $sales_row->total_amount ?? 0, 'orders' => $orders];
+    }
+
+    /**
+     * Approximates "active resellers 30 days ago" by counting resellers
+     * that were both active and already registered as of that date —
+     * there's no historical status-change log to check against.
+     */
+    private function _get_reseller_30_day_trend($current_count) {
+        $period_start = date('Y-m-d H:i:s', strtotime('-30 days'));
+        $previous_count = $this->db->from(RESELLER_TABLE)
+            ->where('status', 'active')
+            ->where('created_at <', $period_start)
+            ->count_all_results();
+
+        return $this->_calc_change_pct($current_count, $previous_count);
+    }
+
+    private function _calc_change_pct($current, $previous) {
+        $current = (float) $current;
+        $previous = (float) $previous;
+
+        if ($previous == 0) {
+            return $current > 0 ? 100.0 : 0.0;
+        }
+
+        return (($current - $previous) / $previous) * 100;
     }
 
     private function _get_commission_stats() {
@@ -116,7 +181,7 @@ class Dashboard extends Authenticated_Controller {
     }
 
     private function _get_top_resellers() {
-        $rows = $this->db->select("r.reseller_id, r.first_name, r.last_name, r.business_name, u.email, SUM(o.total_amount) as total_sales", FALSE)
+        $rows = $this->db->select("r.reseller_id, r.first_name, r.last_name, r.business_name, r.profile_image, u.email, SUM(o.total_amount) as total_sales", FALSE)
             ->from(ORDER_TABLE . ' o')
             ->join(RESELLER_TABLE . ' r', 'r.reseller_id = o.reseller_id')
             ->join(USER_ACCOUNT_TABLE . ' u', 'u.user_account_id = r.user_account_id', 'left')

@@ -32,7 +32,7 @@
 
         body {
             font-family: 'Poppins', sans-serif;
-            background: linear-gradient(135deg, #fce4ec 0%, #f3e5f5 50%, #e1bee7 100%);
+            background: radial-gradient(circle at 50% 35%, #fdeef5 0%, #fbd9ea 55%, #f7c6de 100%);
             min-height: 100vh;
             overflow-x: hidden;
             display: flex;
@@ -40,19 +40,20 @@
             justify-content: center;
             padding: 20px;
         }
-        
+
         .login-wrapper {
             width: 100%;
-            max-width: 1000px;
+            max-width: 1080px;
         }
-        
+
         .login-container {
+            position: relative;
             background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            border-radius: 24px;
+            box-shadow: 0 25px 70px rgba(214, 0, 109, 0.18);
             overflow: hidden;
             display: flex;
-            min-height: 600px;
+            min-height: 640px;
             animation: slideUp 0.5s ease-out;
         }
         
@@ -61,104 +62,150 @@
             to { opacity: 1; transform: translateY(0); }
         }
         
-        /* Left Panel - Pink Gradient */
+        /* Left Panel - Brand / Wine Gradient */
         .login-left {
+            position: relative;
             flex: 0 0 50%;
-            background: linear-gradient(135deg, #ff69b4 0%, #ee82ee 50%, #9370db 100%);
-            padding: 60px 40px;
+            background:
+                radial-gradient(circle, rgba(255,255,255,0.16) 1.5px, transparent 1.5px) 0 0/20px 20px,
+                linear-gradient(150deg, #6b0a3d 0%, #c2185b 45%, #8e0e4e 100%);
+            padding: 50px 40px;
             color: white;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             text-align: center;
+            overflow: hidden;
+            z-index: 1;
         }
-        
+
+        .login-left::before {
+            content: '';
+            position: absolute;
+            top: -20%;
+            left: -30%;
+            width: 90%;
+            height: 140%;
+            background: linear-gradient(135deg, rgba(255,255,255,0.06) 0%, transparent 55%);
+            transform: rotate(8deg);
+            pointer-events: none;
+        }
+
         .brand-section {
-            margin-bottom: 50px;
+            margin-bottom: 30px;
+            position: relative;
         }
-        
-        .brand-logo {
-            font-size: 80px;
-            margin-bottom: 20px;
-            animation: pulse 2s ease-in-out infinite;
+
+        .brand-logo-wrap {
+            width: 170px;
+            height: 170px;
+            margin: 0 auto 20px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 4px solid rgba(255, 255, 255, 0.9);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
         }
-        
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.1); }
+
+        .brand-logo-img {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
-        
+
         .brand-name {
             font-size: 40px;
             font-weight: 800;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
             letter-spacing: 1px;
         }
-        
+
         .brand-title {
             font-size: 16px;
             font-weight: 300;
             opacity: 0.9;
         }
-        
+
+        .brand-divider {
+            width: 56px;
+            height: 3px;
+            background: #ffca28;
+            border-radius: 2px;
+            margin: 14px auto;
+        }
+
+        .brand-tagline {
+            font-size: 13px;
+            opacity: 0.9;
+            margin-bottom: 34px;
+            max-width: 380px;
+        }
+
         .features {
             width: 100%;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            position: relative;
         }
-        
+
         .feature {
             display: flex;
+            flex-direction: column;
             align-items: center;
-            gap: 20px;
+            gap: 10px;
             animation: slideInLeft 0.6s ease backwards;
         }
-        
+
         .feature:nth-child(1) { animation-delay: 0.1s; }
         .feature:nth-child(2) { animation-delay: 0.2s; }
         .feature:nth-child(3) { animation-delay: 0.3s; }
-        
+
         @keyframes slideInLeft {
             from { opacity: 0; transform: translateX(-20px); }
             to { opacity: 1; transform: translateX(0); }
         }
-        
+
         .feature-icon {
-            width: 60px;
-            height: 60px;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 12px;
+            width: 52px;
+            height: 52px;
+            background: linear-gradient(135deg, #ff4f93, #ff85b3);
+            border-radius: 14px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 28px;
+            font-size: 22px;
+            color: #ffca28;
             flex-shrink: 0;
         }
-        
+
         .feature-text {
-            text-align: left;
+            text-align: center;
         }
-        
+
         .feature-text h4 {
-            font-size: 16px;
+            font-size: 14px;
             font-weight: 600;
             margin-bottom: 4px;
         }
-        
+
         .feature-text p {
-            font-size: 13px;
+            font-size: 12px;
             opacity: 0.85;
+            line-height: 1.4;
         }
-        
+
         /* Right Panel - Form */
         .login-right {
+            position: relative;
             flex: 0 0 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 40px;
+            background: white;
+            z-index: 1;
             animation: slideInRight 0.6s ease;
         }
         
@@ -173,15 +220,22 @@
         }
         
         .login-box h2 {
-            font-size: 32px;
-            font-weight: 700;
-            color: #333;
+            font-size: 34px;
+            font-weight: 800;
             margin-bottom: 8px;
         }
-        
+
+        .login-box h2 .welcome-dark {
+            color: #1a1a2e;
+        }
+
+        .login-box h2 .welcome-pink {
+            color: #d6006d;
+        }
+
         .login-subtitle {
             font-size: 14px;
-            color: #999;
+            color: #888;
             margin-bottom: 25px;
             font-weight: 400;
         }
@@ -223,7 +277,7 @@
             display: block;
             width: 100% !important;
             padding: 14px 16px 14px 50px !important;
-            border: 2px solid #e0e0e0 !important;
+            border: 2px solid #f5cee0 !important;
             border-radius: 12px !important;
             font-size: 14px !important;
             font-family: 'Poppins', sans-serif !important;
@@ -280,7 +334,7 @@
         .form-group input {
             width: 100%;
             padding: 14px 15px 14px 50px;
-            border: 2px solid #e0e0e0;
+            border: 2px solid #f5cee0;
             border-radius: 12px;
             font-size: 14px;
             font-family: 'Poppins', sans-serif;
@@ -312,7 +366,7 @@
         }
         
         .btn-login {
-            background: linear-gradient(135deg, #ff69b4 0%, #ee82ee 50%, #9370db 100%);
+            background: linear-gradient(135deg, #d6006d 0%, #b8005c 100%);
             border: none;
             color: white;
             padding: 13px 20px;
@@ -328,10 +382,10 @@
             justify-content: center;
             gap: 8px;
         }
-        
+
         .btn-login:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 8px 25px rgba(214, 0, 109, 0.4);
         }
         
         .btn-login:active {
@@ -372,39 +426,52 @@
             font-size: 13px;
             color: #666;
         }
-        
-        .login-links a {
-            color: #ff69b4;
-            text-decoration: none;
+
+        .signup-buttons {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn-outline {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            border: 2px solid #f5cee0;
+            color: #d6006d;
+            padding: 12px 10px;
+            border-radius: 10px;
             font-weight: 600;
-            transition: color 0.3s;
-            display: block;
-            margin-bottom: 6px;
+            font-size: 13px;
+            text-decoration: none;
+            transition: all 0.2s ease;
         }
-        
-        .login-links a:hover {
-            color: #ee82ee;
+
+        .btn-outline:hover {
+            background: #fff0f6;
+            border-color: #d6006d;
         }
-        
+
         .divider {
             text-align: center;
             margin: 20px 0;
             font-size: 13px;
             color: #999;
         }
-        
+
         .forgot-link {
             text-align: center;
             margin-top: 15px;
         }
-        
+
         .forgot-link a {
-            color: #9370db;
+            color: #2563eb;
             text-decoration: none;
             font-size: 13px;
             font-weight: 500;
         }
-        
+
         .forgot-link a:hover {
             text-decoration: underline;
         }
@@ -426,22 +493,24 @@
                 padding: 30px 20px;
             }
             
-            .brand-logo {
-                font-size: 60px;
+            .brand-logo-wrap {
+                width: 120px;
+                height: 120px;
             }
-            
+
             .brand-name {
                 font-size: 32px;
             }
-            
+
             .brand-section {
-                margin-bottom: 30px;
+                margin-bottom: 20px;
             }
-            
+
             .features {
+                grid-template-columns: 1fr;
                 gap: 15px;
             }
-            
+
             .login-box h2 {
                 font-size: 26px;
             }
@@ -454,11 +523,15 @@
             <!-- Left Panel -->
             <div class="login-left">
                 <div class="brand-section">
-                    <div class="brand-logo">🛍️</div>
+                    <div class="brand-logo-wrap">
+                        <img class="brand-logo-img" src="<?php echo base_url('public/uploads/avatars/c6e87fc1363436e5468a05c9c2a59b26.png'); ?>" alt="Dhendhen Beauty Products and Boutique">
+                    </div>
                     <h1 class="brand-name">DropSell</h1>
-                    <p class="brand-title">Dropshipping Management</p>
+                    <p class="brand-title">Dropshipping Management System</p>
+                    <div class="brand-divider"></div>
+                    <p class="brand-tagline">Manage your business. Grow your sales. Scale effortlessly.</p>
                 </div>
-                
+
                 <div class="features">
                     <div class="feature">
                         <div class="feature-icon">
@@ -466,37 +539,37 @@
                         </div>
                         <div class="feature-text">
                             <h4>Sales Analytics</h4>
-                            <p>Track your sales performance</p>
+                            <p>Track and analyze your performance</p>
                         </div>
                     </div>
-                    
+
                     <div class="feature">
                         <div class="feature-icon">
-                            <i class="fas fa-boxes"></i>
+                            <i class="fas fa-box"></i>
                         </div>
                         <div class="feature-text">
                             <h4>Inventory Management</h4>
-                            <p>Manage your product stock</p>
+                            <p>Manage stock and product availability</p>
                         </div>
                     </div>
-                    
+
                     <div class="feature">
                         <div class="feature-icon">
-                            <i class="fas fa-users"></i>
+                            <i class="fas fa-user"></i>
                         </div>
                         <div class="feature-text">
                             <h4>Team Collaboration</h4>
-                            <p>Work with your team seamlessly</p>
+                            <p>Work together and boost productivity</p>
                         </div>
                     </div>
                 </div>
             </div>
-            
+
             <!-- Right Panel -->
             <div class="login-right">
                 <div class="login-box">
-                    <h2>Welcome Back</h2>
-                    <p class="login-subtitle">Sign in to your account</p>
+                    <h2><span class="welcome-dark">Welcome</span> <span class="welcome-pink">Back!</span></h2>
+                    <p class="login-subtitle">Sign in to your DropSell account</p>
 
                     <?php if ($error ?? false): ?>
                         <div class="alert alert-danger">
@@ -538,16 +611,15 @@
                         </label>
                         
                         <button type="submit" class="btn-login">
-                            <i class="fas fa-sign-in-alt"></i> Sign In
+                            Sign In
                         </button>
                     </form>
-                    
+
                     <div class="divider">Don't have an account?</div>
 
-                    <div class="login-links" style="display:flex;gap:12px;justify-content:center;">
-                        <a href="<?php echo site_url('auth/register'); ?>">Customer Sign Up</a>
-                        <span style="color:#ccc;">|</span>
-                        <a href="<?php echo site_url('auth/register-reseller'); ?>">Reseller Sign Up</a>
+                    <div class="login-links signup-buttons">
+                        <a href="<?php echo site_url('auth/register'); ?>" class="btn-outline"><i class="fas fa-user"></i> Customer Sign Up</a>
+                        <a href="<?php echo site_url('auth/register-reseller'); ?>" class="btn-outline"><i class="fas fa-store"></i> Reseller Sign Up</a>
                     </div>
 
                     <div class="forgot-link">

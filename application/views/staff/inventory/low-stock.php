@@ -1,19 +1,23 @@
-<div class="row">
-    <div class="col-md-12">
-        <h2 class="mb-4"><i class="fas fa-exclamation-triangle text-danger"></i> Low Stock Items</h2>
+<div class="ds-hero-card mb-3">
+    <div class="ds-hero-banner">
+        <svg class="ds-hero-wave" viewBox="0 0 1440 200" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M0,110 C240,170 480,50 720,90 C960,130 1200,50 1440,100 L1440,200 L0,200 Z" fill="rgba(255,105,180,0.16)"></path>
+            <path d="M0,140 C280,80 560,180 840,120 C1080,70 1280,140 1440,130 L1440,200 L0,200 Z" fill="rgba(233,30,99,0.22)"></path>
+        </svg>
+        <div class="ds-hero-banner-content">
+            <h4 class="fw-bold mb-0" style="color:#1a1a2e;"><i class="fas fa-exclamation-triangle text-danger"></i> Low Stock Items</h4>
+            <small class="text-muted">Products at 10 units or below.</small>
+        </div>
     </div>
 </div>
 
 <div class="row">
     <div class="col-md-12">
-        <div class="card border-danger">
-            <div class="card-header bg-danger text-white">
-                <h5 class="mb-0"><i class="fas fa-list"></i> Products at 10 Units or Below</h5>
-            </div>
+        <div class="card ds-pink-table-card">
             <div class="card-body">
                 <div class="table-responsive">
-                    <table class="table table-hover table-striped">
-                        <thead class="table-secondary">
+                    <table class="table inv-table ds-pink-table">
+                        <thead>
                             <tr>
                                 <th>SKU</th>
                                 <th>Product Name</th>

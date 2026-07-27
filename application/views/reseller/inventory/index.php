@@ -90,6 +90,28 @@ $donutBreakdown = [
 .low-stock-item .ls-info strong { display: block; font-size: .84rem; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .low-stock-item .ls-info span { font-size: .74rem; color: var(--gray); }
 
+.lsa-empty { text-align: center; padding: 30px 10px 22px; }
+.lsa-empty-illustration { position: relative; width: 108px; height: 84px; margin: 0 auto 18px; }
+.lsa-empty-box {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    font-size: 62px;
+    background: linear-gradient(135deg, #FF8CC5 0%, #FF4FA2 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    filter: drop-shadow(0 10px 14px rgba(255, 79, 162, .25));
+}
+.lsa-empty-badge {
+    position: absolute; right: 2px; bottom: 2px; width: 30px; height: 30px; border-radius: 50%;
+    background: linear-gradient(135deg, #FF4FA2, #E0439A); color: #fff;
+    display: flex; align-items: center; justify-content: center; font-size: 13px;
+    box-shadow: 0 4px 10px rgba(255, 79, 162, .4); border: 3px solid #fff;
+}
+.lsa-empty-spark { position: absolute; border-radius: 50%; background: #FFC1D9; }
+.lsa-empty-spark.s1 { width: 6px; height: 6px; top: 2px; left: 16px; }
+.lsa-empty-spark.s2 { width: 4px; height: 4px; top: 10px; right: 6px; }
+.lsa-empty-spark.s3 { width: 5px; height: 5px; bottom: 16px; left: 2px; }
+.lsa-empty-title { margin: 0; font-size: .92rem; font-weight: 600; color: var(--text); }
+.lsa-empty-sub { margin: 2px 0 0; font-size: .92rem; font-weight: 600; color: var(--gray); }
+
 .tips-card { background: linear-gradient(135deg, var(--primary-pink-light), #fff); }
 .tips-card ul { list-style: none; margin: 0; padding: 0; }
 .tips-card ul li { display: flex; align-items: flex-start; gap: 8px; font-size: .82rem; color: var(--text); padding: 6px 0; }
@@ -112,18 +134,268 @@ $donutBreakdown = [
 .catalog-nav-btn:hover { border-color: var(--primary-pink); color: var(--primary-pink); }
 
 @media (max-width: 991px) { .minishop-link-group input { min-width: 160px; } }
+
+/* ============================================
+   MINI-SHOP HERO BANNER — luxury beauty edition
+   (scoped to this page only — Dhendhen Beauty palette
+   + rose gold / soft beige accents)
+   ============================================ */
+.minishop-hero-banner {
+    position: relative;
+    overflow: hidden;
+    min-height: clamp(230px, 24vw, 300px);
+    display: flex;
+    align-items: center;
+    padding: 2.4rem 2.6rem;
+    background: linear-gradient(135deg, #FFFFFF 0%, #FFF7FA 45%, #FFE6F0 75%, #FFC1D9 100%);
+}
+
+.minishop-hero-banner .minishop-hero-glow {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(50px);
+    pointer-events: none;
+    z-index: 0;
+}
+.minishop-hero-glow-1 { width: 240px; height: 240px; top: -100px; left: 12%; background: rgba(255, 214, 232, 0.8); }
+.minishop-hero-glow-2 { width: 300px; height: 300px; bottom: -150px; right: 16%; background: rgba(255, 79, 162, 0.16); }
+
+.minishop-hero-flare {
+    position: absolute; top: -70px; right: 6%; width: 280px; height: 280px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,255,255,.95) 0%, rgba(255,193,217,.4) 42%, rgba(255,255,255,0) 74%);
+    z-index: 0; pointer-events: none; mix-blend-mode: screen;
+}
+
+.minishop-hero-wave {
+    position: absolute; left: 0; right: 0; bottom: -1px; width: 100%; height: auto;
+    z-index: 0; pointer-events: none;
+}
+
+.minishop-hero-leaves {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    z-index: 0; pointer-events: none; opacity: .55;
+}
+
+.minishop-hero-shine {
+    position: absolute; inset: 0; z-index: 1; pointer-events: none;
+    background: linear-gradient(115deg, rgba(255,255,255,.55) 0%, rgba(255,255,255,0) 22%, rgba(255,255,255,0) 78%, rgba(255,255,255,.35) 100%);
+    mix-blend-mode: soft-light;
+}
+
+.minishop-hero-particles { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
+.minishop-hero-particles span {
+    position: absolute;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,255,255,.95) 0%, rgba(255,79,162,.45) 100%);
+    box-shadow: 0 0 8px rgba(255,79,162,.35);
+    animation: minishopFloat 6s ease-in-out infinite;
+    opacity: 0;
+}
+.minishop-hero-particles span:nth-child(1) { top: 18%; left: 40%; animation-delay: 0s; }
+.minishop-hero-particles span:nth-child(2) { top: 62%; left: 48%; width: 4px; height: 4px; animation-delay: 1.1s; }
+.minishop-hero-particles span:nth-child(3) { top: 34%; left: 58%; width: 5px; height: 5px; animation-delay: 2.2s; }
+.minishop-hero-particles span:nth-child(4) { top: 72%; left: 38%; width: 4px; height: 4px; animation-delay: 3.1s; }
+.minishop-hero-particles span:nth-child(5) { top: 12%; left: 53%; animation-delay: 4s; }
+.minishop-hero-particles span:nth-child(6) { top: 48%; left: 66%; width: 4px; height: 4px; animation-delay: 4.8s; }
+@keyframes minishopFloat {
+    0% { transform: translateY(10px); opacity: 0; }
+    15% { opacity: .9; }
+    50% { transform: translateY(-16px); opacity: .55; }
+    85% { opacity: .9; }
+    100% { transform: translateY(10px); opacity: 0; }
+}
+
+/* delicate sparkle stars, distinct from the soft floating dust particles */
+.minishop-hero-sparkles { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
+.minishop-sparkle {
+    position: absolute;
+    width: 11px; height: 11px;
+    background: linear-gradient(135deg, #FFFFFF 0%, #FFC1D9 100%);
+    clip-path: polygon(50% 0%, 61% 39%, 100% 50%, 61% 61%, 50% 100%, 39% 61%, 0% 50%, 39% 39%);
+    filter: drop-shadow(0 0 4px rgba(255, 79, 162, .45));
+    animation: minishopTwinkle 3.4s ease-in-out infinite;
+    opacity: 0;
+}
+.minishop-sparkle:nth-child(1) { top: 20%; left: 46%; animation-delay: .2s; }
+.minishop-sparkle:nth-child(2) { top: 58%; left: 56%; width: 8px; height: 8px; animation-delay: 1.4s; }
+.minishop-sparkle:nth-child(3) { top: 30%; left: 63%; width: 7px; height: 7px; animation-delay: 2.5s; }
+@keyframes minishopTwinkle {
+    0%, 100% { transform: scale(.3) rotate(0deg); opacity: 0; }
+    50% { transform: scale(1) rotate(25deg); opacity: 1; }
+}
+
+.minishop-hero-content { position: relative; z-index: 3; display: flex; align-items: center; gap: 1.15rem; max-width: 52%; }
+.minishop-hero-icon {
+    flex-shrink: 0;
+    width: 60px; height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #FF4FA2 0%, #FF8CC5 100%);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 10px 22px rgba(255, 79, 162, .35), inset 0 1px 0 rgba(255,255,255,.4);
+    border: 1px solid rgba(255,255,255,.5);
+}
+.minishop-hero-icon i { color: #fff; font-size: 1.4rem; }
+.minishop-hero-text h4 {
+    margin: 0 0 5px;
+    font-size: 1.5rem;
+    font-weight: 800;
+    letter-spacing: -.01em;
+    color: #2B1626;
+    line-height: 1.2;
+}
+.minishop-hero-text p {
+    margin: 0;
+    font-size: .93rem;
+    font-weight: 500;
+    color: rgba(43, 22, 38, .62);
+    line-height: 1.5;
+}
+
+/* Soft beige / blush shopping bags peeking behind the products */
+.minishop-hero-bags {
+    position: absolute;
+    z-index: 1;
+    right: 1.4rem;
+    bottom: 0;
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    -webkit-mask-image: linear-gradient(to left, #000 40%, transparent 90%);
+            mask-image: linear-gradient(to left, #000 40%, transparent 90%);
+}
+.minishop-bag {
+    position: relative;
+    width: 60px; height: 72px;
+    border-radius: 4px 4px 8px 8px;
+    clip-path: polygon(12% 0%, 88% 0%, 100% 100%, 0% 100%);
+    box-shadow: 0 10px 18px rgba(43, 22, 38, .08);
+}
+.minishop-bag::before {
+    content: "";
+    position: absolute; top: -16px; left: 50%; transform: translateX(-50%);
+    width: 24px; height: 20px;
+    border: 3px solid transparent;
+    border-bottom: none;
+    border-radius: 50% 50% 0 0;
+}
+.minishop-bag--beige { background: linear-gradient(160deg, #FBF3E9 0%, #EDE0CD 100%); }
+.minishop-bag--beige::before { border-color: #D8C4A8; }
+.minishop-bag--pink { background: linear-gradient(160deg, #FFE6F0 0%, #FFC1D9 100%); }
+.minishop-bag--pink::before { border-color: #FF8CC5; }
+
+/* Frosted-glass cosmetic bottles / jars — right side, faded via mask so nothing looks cut out */
+.minishop-hero-products {
+    position: absolute;
+    z-index: 2;
+    right: 2.2rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 340px;
+    height: 190px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-end;
+    gap: 14px;
+    -webkit-mask-image: linear-gradient(to left, #000 42%, transparent 92%);
+            mask-image: linear-gradient(to left, #000 42%, transparent 92%);
+}
+.minishop-bottle {
+    position: relative;
+    border-radius: 16px 16px 10px 10px;
+    box-shadow: 0 14px 26px rgba(43,22,38,.12);
+    backdrop-filter: blur(3px);
+    border: 1px solid rgba(255,255,255,.65);
+}
+.minishop-bottle::after {
+    content: ""; position: absolute; top: 8%; left: 14%; width: 22%; height: 55%;
+    background: linear-gradient(180deg, rgba(255,255,255,.9), rgba(255,255,255,0));
+    border-radius: 10px;
+}
+.minishop-cap { position: absolute; left: 50%; transform: translateX(-50%); }
+
+.minishop-bottle--tall { width: 54px; height: 164px; background: linear-gradient(160deg, rgba(255,255,255,.85) 0%, rgba(255,214,232,.75) 100%); }
+.minishop-bottle--tall .minishop-cap { top: -14px; width: 24px; height: 18px; border-radius: 6px; background: linear-gradient(135deg, #F3D6C5 0%, #C98A6D 100%); }
+
+.minishop-bottle--pump { width: 50px; height: 140px; align-self: flex-end; background: linear-gradient(160deg, rgba(255,247,250,.85) 0%, rgba(255,193,217,.75) 100%); }
+.minishop-bottle--pump .minishop-cap { top: -12px; width: 20px; height: 16px; border-radius: 5px; background: linear-gradient(135deg, #FFFFFF 0%, #D8C4A8 100%); }
+.minishop-bottle--pump .minishop-nozzle { position: absolute; top: -22px; left: 62%; width: 26px; height: 7px; border-radius: 4px; background: linear-gradient(135deg, #F3D6C5, #C98A6D); transform: rotate(-18deg); }
+
+.minishop-bottle--jar { width: 78px; height: 66px; border-radius: 40% 40% 18px 18px; background: linear-gradient(160deg, rgba(255,255,255,.85) 0%, rgba(255,230,240,.8) 100%); align-self: flex-end; }
+.minishop-bottle--jar .minishop-cap { top: -10px; width: 44px; height: 14px; border-radius: 7px; background: linear-gradient(135deg, #FF8CC5, #FF4FA2); }
+
+.minishop-bottle--drop { width: 36px; height: 112px; background: linear-gradient(160deg, rgba(255,247,250,.85) 0%, rgba(255,193,217,.75) 100%); }
+.minishop-bottle--drop .minishop-cap { top: -16px; width: 16px; height: 20px; border-radius: 5px; background: linear-gradient(135deg, #FF4FA2, #E0439A); }
+
+@media (max-width: 991px) {
+    .minishop-hero-content { max-width: 100%; }
+    .minishop-hero-products { width: 240px; opacity: .75; }
+    .minishop-hero-bags { display: none; }
+}
+@media (max-width: 767px) {
+    .minishop-hero-banner { padding: 1.7rem 1.5rem; min-height: 170px; }
+    .minishop-hero-products { display: none; }
+    .minishop-hero-flare { display: none; }
+    .minishop-hero-icon { width: 50px; height: 50px; }
+    .minishop-hero-icon i { font-size: 1.15rem; }
+    .minishop-hero-text h4 { font-size: 1.2rem; }
+    .minishop-hero-text p { font-size: .84rem; }
+}
 </style>
 
 <!-- Page Header -->
-<div class="page-header-section">
-    <div>
-        <h1 class="page-title"><i class="fas fa-store"></i> My Mini-Shop</h1>
-        <p class="page-subtitle">Manage your inventory and publish products to your storefront.</p>
+<div class="ds-hero-card mb-3">
+    <div class="minishop-hero-banner">
+        <div class="minishop-hero-glow minishop-hero-glow-1"></div>
+        <div class="minishop-hero-glow minishop-hero-glow-2"></div>
+        <div class="minishop-hero-flare"></div>
+
+        <svg class="minishop-hero-leaves" viewBox="0 0 800 210" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <g fill="#FF4FA2" opacity="0.07">
+                <path d="M40 20 C90 10 120 45 105 90 C70 85 30 60 40 20 Z"></path>
+                <path d="M120 170 C155 150 200 165 205 200 C170 210 130 205 120 170 Z"></path>
+                <path d="M700 15 C740 5 775 35 765 75 C730 75 695 50 700 15 Z"></path>
+            </g>
+        </svg>
+
+        <svg class="minishop-hero-wave" viewBox="0 0 1440 200" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M0,110 C240,170 480,50 720,90 C960,130 1200,50 1440,100 L1440,200 L0,200 Z" fill="rgba(255,214,232,0.55)"></path>
+            <path d="M0,140 C280,80 560,180 840,120 C1080,70 1280,140 1440,130 L1440,200 L0,200 Z" fill="rgba(255,79,162,0.14)"></path>
+        </svg>
+
+        <div class="minishop-hero-shine"></div>
+
+        <div class="minishop-hero-particles" aria-hidden="true">
+            <span></span><span></span><span></span><span></span><span></span><span></span>
+        </div>
+        <div class="minishop-hero-sparkles" aria-hidden="true">
+            <div class="minishop-sparkle"></div><div class="minishop-sparkle"></div><div class="minishop-sparkle"></div>
+        </div>
+
+        <div class="minishop-hero-bags" aria-hidden="true">
+            <div class="minishop-bag minishop-bag--beige"></div>
+            <div class="minishop-bag minishop-bag--pink"></div>
+        </div>
+
+        <div class="minishop-hero-products" aria-hidden="true">
+            <div class="minishop-bottle minishop-bottle--drop"><div class="minishop-cap"></div></div>
+            <div class="minishop-bottle minishop-bottle--pump"><div class="minishop-nozzle"></div><div class="minishop-cap"></div></div>
+            <div class="minishop-bottle minishop-bottle--tall"><div class="minishop-cap"></div></div>
+            <div class="minishop-bottle minishop-bottle--jar"><div class="minishop-cap"></div></div>
+        </div>
+
+        <div class="minishop-hero-content">
+            <div class="minishop-hero-icon"><i class="fas fa-shopping-bag"></i></div>
+            <div class="minishop-hero-text">
+                <h4><?php echo !empty($shopName) ? htmlspecialchars($shopName) : 'My Mini-Shop'; ?></h4>
+                <p>Manage your inventory and publish products to your storefront.</p>
+            </div>
+        </div>
     </div>
 </div>
 
-<!-- Stat Cards -->
-<div class="row g-3 mt-2">
+<!-- Stat Cards (trend-line variant — left as plain .stat-card, not merged into the hero card) -->
+<div class="row g-3 mt-3">
     <?php foreach ($statCards as $card): ?>
         <?php
             $pct = $trend[$card['trendKey']] ?? 0;
@@ -177,10 +449,10 @@ function copyShopUrl() {
 }
 </script>
 
-<!-- Published Listings + Sidebar -->
+<!-- Published Listings (full width so the table has room to breathe) -->
 <div class="row g-3 mt-1">
-    <div class="col-12 col-xl-8">
-        <div class="card h-100">
+    <div class="col-12">
+        <div class="card ds-pink-table-card">
             <div class="card-header">
                 <h3 class="card-title"><i class="fas fa-store"></i> Published Listings <span class="badge badge-primary" style="margin-left:6px;"><?php echo count($myListings); ?> Products</span></h3>
                 <div class="section-toolbar">
@@ -205,7 +477,7 @@ function copyShopUrl() {
                     </div>
                 <?php else: ?>
                     <div class="table-responsive">
-                        <table class="table table-striped" id="listingsTable">
+                        <table class="table table-striped ds-pink-table" id="listingsTable">
                             <thead>
                                 <tr>
                                     <th>Product</th>
@@ -241,7 +513,7 @@ function copyShopUrl() {
                                                 <input type="number" step="0.01" min="<?php echo $listing['base_price']; ?>" name="commission_price"
                                                        value="<?php echo htmlspecialchars($listing['commission_price']); ?>"
                                                        style="width:100px;" class="form-control form-control-sm">
-                                                <button type="submit" class="btn btn-sm btn-info" title="Save price"><i class="fas fa-save"></i></button>
+                                                <button type="submit" class="ds-action-btn" title="Save price"><i class="fas fa-save" style="font-size:11px;"></i></button>
                                             </form>
                                         </td>
                                         <td data-label="Stock">
@@ -268,19 +540,19 @@ function copyShopUrl() {
                                         </td>
                                         <td data-label="Actions">
                                             <div class="action-buttons">
-                                                <button onclick="shareProduct(<?php echo $listing['product_id']; ?>)" class="btn btn-sm btn-outline-primary" title="Copy share link">
-                                                    <i class="fas fa-share-alt"></i>
+                                                <button onclick="shareProduct(<?php echo $listing['product_id']; ?>)" class="ds-action-btn" title="Copy share link">
+                                                    <i class="fas fa-share-alt" style="font-size:11px;"></i>
                                                 </button>
-                                                <a href="<?php echo BASE_URL; ?>reseller/inventory/history/<?php echo $listing['product_id']; ?>" class="btn btn-sm btn-outline" title="Stock history">
-                                                    <i class="fas fa-clock"></i>
+                                                <a href="<?php echo BASE_URL; ?>reseller/inventory/history/<?php echo $listing['product_id']; ?>" class="ds-action-btn" title="Stock history">
+                                                    <i class="fas fa-clock" style="font-size:11px;"></i>
                                                 </a>
                                                 <?php if ($listing['is_published']): ?>
                                                     <form method="post" action="<?php echo BASE_URL; ?>reseller/inventory/unpublish/<?php echo $listing['reseller_product_id']; ?>" class="d-inline" onsubmit="return confirmSubmit(event, this, 'Remove this product from your mini-shop?');">
-                                                        <button type="submit" class="btn btn-sm btn-danger" title="Unpublish"><i class="fas fa-eye-slash"></i></button>
+                                                        <button type="submit" class="ds-action-btn" title="Unpublish"><i class="fas fa-eye-slash" style="font-size:11px;"></i></button>
                                                     </form>
                                                 <?php else: ?>
                                                     <form method="post" action="<?php echo BASE_URL; ?>reseller/inventory/publish/<?php echo $listing['product_id']; ?>" class="d-inline">
-                                                        <button type="submit" class="btn btn-sm btn-success" title="Re-publish"><i class="fas fa-eye"></i></button>
+                                                        <button type="submit" class="ds-action-btn" title="Re-publish"><i class="fas fa-eye" style="font-size:11px;"></i></button>
                                                     </form>
                                                 <?php endif; ?>
                                             </div>
@@ -294,9 +566,12 @@ function copyShopUrl() {
             </div>
         </div>
     </div>
+</div>
 
-    <div class="col-12 col-xl-4">
-        <div class="card mb-3">
+<!-- Inventory summary sidebar cards, now side-by-side below the full-width table -->
+<div class="row g-3 mt-1">
+    <div class="col-12 col-lg-4">
+        <div class="card h-100">
             <div class="card-header">
                 <h3 class="card-title"><i class="fas fa-chart-pie"></i> Inventory Overview</h3>
             </div>
@@ -320,8 +595,10 @@ function copyShopUrl() {
                 </div>
             </div>
         </div>
+    </div>
 
-        <div class="card mb-3">
+    <div class="col-12 col-lg-4">
+        <div class="card h-100">
             <div class="card-header">
                 <h3 class="card-title"><i class="fas fa-bell"></i> Low Stock Alerts</h3>
             </div>
@@ -337,12 +614,24 @@ function copyShopUrl() {
                         </div>
                     <?php endforeach; ?>
                 <?php else: ?>
-                    <p class="text-center text-muted" style="padding:14px 0;font-size:.85rem;">No low stock items right now.</p>
+                    <div class="lsa-empty">
+                        <div class="lsa-empty-illustration">
+                            <i class="fas fa-box-open lsa-empty-box"></i>
+                            <span class="lsa-empty-badge"><i class="fas fa-triangle-exclamation"></i></span>
+                            <span class="lsa-empty-spark s1"></span>
+                            <span class="lsa-empty-spark s2"></span>
+                            <span class="lsa-empty-spark s3"></span>
+                        </div>
+                        <p class="lsa-empty-title">No low stock items right now.</p>
+                        <p class="lsa-empty-sub">You're all set!</p>
+                    </div>
                 <?php endif; ?>
             </div>
         </div>
+    </div>
 
-        <div class="card tips-card">
+    <div class="col-12 col-lg-4">
+        <div class="card tips-card h-100">
             <div class="card-header" style="border-bottom-color:rgba(255,105,180,.2);">
                 <h3 class="card-title"><i class="fas fa-lightbulb"></i> Tips to Boost Sales</h3>
             </div>
@@ -405,7 +694,7 @@ function copyShopUrl() {
 <script>
 function shareProduct(productId) {
     const resellerId = <?php echo (int) $this->session->userdata('user_id'); ?>;
-    const customerShopUrl = '<?php echo str_replace("/reseller/", "/customer/", BASE_URL); ?>shop/product/' + productId + '?ref=' + resellerId;
+    const customerShopUrl = '<?php echo str_replace("/reseller/", "/customer/", BASE_URL); ?>shop/product/' + productId + '?reseller=' + resellerId;
 
     if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(customerShopUrl).then(() => alert('Share link copied to clipboard!'));

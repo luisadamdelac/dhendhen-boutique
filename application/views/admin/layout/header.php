@@ -124,9 +124,14 @@
 
         <!-- Sidebar -->
         <aside class="sidebar" id="sidebar">
+            <?php $sidebarLogoImage = get_user_profile_image(); ?>
             <div class="sidebar-header">
                 <div class="sidebar-logo">
-                    <i class="fas fa-store"></i>
+                    <?php if (!empty($sidebarLogoImage)): ?>
+                        <img src="<?php echo BASE_URL . $sidebarLogoImage; ?>" alt="Store logo" class="sidebar-logo-img">
+                    <?php else: ?>
+                        <i class="fas fa-store"></i>
+                    <?php endif; ?>
                 </div>
                 <div class="sidebar-brand">
                     <h2>DropSell</h2>
@@ -243,6 +248,25 @@
                     </li>
                 </ul>
             </nav>
+
+            <?php if (isset($order_stats['total_sales'])): ?>
+            <!-- Wallet Balance (mirrors the Total Sales figure already
+                 computed for the dashboard — there is no separate admin
+                 wallet ledger, so this only renders where that stat is
+                 available). -->
+            <div class="sidebar-wallet-card">
+                <div class="sidebar-wallet-label">Wallet Balance</div>
+                <div class="sidebar-wallet-amount">₱<?php echo number_format($order_stats['total_sales'], 2); ?></div>
+                <div class="sidebar-wallet-sub">Available Balance</div>
+                <div class="sidebar-wallet-available">₱<?php echo number_format($order_stats['total_sales'], 2); ?></div>
+                <a href="<?php echo site_url('admin/withdrawal'); ?>" class="sidebar-wallet-btn">View Wallet</a>
+            </div>
+            <?php endif; ?>
+
+            <div class="sidebar-footer-note">
+                <span>© <?php echo date('Y'); ?> DropSell</span>
+                <span>All rights reserved.</span>
+            </div>
         </aside>
 
         <!-- Main Content -->

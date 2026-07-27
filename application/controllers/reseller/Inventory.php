@@ -21,6 +21,15 @@ class Inventory extends Authenticated_Controller {
         $data = $this->set_view_data();
         $data['page_title'] = 'Inventory - Reseller Portal';
 
+        // Mini-shop hero title: the reseller's own storefront/business name,
+        // same fallback used on the public storefront (Shop::reseller()) —
+        // business_name if set, else their full name.
+        $this->load->model('reseller_model');
+        $reseller = $this->reseller_model->get_by_id($this->user_id);
+        $data['shopName'] = !empty($reseller['business_name'])
+            ? $reseller['business_name']
+            : trim(($reseller['first_name'] ?? '') . ' ' . ($reseller['last_name'] ?? ''));
+
         // My Mini-Shop: this reseller's published (and unpublished) listings
         $data['myListings'] = $this->db->select('rp.*, p.product_name, p.description, p.price as base_price, p.stock as central_stock, p.status as product_status, p.expiry_date, c.category_name, pi.image_path as product_image')
             ->from(RESELLER_PRODUCTS_TABLE . ' rp')

@@ -22,10 +22,10 @@
     <style>
         :root {
             --ds-pink: #ff69b4;
-            --ds-pink-dark: #e0559c;
-            --ds-violet: #ee82ee;
-            --ds-purple: #9370db;
-            --ds-gradient: linear-gradient(135deg, var(--ds-pink) 0%, var(--ds-violet) 50%, var(--ds-purple) 100%);
+            --ds-pink-dark: #d6006d;
+            --ds-violet: #ff8cc5;
+            --ds-purple: #b8005c;
+            --ds-gradient: linear-gradient(135deg, var(--ds-pink-dark) 0%, var(--ds-purple) 100%);
             --ds-text: #24202b;
             --ds-muted: #6b7280;
             --ds-border: #e5e7eb;
@@ -33,7 +33,7 @@
             --ds-success: #22c55e;
             --ds-radius-lg: 20px;
             --ds-radius-md: 12px;
-            --ds-shadow: 0 24px 60px rgba(133, 49, 122, 0.14);
+            --ds-shadow: 0 24px 60px rgba(142, 14, 78, 0.16);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -41,7 +41,7 @@
 
         body {
             font-family: 'Poppins', sans-serif;
-            background: linear-gradient(135deg, #fce4ec 0%, #f3e5f5 50%, #e1bee7 100%);
+            background: radial-gradient(circle at 50% 35%, #fdeef5 0%, #fbd9ea 55%, #f7c6de 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -74,7 +74,9 @@
 
         /* ============ Left branding panel ============ */
         .register-left {
-            background: var(--ds-gradient);
+            background:
+                radial-gradient(circle, rgba(255,255,255,0.16) 1.5px, transparent 1.5px) 0 0/20px 20px,
+                linear-gradient(150deg, #6b0a3d 0%, #c2185b 45%, #8e0e4e 100%);
             padding: 52px 42px;
             color: white;
             display: flex;
@@ -87,33 +89,32 @@
             text-align: center;
         }
 
-        .brand-section { margin-bottom: 34px; }
+        .brand-section { margin-bottom: 30px; }
 
-        .brand-logo {
-            font-size: 60px;
-            margin-bottom: 18px;
-            display: inline-block;
-            animation: pulse 2.2s ease-in-out infinite;
+        .brand-logo-wrap {
+            width: 130px;
+            height: 130px;
+            margin: 0 auto 18px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 4px solid rgba(255, 255, 255, 0.9);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
         }
 
-        @media (prefers-reduced-motion: reduce) {
-            .brand-logo { animation: none; }
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50%       { transform: scale(1.08); }
-        }
+        .brand-logo-img { display: block; width: 100%; height: 100%; object-fit: cover; }
 
         .brand-name { font-size: 32px; font-weight: 700; margin-bottom: 6px; letter-spacing: -0.02em; }
         .brand-title { font-size: 15.5px; font-weight: 300; opacity: 0.95; }
+        .brand-divider { width: 50px; height: 3px; background: #ffca28; border-radius: 2px; margin: 14px auto; }
 
-        .benefits { width: 100%; text-align: left; display: flex; flex-direction: column; gap: 22px; }
+        .benefits { width: 100%; display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
 
         .benefit {
             display: flex;
+            flex-direction: column;
             align-items: center;
-            gap: 16px;
+            text-align: center;
+            gap: 10px;
             animation: slideInLeft 0.6s ease backwards;
         }
 
@@ -127,20 +128,20 @@
         }
 
         .benefit-icon {
-            width: 44px;
-            height: 44px;
-            background: rgba(255, 255, 255, 0.18);
-            border: 1px solid rgba(255,255,255,0.28);
+            width: 52px;
+            height: 52px;
+            background: linear-gradient(135deg, #ff4f93, #ff85b3);
             border-radius: 14px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 18px;
+            font-size: 20px;
+            color: #ffca28;
             flex-shrink: 0;
         }
 
-        .benefit-text h4 { font-size: 14.5px; font-weight: 600; margin-bottom: 3px; }
-        .benefit-text p { font-size: 12.5px; opacity: 0.88; line-height: 1.4; }
+        .benefit-text h4 { font-size: 13.5px; font-weight: 600; margin-bottom: 3px; }
+        .benefit-text p { font-size: 11.5px; opacity: 0.88; line-height: 1.4; }
 
         /* ============ Right panel: wizard ============ */
         .register-right {
@@ -493,7 +494,7 @@
             .register-left { padding: 26px 20px; }
             .register-right { padding: 22px 18px 90px; }
             .register-box h2 { font-size: 22px; }
-            .brand-logo { font-size: 44px; animation: none; margin-bottom: 12px; }
+            .brand-logo-wrap { width: 100px; height: 100px; margin-bottom: 12px; }
             .benefits { gap: 14px; }
             .benefit-icon { width: 38px; height: 38px; font-size: 15px; border-radius: 11px; }
             .benefit-text h4 { font-size: 13px; }
@@ -520,9 +521,12 @@
         <!-- Left Panel -->
         <div class="register-left">
             <div class="brand-section">
-                <div class="brand-logo">🛍️</div>
+                <div class="brand-logo-wrap">
+                    <img class="brand-logo-img" src="<?php echo base_url('public/uploads/avatars/c6e87fc1363436e5468a05c9c2a59b26.png'); ?>" alt="Dhendhen Beauty Products and Boutique">
+                </div>
                 <h1 class="brand-name">DropSell</h1>
                 <p class="brand-title">Join Our Community</p>
+                <div class="brand-divider"></div>
             </div>
 
             <div class="benefits">
@@ -636,7 +640,7 @@
 
                         <div class="step-actions single">
                             <button type="button" class="btn btn-primary" data-action="next">
-                                Next <i class="fas fa-arrow-right"></i>
+                                Next
                             </button>
                         </div>
                     </section>
@@ -717,10 +721,10 @@
 
                         <div class="step-actions">
                             <button type="button" class="btn btn-outline" data-action="back">
-                                <i class="fas fa-arrow-left"></i> Back
+                                Back
                             </button>
                             <button type="button" class="btn btn-primary" data-action="next">
-                                Next <i class="fas fa-arrow-right"></i>
+                                Next
                             </button>
                         </div>
                     </section>
@@ -774,7 +778,7 @@
 
                         <div class="step-actions">
                             <button type="button" class="btn btn-outline" data-action="back">
-                                <i class="fas fa-arrow-left"></i> Back
+                                Back
                             </button>
                             <button type="submit" class="btn btn-primary" id="submitBtn">
                                 <i class="fas fa-user-plus"></i> Create Account

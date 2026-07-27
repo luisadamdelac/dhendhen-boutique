@@ -1,15 +1,6 @@
     <?php defined('BASEPATH') OR exit('No direct script access allowed'); ?>
 <link rel="stylesheet" href="<?php echo BASE_URL; ?>public/vendor/datatables/dataTables.bootstrap5.min.css">
 <style>
-/* DataTables controls restyled to match the existing filter-bar/pill look instead of its own defaults */
-.dataTables_wrapper .dataTables_filter input {
-    border: 1px solid var(--border); border-radius: var(--radius-md);
-    padding: .4rem .75rem; font-size: .85rem; margin-left: .5rem;
-}
-.dataTables_wrapper .dataTables_filter input:focus { outline: none; border-color: var(--primary-pink); }
-table.dataTable thead th { position: relative; }
-table.dataTable thead th.sorting:hover { color: var(--primary-pink); cursor: pointer; }
-
 /* Header alert pills */
 .hdr-pill { display:inline-flex; align-items:center; gap:6px; padding:7px 14px; border-radius:20px; font-size:12.5px; font-weight:600; background:#fff; border:1px solid #fbc02d; color:#a66a00; text-decoration:none; transition:box-shadow .15s; }
 .hdr-pill:hover { color:#a66a00; box-shadow:0 2px 8px rgba(0,0,0,.08); }
@@ -51,109 +42,145 @@ table.dataTable thead th.sorting:hover { color: var(--primary-pink); cursor: poi
 .branch-bar-track { height:7px; border-radius:999px; background:#f0f1f6; overflow:hidden; }
 .branch-bar-fill { height:100%; border-radius:999px; background:linear-gradient(90deg,#8b5cf6,#a78bfa); }
 .branch-bar-pct { text-align:right; font-size:11px; color:#8a94ad; margin-top:4px; }
+
+.stkal-empty { text-align: center; padding: 20px 10px 10px; }
+.stkal-empty-illustration { position: relative; width: 92px; height: 72px; margin: 0 auto 14px; }
+.stkal-empty-box {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    font-size: 52px;
+    background: linear-gradient(135deg, #FF8CC5 0%, #FF4FA2 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    filter: drop-shadow(0 8px 12px rgba(255, 79, 162, .25));
+}
+.stkal-empty-badge {
+    position: absolute; right: 0; bottom: 0; width: 26px; height: 26px; border-radius: 50%;
+    background: linear-gradient(135deg, #FF4FA2, #E0439A); color: #fff;
+    display: flex; align-items: center; justify-content: center; font-size: 11px;
+    box-shadow: 0 4px 8px rgba(255, 79, 162, .4); border: 2px solid #fff;
+}
+.stkal-empty-spark { position: absolute; border-radius: 50%; background: #FFC1D9; }
+.stkal-empty-spark.s1 { width: 5px; height: 5px; top: 0; left: 12px; }
+.stkal-empty-spark.s2 { width: 4px; height: 4px; top: 8px; right: 4px; }
+.stkal-empty-spark.s3 { width: 4px; height: 4px; bottom: 14px; left: 0; }
+.stkal-empty-title { margin: 0; font-size: .85rem; font-weight: 600; color: #1a1a2e; }
+.stkal-empty-sub { margin: 2px 0 0; font-size: .85rem; font-weight: 600; color: #8a94ad; }
 </style>
 
 <div class="container-fluid py-4">
 
-    <!-- Page Header -->
-    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-4">
-        <div>
-            <h4 class="fw-bold mb-0" style="color:#1a1a2e;">Inventory Management</h4>
-            <small class="text-muted">Products, stock levels, and physical branches</small>
-        </div>
-        <div class="d-flex gap-2 flex-wrap align-items-center">
-            <a href="<?= site_url('admin/product/expiring'); ?>" class="hdr-pill">
-                <i class="fas fa-calendar-times"></i> Expiring Soon
-                <?php if ($stat_expiring > 0): ?><span class="cnt"><?= $stat_expiring; ?></span><?php endif; ?>
-            </a>
-            <a href="<?= site_url('admin/product/low_stock'); ?>" class="hdr-pill">
-                <i class="fas fa-exclamation-triangle"></i> Low Stock
-                <?php if ($stat_low_stock > 0): ?><span class="cnt"><?= $stat_low_stock; ?></span><?php endif; ?>
-            </a>
-            <a href="<?= site_url('admin/product/add'); ?>" class="btn btn-primary btn-sm">
-                <i class="fas fa-plus me-1"></i> Add Product
-            </a>
-        </div>
-    </div>
+    <!-- Hero + Stats + Products header — merged into a single card -->
+    <div class="ds-hero-card">
 
-    <!-- Stat Cards -->
-    <div class="row row-cols-2 row-cols-md-5 g-3 mb-3">
-        <div class="col">
-            <div class="stat-card stat-card-v2">
-                <div>
-                    <div class="scv2-label">Total Products</div>
-                    <div class="scv2-value"><?= number_format($stat_total); ?></div>
-                    <div class="scv2-sub">All registered products</div>
+        <div class="ds-hero-banner">
+            <svg class="ds-hero-wave" viewBox="0 0 1440 200" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M0,110 C240,170 480,50 720,90 C960,130 1200,50 1440,100 L1440,200 L0,200 Z" fill="rgba(255,105,180,0.16)"></path>
+                <path d="M0,140 C280,80 560,180 840,120 C1080,70 1280,140 1440,130 L1440,200 L0,200 Z" fill="rgba(233,30,99,0.22)"></path>
+            </svg>
+            <div class="ds-hero-banner-content d-flex flex-wrap align-items-center justify-content-between gap-2">
+                <div class="d-flex align-items-center gap-3">
+                    <div style="width:46px;height:46px;border-radius:14px;background:var(--primary-pink-dark);color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;">
+                        <i class="fas fa-boxes"></i>
+                    </div>
+                    <div>
+                        <h4 class="fw-bold mb-0" style="color:#1a1a2e;">Inventory Management</h4>
+                        <small class="text-muted">Products, stock levels, and physical branches</small>
+                    </div>
                 </div>
-                <div class="scv2-icon" style="background:#eef0ff;color:#4361ee;"><i class="fas fa-boxes"></i></div>
+                <div class="d-flex gap-2 flex-wrap align-items-center">
+                    <a href="<?= site_url('admin/product/expiring'); ?>" class="hdr-pill">
+                        <i class="fas fa-calendar-times"></i> Expiring Soon
+                        <?php if ($stat_expiring > 0): ?><span class="cnt"><?= $stat_expiring; ?></span><?php endif; ?>
+                    </a>
+                    <a href="<?= site_url('admin/product/low_stock'); ?>" class="hdr-pill">
+                        <i class="fas fa-exclamation-triangle"></i> Low Stock
+                        <?php if ($stat_low_stock > 0): ?><span class="cnt"><?= $stat_low_stock; ?></span><?php endif; ?>
+                    </a>
+                    <a href="<?= site_url('admin/product/add'); ?>" class="btn btn-primary btn-sm">
+                        <i class="fas fa-plus me-1"></i> Add Product
+                    </a>
+                </div>
             </div>
         </div>
-        <div class="col">
-            <div class="stat-card stat-card-v2">
-                <div>
-                    <div class="scv2-label">Available Stock</div>
-                    <div class="scv2-value"><?= number_format($stat_available); ?></div>
-                    <div class="scv2-sub">Products in stock</div>
-                </div>
-                <div class="scv2-icon" style="background:#e8f5e9;color:#2e7d32;"><i class="fas fa-check"></i></div>
-            </div>
-        </div>
-        <div class="col">
-            <div class="stat-card stat-card-v2">
-                <div>
-                    <div class="scv2-label">Unavailable Stock</div>
-                    <div class="scv2-value"><?= number_format($stat_not_available); ?></div>
-                    <div class="scv2-sub">Out of stock products</div>
-                </div>
-                <div class="scv2-icon" style="background:#ffebee;color:#c62828;"><i class="fas fa-xmark"></i></div>
-            </div>
-        </div>
-        <div class="col">
-            <div class="stat-card stat-card-v2">
-                <div>
-                    <div class="scv2-label">Low Stock</div>
-                    <div class="scv2-value"><?= number_format($stat_low_stock); ?></div>
-                    <div class="scv2-sub">Need restocking</div>
-                </div>
-                <div class="scv2-icon" style="background:#fff8e1;color:#f57f17;"><i class="fas fa-triangle-exclamation"></i></div>
-            </div>
-        </div>
-        <div class="col">
-            <div class="stat-card stat-card-v2">
-                <div>
-                    <div class="scv2-label">Expiring Soon</div>
-                    <div class="scv2-value"><?= number_format($stat_expiring); ?></div>
-                    <div class="scv2-sub">Within 30 days</div>
-                </div>
-                <div class="scv2-icon" style="background:#fff3e0;color:#e65100;"><i class="fas fa-box-archive"></i></div>
-            </div>
-        </div>
-    </div>
 
-    <!-- ===================== PRODUCTS SECTION ===================== -->
-    <div class="page-section">
-        <span class="section-title"><i class="fas fa-boxes me-2 text-primary"></i><?= $view === 'archived' ? 'Archived Products' : 'Products'; ?></span>
-        <hr>
-        <span class="text-muted small" style="white-space:nowrap;"><?= number_format($total); ?> result<?= $total != 1 ? 's' : ''; ?></span>
-        <div class="section-actions">
-            <?php if ($view === 'archived'): ?>
-                <a href="<?= site_url('admin/inventory'); ?>" class="btn btn-sm btn-outline-secondary">
-                    <i class="fas fa-arrow-left me-1"></i> Back to Active Products
-                </a>
-            <?php else: ?>
-                <a href="<?= site_url('admin/inventory?view=archived'); ?>" class="btn btn-sm btn-outline-secondary">
-                    <i class="fas fa-box-archive me-1"></i> View Archived
-                    <?php if (!empty($archived_count)): ?>
-                        <span class="badge bg-secondary ms-1"><?= $archived_count; ?></span>
-                    <?php endif; ?>
-                </a>
-            <?php endif; ?>
+        <!-- Stat Cards -->
+        <div class="ds-hero-stats">
+            <div class="row row-cols-2 row-cols-md-5 g-3">
+                <div class="col">
+                    <div class="ds-stat-tile">
+                        <div class="ds-stat-tile-icon" style="background:#eef0ff;color:#4361ee;"><i class="fas fa-boxes"></i></div>
+                        <div>
+                            <div class="ds-stat-tile-label">Total Products</div>
+                            <div class="ds-stat-tile-value"><?= number_format($stat_total); ?></div>
+                            <div class="ds-stat-tile-sub text-muted">All registered products</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="ds-stat-tile">
+                        <div class="ds-stat-tile-icon" style="background:#e8f5e9;color:#2e7d32;"><i class="fas fa-check"></i></div>
+                        <div>
+                            <div class="ds-stat-tile-label">Available Stock</div>
+                            <div class="ds-stat-tile-value"><?= number_format($stat_available); ?></div>
+                            <div class="ds-stat-tile-sub text-muted">Products in stock</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="ds-stat-tile">
+                        <div class="ds-stat-tile-icon" style="background:#ffebee;color:#c62828;"><i class="fas fa-xmark"></i></div>
+                        <div>
+                            <div class="ds-stat-tile-label">Unavailable Stock</div>
+                            <div class="ds-stat-tile-value"><?= number_format($stat_not_available); ?></div>
+                            <div class="ds-stat-tile-sub text-muted">Out of stock products</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="ds-stat-tile">
+                        <div class="ds-stat-tile-icon" style="background:#fff8e1;color:#f57f17;"><i class="fas fa-triangle-exclamation"></i></div>
+                        <div>
+                            <div class="ds-stat-tile-label">Low Stock</div>
+                            <div class="ds-stat-tile-value"><?= number_format($stat_low_stock); ?></div>
+                            <div class="ds-stat-tile-sub text-muted">Need restocking</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="ds-stat-tile">
+                        <div class="ds-stat-tile-icon" style="background:#fff3e0;color:#e65100;"><i class="fas fa-box-archive"></i></div>
+                        <div>
+                            <div class="ds-stat-tile-label">Expiring Soon</div>
+                            <div class="ds-stat-tile-value"><?= number_format($stat_expiring); ?></div>
+                            <div class="ds-stat-tile-sub text-muted">Within 30 days</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-    </div>
 
-    <!-- Filter Bar -->
-    <div class="filter-bar">
-        <form method="get" id="filterForm" class="row g-2 align-items-end">
+        <!-- ===================== PRODUCTS SECTION ===================== -->
+        <div class="ds-hero-section-row">
+            <span class="section-title"><i class="fas fa-boxes me-2 text-primary"></i><?= $view === 'archived' ? 'Archived Products' : 'Products'; ?></span>
+            <div class="d-flex align-items-center gap-3">
+                <?php if ($view === 'archived'): ?>
+                    <a href="<?= site_url('admin/inventory'); ?>" class="btn btn-sm btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-1"></i> Back to Active Products
+                    </a>
+                <?php else: ?>
+                    <a href="<?= site_url('admin/inventory?view=archived'); ?>" class="btn btn-sm btn-outline-secondary">
+                        <i class="fas fa-box-archive me-1"></i> View Archived
+                        <?php if (!empty($archived_count)): ?>
+                            <span class="badge bg-secondary ms-1"><?= $archived_count; ?></span>
+                        <?php endif; ?>
+                    </a>
+                <?php endif; ?>
+                <span class="text-muted small" style="white-space:nowrap;"><?= number_format($total); ?> result<?= $total != 1 ? 's' : ''; ?></span>
+            </div>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="filter-bar">
+            <form method="get" id="filterForm" class="row g-2 align-items-end">
             <input type="hidden" name="view" value="<?= htmlspecialchars($view); ?>">
             <div class="col-md-4 col-sm-6">
                 <div class="input-group input-group-sm">
@@ -199,12 +226,14 @@ table.dataTable thead th.sorting:hover { color: var(--primary-pink); cursor: poi
                 <?php endif; ?>
             </div>
         </form>
+        </div>
+
     </div>
 
     <!-- Products Table -->
-    <div class="card border-0 shadow-sm mb-2" style="border-radius:12px;overflow:hidden;">
+    <div class="card ds-pink-table-card mb-2">
         <div class="table-responsive">
-            <table class="table inv-table mb-0 table-stack" id="productsTable">
+            <table class="table inv-table ds-pink-table mb-0 table-stack" id="productsTable">
                 <thead>
                     <tr>
                         <th class="ps-3" style="width:34px;"><input type="checkbox" id="selectAllProducts" class="form-check-input"></th>
@@ -288,23 +317,21 @@ table.dataTable thead th.sorting:hover { color: var(--primary-pink); cursor: poi
                         <td class="text-center pe-3">
                             <div class="d-flex gap-1 justify-content-center">
                                 <a href="<?= site_url('admin/product/view/' . $p['product_id']); ?>"
-                                   class="btn btn-sm btn-outline-info" title="View" style="width:30px;height:30px;padding:0;display:flex;align-items:center;justify-content:center;">
+                                   class="ds-action-btn" title="View">
                                     <i class="fas fa-eye" style="font-size:11px;"></i>
                                 </a>
                                 <a href="<?= site_url('admin/product/edit/' . $p['product_id']); ?>"
-                                   class="btn btn-sm btn-outline-warning" title="Edit" style="width:30px;height:30px;padding:0;display:flex;align-items:center;justify-content:center;">
+                                   class="ds-action-btn" title="Edit">
                                     <i class="fas fa-edit" style="font-size:11px;"></i>
                                 </a>
                                 <?php if (!empty($p['is_archived'])): ?>
-                                <button type="button" class="btn btn-sm btn-outline-success" title="Restore"
-                                        onclick="restoreProduct(<?= $p['product_id']; ?>, '<?= addslashes(htmlspecialchars($p['product_name'])); ?>')"
-                                        style="width:30px;height:30px;padding:0;display:flex;align-items:center;justify-content:center;">
+                                <button type="button" class="ds-action-btn" title="Restore"
+                                        onclick="restoreProduct(<?= $p['product_id']; ?>, '<?= addslashes(htmlspecialchars($p['product_name'])); ?>')">
                                     <i class="fas fa-rotate-left" style="font-size:11px;"></i>
                                 </button>
                                 <?php else: ?>
-                                <button type="button" class="btn btn-sm btn-outline-secondary" title="Archive"
-                                        onclick="archiveProduct(<?= $p['product_id']; ?>, '<?= addslashes(htmlspecialchars($p['product_name'])); ?>')"
-                                        style="width:30px;height:30px;padding:0;display:flex;align-items:center;justify-content:center;">
+                                <button type="button" class="ds-action-btn" title="Archive"
+                                        onclick="archiveProduct(<?= $p['product_id']; ?>, '<?= addslashes(htmlspecialchars($p['product_name'])); ?>')">
                                     <i class="fas fa-box-archive" style="font-size:11px;"></i>
                                 </button>
                                 <?php endif; ?>
@@ -408,7 +435,17 @@ table.dataTable thead th.sorting:hover { color: var(--primary-pink); cursor: poi
                             </div>
                         <?php endforeach; ?>
                     <?php else: ?>
-                        <p class="text-center text-muted" style="padding:24px 0;font-size:.85rem;">No stock alerts right now.</p>
+                        <div class="stkal-empty">
+                            <div class="stkal-empty-illustration">
+                                <i class="fas fa-box-open stkal-empty-box"></i>
+                                <span class="stkal-empty-badge"><i class="fas fa-triangle-exclamation"></i></span>
+                                <span class="stkal-empty-spark s1"></span>
+                                <span class="stkal-empty-spark s2"></span>
+                                <span class="stkal-empty-spark s3"></span>
+                            </div>
+                            <p class="stkal-empty-title">No stock alerts right now.</p>
+                            <p class="stkal-empty-sub">You're all set!</p>
+                        </div>
                     <?php endif; ?>
                 </div>
             </div>
@@ -452,9 +489,9 @@ table.dataTable thead th.sorting:hover { color: var(--primary-pink); cursor: poi
         </div>
     </div>
 
-    <div class="card border-0 shadow-sm" style="border-radius:12px;overflow:hidden;">
+    <div class="card ds-pink-table-card">
         <div class="table-responsive">
-            <table class="table inv-table mb-0">
+            <table class="table inv-table ds-pink-table mb-0">
                 <thead>
                     <tr>
                         <th class="ps-3">Branch Name</th>
@@ -498,25 +535,21 @@ table.dataTable thead th.sorting:hover { color: var(--primary-pink); cursor: poi
                         <td class="text-center pe-3">
                             <div class="d-flex gap-1 justify-content-center">
                                 <a href="<?= site_url('admin/inventory?branch=' . $b['branch_id']); ?>"
-                                   class="btn btn-sm btn-outline-info" title="View products in this branch"
-                                   style="width:30px;height:30px;padding:0;display:flex;align-items:center;justify-content:center;">
+                                   class="ds-action-btn" title="View products in this branch">
                                     <i class="fas fa-eye" style="font-size:11px;"></i>
                                 </a>
-                                <button type="button" class="btn btn-sm btn-outline-warning" title="Edit"
-                                        onclick='openBranchModal(<?= json_encode($b); ?>)'
-                                        style="width:30px;height:30px;padding:0;display:flex;align-items:center;justify-content:center;">
+                                <button type="button" class="ds-action-btn" title="Edit"
+                                        onclick='openBranchModal(<?= json_encode($b); ?>)'>
                                     <i class="fas fa-edit" style="font-size:11px;"></i>
                                 </button>
                                 <?php if (($b['status'] ?? 'active') === 'active'): ?>
-                                <button type="button" class="btn btn-sm btn-outline-secondary" title="Deactivate"
-                                        onclick="toggleBranchStatus(<?= $b['branch_id']; ?>, '<?= addslashes(htmlspecialchars($b['branch_name'])); ?>', 'active')"
-                                        style="width:30px;height:30px;padding:0;display:flex;align-items:center;justify-content:center;">
+                                <button type="button" class="ds-action-btn" title="Deactivate"
+                                        onclick="toggleBranchStatus(<?= $b['branch_id']; ?>, '<?= addslashes(htmlspecialchars($b['branch_name'])); ?>', 'active')">
                                     <i class="fas fa-ban" style="font-size:11px;"></i>
                                 </button>
                                 <?php else: ?>
-                                <button type="button" class="btn btn-sm btn-outline-success" title="Reactivate"
-                                        onclick="toggleBranchStatus(<?= $b['branch_id']; ?>, '<?= addslashes(htmlspecialchars($b['branch_name'])); ?>', 'inactive')"
-                                        style="width:30px;height:30px;padding:0;display:flex;align-items:center;justify-content:center;">
+                                <button type="button" class="ds-action-btn" title="Reactivate"
+                                        onclick="toggleBranchStatus(<?= $b['branch_id']; ?>, '<?= addslashes(htmlspecialchars($b['branch_name'])); ?>', 'inactive')">
                                     <i class="fas fa-rotate-left" style="font-size:11px;"></i>
                                 </button>
                                 <?php endif; ?>

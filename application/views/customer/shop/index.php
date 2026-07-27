@@ -1,7 +1,7 @@
 <style>
     /* .products-grid/.product-card/.product-image/.product-info/.product-name/
        .product-price/.empty-state/.filter-section/.category-filter/.category-btn/
-       .pagination/.page-btn/.product-stock now come from the shared
+       .pagination/.page-btn/.product-stock/.trust-bar now come from the shared
        public/css/style.css component library instead of being redeclared per page. */
 
     /* ── Add to Cart modal (structural .modal/.modal-content/etc come from
@@ -63,14 +63,32 @@
 </style>
 
 <?php if (empty($isResellerShop) && empty($searchQuery) && empty($currentCategory) && (int) $currentPage <= 1): ?>
-<section class="shop-hero">
-    <div class="shop-hero-content">
-        <span class="shop-hero-eyebrow"><i class="fas fa-heart"></i> Welcome to DropSell</span>
-        <h1 class="shop-hero-title">Discover Your<br><span class="accent">Beauty Essentials</span></h1>
-        <p class="shop-hero-subtitle">Browse thousands of skincare and cosmetic products.</p>
-        <a href="#shop-products" class="btn btn-primary btn-lg shop-hero-cta">
-            Browse Products
-        </a>
+<section class="shop-hero" id="shopHeroSlider">
+    <div class="shop-hero-content-frame">
+        <div class="shop-hero-content active" data-slide-content="0">
+            <span class="shop-hero-eyebrow"><i class="fas fa-heart"></i> Welcome to DropSell</span>
+            <h1 class="shop-hero-title">Discover Your<br><span class="accent">Beauty Essentials</span></h1>
+            <p class="shop-hero-subtitle">Browse thousands of skincare and cosmetic products.</p>
+            <a href="#shop-products" class="btn btn-primary btn-lg shop-hero-cta">
+                Browse Products
+            </a>
+        </div>
+        <div class="shop-hero-content" data-slide-content="1">
+            <span class="shop-hero-eyebrow"><i class="fas fa-couch"></i> New Arrivals</span>
+            <h1 class="shop-hero-title">Elevate Your<br><span class="accent">Home Living</span></h1>
+            <p class="shop-hero-subtitle">Stylish furniture and home decor pieces for every room.</p>
+            <a href="#shop-products" class="btn btn-primary btn-lg shop-hero-cta">
+                Shop Furniture
+            </a>
+        </div>
+        <div class="shop-hero-content" data-slide-content="2">
+            <span class="shop-hero-eyebrow"><i class="fas fa-cookie-bite"></i> Sweet Treats</span>
+            <h1 class="shop-hero-title">Indulge in<br><span class="accent">Delicious Chocolates</span></h1>
+            <p class="shop-hero-subtitle">Premium chocolates and gourmet treats delivered fresh.</p>
+            <a href="#shop-products" class="btn btn-primary btn-lg shop-hero-cta">
+                Shop Treats
+            </a>
+        </div>
     </div>
     <div class="shop-hero-decor" aria-hidden="true">
         <span class="decor-circle c1"></span>
@@ -85,6 +103,8 @@
         <i class="fas fa-star decor-star s5"></i>
     </div>
     <div class="shop-hero-art" aria-hidden="true">
+        <!-- Slide 1: Beauty products -->
+        <div class="shop-hero-art-slide active" data-slide-art="0">
         <svg viewBox="0 0 460 300" xmlns="http://www.w3.org/2000/svg">
             <defs>
                 <filter id="softBlur" x="-50%" y="-50%" width="200%" height="200%">
@@ -220,13 +240,261 @@
                 <circle cx="100" cy="130" r="2.5"/>
             </g>
         </svg>
-        <div class="hero-dots">
-            <span class="hero-dot active"></span>
-            <span class="hero-dot"></span>
-            <span class="hero-dot"></span>
+        </div>
+
+        <!-- Slide 2: Furniture -->
+        <div class="shop-hero-art-slide" data-slide-art="1">
+        <svg viewBox="0 0 460 300" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <filter id="softBlurF" x="-50%" y="-50%" width="200%" height="200%">
+                    <feGaussianBlur stdDeviation="7"/>
+                </filter>
+                <filter id="dropShadowF" x="-60%" y="-60%" width="220%" height="220%">
+                    <feDropShadow dx="0" dy="7" stdDeviation="5" flood-color="#9D174D" flood-opacity="0.22"/>
+                </filter>
+                <radialGradient id="heroGlowF" cx="50%" cy="52%" r="55%">
+                    <stop offset="0%" stop-color="#EC4899" stop-opacity="0.18"/>
+                    <stop offset="100%" stop-color="#EC4899" stop-opacity="0"/>
+                </radialGradient>
+                <linearGradient id="ringGradF" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#FFFFFF"/>
+                    <stop offset="100%" stop-color="#FBCFE8"/>
+                </linearGradient>
+                <linearGradient id="podiumLightF" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#FFFFFF"/>
+                    <stop offset="100%" stop-color="#FCE7F3"/>
+                </linearGradient>
+                <linearGradient id="podiumDarkF" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#F9A8D4"/>
+                    <stop offset="100%" stop-color="#EC4899"/>
+                </linearGradient>
+                <linearGradient id="chairFabric" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#FBD5EA"/>
+                    <stop offset="100%" stop-color="#F472B6"/>
+                </linearGradient>
+                <linearGradient id="woodLeg" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stop-color="#C98A3E"/>
+                    <stop offset="100%" stop-color="#9D5A26"/>
+                </linearGradient>
+                <linearGradient id="lampShade" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#FDE9C7"/>
+                    <stop offset="100%" stop-color="#F5C97B"/>
+                </linearGradient>
+                <linearGradient id="tableTop" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stop-color="#DBEAFE"/>
+                    <stop offset="100%" stop-color="#93C5FD"/>
+                </linearGradient>
+                <linearGradient id="potGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#F9A8D4"/>
+                    <stop offset="100%" stop-color="#EC4899"/>
+                </linearGradient>
+                <symbol id="leafShapeF" viewBox="-12 -22 24 44">
+                    <path d="M0,-20 C11,-14 11,14 0,20 C-11,14 -11,-14 0,-20 Z" fill="currentColor"/>
+                    <path d="M0,-16 L0,16" stroke="rgba(157,23,77,0.30)" stroke-width="1"/>
+                </symbol>
+            </defs>
+
+            <ellipse cx="235" cy="165" rx="200" ry="125" fill="url(#heroGlowF)"/>
+            <ellipse cx="235" cy="286" rx="130" ry="12" fill="#9D174D" opacity="0.15" filter="url(#softBlurF)"/>
+
+            <!-- glow ring -->
+            <circle cx="235" cy="150" r="118" fill="none" stroke="#F472B6" stroke-width="18" opacity="0.28" filter="url(#softBlurF)"/>
+            <circle cx="235" cy="150" r="110" fill="none" stroke="url(#ringGradF)" stroke-width="4" opacity="0.95"/>
+
+            <!-- podium -->
+            <ellipse cx="235" cy="270" rx="150" ry="22" fill="url(#podiumDarkF)"/>
+            <rect x="85" y="252" width="300" height="18" fill="url(#podiumDarkF)"/>
+            <ellipse cx="235" cy="252" rx="150" ry="22" fill="url(#podiumLightF)"/>
+
+            <!-- armchair -->
+            <g filter="url(#dropShadowF)">
+                <rect x="108" y="238" width="6" height="20" fill="url(#woodLeg)"/>
+                <rect x="176" y="238" width="6" height="20" fill="url(#woodLeg)"/>
+                <rect x="92" y="176" width="22" height="58" rx="11" fill="url(#chairFabric)"/>
+                <rect x="176" y="176" width="22" height="58" rx="11" fill="url(#chairFabric)"/>
+                <rect x="106" y="146" width="76" height="72" rx="20" fill="url(#chairFabric)"/>
+                <rect x="98" y="196" width="92" height="46" rx="16" fill="url(#chairFabric)"/>
+                <rect x="118" y="201" width="60" height="7" rx="3.5" fill="#ffffff" opacity="0.35"/>
+                <path d="M144,150 L144,214" stroke="rgba(157,23,77,0.18)" stroke-width="1.5"/>
+            </g>
+
+            <!-- side table + lamp -->
+            <g filter="url(#dropShadowF)">
+                <rect x="257" y="238" width="26" height="6" rx="3" fill="url(#woodLeg)" opacity="0.6"/>
+                <rect x="266" y="198" width="8" height="40" fill="url(#woodLeg)"/>
+                <ellipse cx="270" cy="196" rx="42" ry="12" fill="url(#tableTop)"/>
+                <ellipse cx="270" cy="192" rx="42" ry="12" fill="#ffffff" opacity="0.3"/>
+                <rect x="267" y="152" width="4" height="40" fill="url(#woodLeg)"/>
+                <ellipse cx="269" cy="156" rx="10" ry="3" fill="#FFF6E0" opacity="0.6"/>
+                <path d="M247,156 L293,156 L282,116 Q269,108 256,116 Z" fill="url(#lampShade)"/>
+                <ellipse cx="269" cy="116" rx="13" ry="4" fill="#FDE9C7" opacity="0.85"/>
+            </g>
+
+            <!-- potted plant -->
+            <g filter="url(#dropShadowF)">
+                <path d="M338,210 L378,210 L372,240 Q358,246 344,240 Z" fill="url(#potGrad)"/>
+                <ellipse cx="358" cy="210" rx="20" ry="5" fill="#F9CEE3"/>
+                <use href="#leafShapeF" width="20" height="36" x="-10" y="-18" transform="translate(358,196) rotate(-28)" color="#F9A8D4" opacity="0.9"/>
+                <use href="#leafShapeF" width="20" height="36" x="-10" y="-18" transform="translate(358,192) rotate(0)" color="#F472B6" opacity="0.9"/>
+                <use href="#leafShapeF" width="20" height="36" x="-10" y="-18" transform="translate(358,196) rotate(28)" color="#F9A8D4" opacity="0.9"/>
+            </g>
+
+            <!-- sparkles -->
+            <g fill="#F472B6" opacity="0.85">
+                <path d="M110 70 l3 9 9 3 -9 3 -3 9 -3 -9 -9 -3 9 -3 z"/>
+                <path d="M370 100 l2.5 7 7 2.5 -7 2.5 -2.5 7 -2.5 -7 -7 -2.5 7 -2.5 z"/>
+            </g>
+            <g fill="#ffffff" opacity="0.9">
+                <circle cx="235" cy="45" r="3"/>
+                <circle cx="360" cy="140" r="2.5"/>
+                <circle cx="100" cy="130" r="2.5"/>
+            </g>
+        </svg>
+        </div>
+
+        <!-- Slide 3: Chocolates -->
+        <div class="shop-hero-art-slide" data-slide-art="2">
+        <svg viewBox="0 0 460 300" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <filter id="softBlurC" x="-50%" y="-50%" width="200%" height="200%">
+                    <feGaussianBlur stdDeviation="7"/>
+                </filter>
+                <filter id="dropShadowC" x="-60%" y="-60%" width="220%" height="220%">
+                    <feDropShadow dx="0" dy="7" stdDeviation="5" flood-color="#9D174D" flood-opacity="0.22"/>
+                </filter>
+                <radialGradient id="heroGlowC" cx="50%" cy="52%" r="55%">
+                    <stop offset="0%" stop-color="#EC4899" stop-opacity="0.18"/>
+                    <stop offset="100%" stop-color="#EC4899" stop-opacity="0"/>
+                </radialGradient>
+                <linearGradient id="ringGradC" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#FFFFFF"/>
+                    <stop offset="100%" stop-color="#FBCFE8"/>
+                </linearGradient>
+                <linearGradient id="podiumLightC" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#FFFFFF"/>
+                    <stop offset="100%" stop-color="#FCE7F3"/>
+                </linearGradient>
+                <linearGradient id="podiumDarkC" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#F9A8D4"/>
+                    <stop offset="100%" stop-color="#EC4899"/>
+                </linearGradient>
+                <linearGradient id="chocoDark" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#8B5A38"/>
+                    <stop offset="100%" stop-color="#4A2C17"/>
+                </linearGradient>
+                <linearGradient id="boxPink" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stop-color="#F472B6"/>
+                    <stop offset="50%" stop-color="#FDF2F8"/>
+                    <stop offset="100%" stop-color="#F472B6"/>
+                </linearGradient>
+                <linearGradient id="truffleGold" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stop-color="#C98A3E"/>
+                    <stop offset="45%" stop-color="#FDE9C7"/>
+                    <stop offset="100%" stop-color="#C98A3E"/>
+                </linearGradient>
+            </defs>
+
+            <ellipse cx="235" cy="165" rx="200" ry="125" fill="url(#heroGlowC)"/>
+            <ellipse cx="235" cy="286" rx="130" ry="12" fill="#9D174D" opacity="0.15" filter="url(#softBlurC)"/>
+
+            <!-- glow ring -->
+            <circle cx="235" cy="150" r="118" fill="none" stroke="#F472B6" stroke-width="18" opacity="0.28" filter="url(#softBlurC)"/>
+            <circle cx="235" cy="150" r="110" fill="none" stroke="url(#ringGradC)" stroke-width="4" opacity="0.95"/>
+
+            <!-- podium -->
+            <ellipse cx="235" cy="270" rx="150" ry="22" fill="url(#podiumDarkC)"/>
+            <rect x="85" y="252" width="300" height="18" fill="url(#podiumDarkC)"/>
+            <ellipse cx="235" cy="252" rx="150" ry="22" fill="url(#podiumLightC)"/>
+
+            <!-- chocolate bar -->
+            <g filter="url(#dropShadowC)">
+                <rect x="104" y="152" width="80" height="86" rx="8" fill="url(#chocoDark)"/>
+                <path d="M144,152 L104,152 L104,178 Q124,168 144,178 Z" fill="#F9A8D4"/>
+                <line x1="144" y1="152" x2="144" y2="238" stroke="#3A2010" stroke-width="2"/>
+                <line x1="104" y1="195" x2="184" y2="195" stroke="#3A2010" stroke-width="2"/>
+                <rect x="110" y="160" width="28" height="30" rx="3" fill="#ffffff" opacity="0.08"/>
+                <rect x="150" y="160" width="28" height="30" rx="3" fill="#ffffff" opacity="0.08"/>
+                <rect x="110" y="201" width="28" height="30" rx="3" fill="#ffffff" opacity="0.08"/>
+                <rect x="150" y="201" width="28" height="30" rx="3" fill="#ffffff" opacity="0.08"/>
+            </g>
+
+            <!-- box of chocolates -->
+            <g filter="url(#dropShadowC)">
+                <rect x="204" y="150" width="88" height="16" rx="4" fill="url(#boxPink)" transform="rotate(-6 248 158)" opacity="0.9"/>
+                <rect x="200" y="180" width="96" height="58" rx="12" fill="url(#boxPink)"/>
+                <rect x="208" y="188" width="80" height="42" rx="8" fill="#4A2C17" opacity="0.12"/>
+                <circle cx="228" cy="206" r="13" fill="url(#truffleGold)"/>
+                <circle cx="258" cy="206" r="13" fill="url(#chocoDark)"/>
+                <circle cx="228" cy="206" r="13" fill="none" stroke="#ffffff" stroke-width="1" opacity="0.3"/>
+                <circle cx="258" cy="206" r="13" fill="none" stroke="#ffffff" stroke-width="1" opacity="0.2"/>
+                <path d="M240,178 q8,-14 16,0" stroke="#DB2777" stroke-width="5" fill="none" stroke-linecap="round"/>
+                <circle cx="248" cy="176" r="6" fill="#DB2777"/>
+            </g>
+
+            <!-- wrapped truffle -->
+            <g transform="rotate(-8 340 216)" filter="url(#dropShadowC)">
+                <circle cx="340" cy="216" r="20" fill="url(#truffleGold)"/>
+                <path d="M320,216 l-12,-8 4,8 -4,8 z" fill="#F9CEE3"/>
+                <path d="M360,216 l12,-8 -4,8 4,8 z" fill="#F9CEE3"/>
+                <circle cx="340" cy="216" r="20" fill="none" stroke="#ffffff" stroke-width="1.5" opacity="0.35"/>
+            </g>
+
+            <!-- sparkles -->
+            <g fill="#F472B6" opacity="0.85">
+                <path d="M110 70 l3 9 9 3 -9 3 -3 9 -3 -9 -9 -3 9 -3 z"/>
+                <path d="M370 100 l2.5 7 7 2.5 -7 2.5 -2.5 7 -2.5 -7 -7 -2.5 7 -2.5 z"/>
+            </g>
+            <g fill="#ffffff" opacity="0.9">
+                <circle cx="235" cy="45" r="3"/>
+                <circle cx="360" cy="140" r="2.5"/>
+                <circle cx="100" cy="130" r="2.5"/>
+            </g>
+        </svg>
+        </div>
+
+        <div class="hero-dots" id="heroDots">
+            <span class="hero-dot active" onclick="heroGoToSlide(0)"></span>
+            <span class="hero-dot" onclick="heroGoToSlide(1)"></span>
+            <span class="hero-dot" onclick="heroGoToSlide(2)"></span>
         </div>
     </div>
 </section>
+
+<script>
+(function() {
+    var heroTotal = 3;
+    var heroCurrent = 0;
+    var heroTimer = null;
+
+    window.heroGoToSlide = function(index) {
+        heroCurrent = index;
+        document.querySelectorAll('#shopHeroSlider [data-slide-content]').forEach(function(el) {
+            el.classList.toggle('active', el.dataset.slideContent == index);
+        });
+        document.querySelectorAll('#shopHeroSlider [data-slide-art]').forEach(function(el) {
+            el.classList.toggle('active', el.dataset.slideArt == index);
+        });
+        document.querySelectorAll('#heroDots .hero-dot').forEach(function(dot, i) {
+            dot.classList.toggle('active', i === index);
+        });
+    };
+
+    function heroNext() {
+        heroGoToSlide((heroCurrent + 1) % heroTotal);
+    }
+
+    function heroStartAutoplay() {
+        heroTimer = setInterval(heroNext, 6000);
+    }
+
+    var heroSection = document.getElementById('shopHeroSlider');
+    if (heroSection) {
+        heroStartAutoplay();
+        heroSection.addEventListener('mouseenter', function() { clearInterval(heroTimer); });
+        heroSection.addEventListener('mouseleave', heroStartAutoplay);
+    }
+})();
+</script>
 <?php endif; ?>
 
 <?php if (!empty($isResellerShop) && !empty($reseller)): ?>
@@ -242,12 +510,12 @@
 <?php endif; ?>
 
 <div class="filter-section" id="shop-products">
-    <h3 style="margin-bottom: 15px;">
+    <h3>
         <i class="fas fa-filter"></i> Filter by Category
     </h3>
     <div class="category-filter">
         <a href="<?php echo BASE_URL; ?>shop" class="category-btn <?php echo !isset($_GET['category']) ? 'active' : ''; ?>">
-            All Products
+            <i class="fas fa-th-large"></i> All Products
         </a>
         <?php foreach ($categories as $category): ?>
             <?php
@@ -264,6 +532,12 @@
                     $catIcon = 'fa-paintbrush';
                 } elseif (strpos($catNameLower, 'perfume') !== false || strpos($catNameLower, 'fragrance') !== false) {
                     $catIcon = 'fa-spray-can-sparkles';
+                } elseif (strpos($catNameLower, 'massage') !== false) {
+                    $catIcon = 'fa-spa';
+                } elseif (strpos($catNameLower, 'furniture') !== false) {
+                    $catIcon = 'fa-couch';
+                } elseif (strpos($catNameLower, 'beauty') !== false || strpos($catNameLower, 'personal care') !== false) {
+                    $catIcon = 'fa-heart';
                 } else {
                     $catIcon = 'fa-tag';
                 }
@@ -289,11 +563,17 @@
             <i class="fas fa-arrow-left"></i> Back to Landing
         </a>
     </div>
+</div>
 
-    <h2 class="shop-title">
-        <i class="fas fa-shopping-bag"></i>
-        <?php echo $searchQuery ? 'Search Results' : ($currentCategory ? 'Products' : 'Featured Products'); ?>
-    </h2>
+<div class="shop-title-row">
+    <div>
+        <h2 class="shop-title">
+            <i class="fas fa-star"></i>
+            <?php echo $searchQuery ? 'Search Results' : ($currentCategory ? 'Products' : 'Featured Products'); ?>
+        </h2>
+        <p class="shop-title-sub"><?php echo $searchQuery ? 'Results matching your search.' : ($currentCategory ? 'Browse products in this category.' : 'Popular products selected for you.'); ?></p>
+    </div>
+    <a href="<?php echo BASE_URL; ?>shop?category=all" class="btn btn-outline btn-sm shop-viewall-btn">View All Products</a>
 </div>
 
 
@@ -351,6 +631,10 @@
                     </div>
                     <?php if ($product['stock'] <= 0): ?>
                         <div class="stock-indicator out-of-stock">Sold Out</div>
+                    <?php elseif ($product['stock'] <= 10): ?>
+                        <div class="stock-indicator low-stock">Low Stock</div>
+                    <?php else: ?>
+                        <div class="stock-indicator in-stock">In Stock</div>
                     <?php endif; ?>
                     <?php $canBuy = ($product['purchasable'] ?? true) && $product['stock'] > 0; ?>
                     <?php
@@ -414,6 +698,37 @@
         </div>
     <?php endif; ?>
 <?php endif; ?>
+
+<div class="trust-bar">
+    <div class="trust-item">
+        <span class="trust-icon"><i class="fas fa-truck-fast"></i></span>
+        <span>
+            <span class="trust-title">Fast Delivery</span>
+            <span class="trust-sub">Quick &amp; reliable delivery nationwide</span>
+        </span>
+    </div>
+    <div class="trust-item">
+        <span class="trust-icon"><i class="fas fa-shield-halved"></i></span>
+        <span>
+            <span class="trust-title">100% Authentic</span>
+            <span class="trust-sub">All products are original and verified</span>
+        </span>
+    </div>
+    <div class="trust-item">
+        <span class="trust-icon"><i class="fas fa-headset"></i></span>
+        <span>
+            <span class="trust-title">Customer Support</span>
+            <span class="trust-sub">We're here to help you 24/7</span>
+        </span>
+    </div>
+    <div class="trust-item">
+        <span class="trust-icon"><i class="fas fa-award"></i></span>
+        <span>
+            <span class="trust-title">Best Quality</span>
+            <span class="trust-sub">Premium quality beauty products</span>
+        </span>
+    </div>
+</div>
 
 <!-- Add to Cart / Buy Now modal (shared .modal component) -->
 <div class="modal" id="addToCartModal">

@@ -7,10 +7,45 @@ $is_reseller_view = $is_reseller_view ?? false;
 $is_admin_only = !$is_staff_view && !$is_reseller_view;
 ?>
 
-    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-4">
-        <div>
-            <h4 class="fw-bold mb-0" style="color:#1a1a2e;">Admin Dashboard</h4>
-            <small class="text-muted">Welcome back, <strong><?= htmlspecialchars($user_full_name ?? get_user_full_name() ?? 'Administrator'); ?></strong> — summary of store activity and performance metrics.</small>
+    <?php
+        $hour = (int) date('G');
+        $greeting = $hour < 12 ? 'Good morning' : ($hour < 18 ? 'Good afternoon' : 'Good evening');
+        $adminDisplayName = htmlspecialchars($user_full_name ?? get_user_full_name() ?? 'Administrator');
+
+        // Renders a stat card's trend line: an up/down arrow with a percentage
+        // when a comparable prior period is available, or a flat "No change"
+        // otherwise (used for cards with no historical baseline to compare).
+        $render_stat_change = function ($pct = null) {
+            if ($pct === null || (float) $pct === 0.0) {
+                echo '<div class="stat-change neutral"><i class="fas fa-minus"></i> No change</div>';
+                return;
+            }
+            $isPositive = $pct > 0;
+            $cssClass = $isPositive ? 'positive' : 'negative';
+            $icon = $isPositive ? 'fa-arrow-up' : 'fa-arrow-down';
+            echo '<div class="stat-change ' . $cssClass . '"><i class="fas ' . $icon . '"></i> ' . number_format(abs($pct), 1) . '% vs last 30 days</div>';
+        };
+    ?>
+    <div class="ds-hero-card mb-4">
+        <div class="ds-hero-banner">
+            <svg class="ds-hero-wave" viewBox="0 0 1440 200" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M0,110 C240,170 480,50 720,90 C960,130 1200,50 1440,100 L1440,200 L0,200 Z" fill="rgba(255,105,180,0.16)"></path>
+                <path d="M0,140 C280,80 560,180 840,120 C1080,70 1280,140 1440,130 L1440,200 L0,200 Z" fill="rgba(233,30,99,0.22)"></path>
+            </svg>
+            <div class="ds-hero-banner-content dashboard-greeting-row">
+                <div class="dashboard-greeting">
+                    <h4 class="fw-bold mb-0" style="color:#1a1a2e;"><?= $greeting; ?>, <?= $adminDisplayName; ?>! <span aria-hidden="true">👋</span></h4>
+                    <small class="text-muted">Here's what's happening with your store today.</small>
+                </div>
+                <?php if ($is_admin_only): ?>
+                <div class="dashboard-header-actions">
+                    <span class="date-badge"><i class="fas fa-calendar"></i> <?php echo date('F j, Y'); ?></span>
+                    <a href="<?php echo site_url('admin/reports/export/sales/pdf'); ?>" class="btn-export">
+                        <i class="fas fa-download"></i> Export Report
+                    </a>
+                </div>
+                <?php endif; ?>
+            </div>
         </div>
     </div>
 
@@ -20,10 +55,11 @@ $is_admin_only = !$is_staff_view && !$is_reseller_view;
         <!-- Total Sales - Admin Only -->
             <div class="col-12 col-md-6 col-xl-3">
                 <div class="stat-card">
-                    <div class="stat-icon" style="background:#e8f5e9;color:#2e7d32;"><i class="fas fa-dollar-sign"></i></div>
+                    <div class="stat-icon" style="background:#ffd9ec;color:#e0559c;"><i class="fas fa-dollar-sign"></i></div>
                     <div>
                         <div class="stat-label">Total Sales</div>
                         <div class="stat-value">₱<?php echo number_format($order_stats['total_sales'] ?? 0, 2); ?></div>
+                        <?php $render_stat_change($order_stats['sales_change_pct'] ?? null); ?>
                     </div>
                 </div>
             </div>
@@ -32,10 +68,11 @@ $is_admin_only = !$is_staff_view && !$is_reseller_view;
         <!-- Total Orders -->
         <div class="col-12 col-md-6 col-xl-3">
             <div class="stat-card">
-                <div class="stat-icon" style="background:#eef0ff;color:#4361ee;"><i class="fas fa-shopping-cart"></i></div>
+                <div class="stat-icon" style="background:#e3f2fd;color:#1565c0;"><i class="fas fa-shopping-cart"></i></div>
                 <div>
                     <div class="stat-label">Total Orders</div>
                     <div class="stat-value"><?php echo number_format($order_stats['total_orders'] ?? 0); ?></div>
+                    <?php $render_stat_change($order_stats['orders_change_pct'] ?? null); ?>
                 </div>
             </div>
         </div>
@@ -44,10 +81,11 @@ $is_admin_only = !$is_staff_view && !$is_reseller_view;
         <!-- Active Resellers - Admin Only -->
         <div class="col-12 col-md-6 col-xl-3">
             <div class="stat-card">
-                <div class="stat-icon" style="background:#ede7f6;color:#5e35b1;"><i class="fas fa-users"></i></div>
+                <div class="stat-icon" style="background:#ffd9ec;color:#e0559c;"><i class="fas fa-users"></i></div>
                 <div>
                     <div class="stat-label">Active Resellers</div>
                     <div class="stat-value"><?php echo number_format($reseller_stats['approved_count'] ?? 0); ?></div>
+                    <?php $render_stat_change($reseller_stats['change_pct'] ?? null); ?>
                 </div>
             </div>
         </div>
@@ -56,10 +94,11 @@ $is_admin_only = !$is_staff_view && !$is_reseller_view;
         <!-- Total Products -->
         <div class="col-12 col-md-6 col-xl-3">
             <div class="stat-card">
-                <div class="stat-icon" style="background:#e0f7fa;color:#00838f;"><i class="fas fa-boxes"></i></div>
+                <div class="stat-icon" style="background:#e3f2fd;color:#1565c0;"><i class="fas fa-boxes"></i></div>
                 <div>
                     <div class="stat-label">Total Products</div>
                     <div class="stat-value"><?php echo number_format($product_stats['total_products'] ?? 0); ?></div>
+                    <?php $render_stat_change(); ?>
                 </div>
             </div>
         </div>
@@ -69,10 +108,11 @@ $is_admin_only = !$is_staff_view && !$is_reseller_view;
     <div class="row g-3 mt-1">
         <div class="col-12 col-md-6 col-xl-3">
             <div class="stat-card">
-                <div class="stat-icon" style="background:#fff8e1;color:#f57f17;"><i class="fas fa-clock"></i></div>
+                <div class="stat-icon" style="background:#ffd9ec;color:#e0559c;"><i class="fas fa-clock"></i></div>
                 <div>
                     <div class="stat-label">Pending Orders</div>
                     <div class="stat-value"><?php echo number_format($order_stats['pending_orders'] ?? 0); ?></div>
+                    <?php $render_stat_change(); ?>
                 </div>
             </div>
         </div>
@@ -83,26 +123,29 @@ $is_admin_only = !$is_staff_view && !$is_reseller_view;
                 <div>
                     <div class="stat-label">Processing</div>
                     <div class="stat-value"><?php echo number_format($order_stats['processing_orders'] ?? 0); ?></div>
+                    <?php $render_stat_change(); ?>
                 </div>
             </div>
         </div>
 
         <div class="col-12 col-md-6 col-xl-3">
             <div class="stat-card">
-                <div class="stat-icon" style="background:#e8eaf6;color:#3949ab;"><i class="fas fa-truck"></i></div>
+                <div class="stat-icon" style="background:#ffd9ec;color:#e0559c;"><i class="fas fa-truck"></i></div>
                 <div>
                     <div class="stat-label">To Ship</div>
                     <div class="stat-value"><?php echo number_format($order_stats['shipped_orders'] ?? 0); ?></div>
+                    <?php $render_stat_change(); ?>
                 </div>
             </div>
         </div>
 
         <div class="col-12 col-md-6 col-xl-3">
             <div class="stat-card">
-                <div class="stat-icon" style="background:#e8f5e9;color:#2e7d32;"><i class="fas fa-check-circle"></i></div>
+                <div class="stat-icon" style="background:#e3f2fd;color:#1565c0;"><i class="fas fa-check-circle"></i></div>
                 <div>
                     <div class="stat-label">Delivered</div>
                     <div class="stat-value"><?php echo number_format($order_stats['delivered_orders'] ?? 0); ?></div>
+                    <?php $render_stat_change(); ?>
                 </div>
             </div>
         </div>
@@ -112,30 +155,33 @@ $is_admin_only = !$is_staff_view && !$is_reseller_view;
     <div class="row g-3 mt-1">
         <div class="col-12 col-md-6 col-xl-4">
             <div class="stat-card">
-                <div class="stat-icon" style="background:#fff8e1;color:#f57f17;"><i class="fas fa-undo"></i></div>
+                <div class="stat-icon" style="background:#ffd9ec;color:#e0559c;"><i class="fas fa-undo"></i></div>
                 <div>
                     <div class="stat-label">Return / Refund</div>
                     <div class="stat-value"><?php echo number_format($refund_stats['pending_requests'] ?? 0); ?></div>
+                    <?php $render_stat_change(); ?>
                 </div>
             </div>
         </div>
 
         <div class="col-12 col-md-6 col-xl-4">
             <div class="stat-card">
-                <div class="stat-icon" style="background:#e8f5e9;color:#2e7d32;"><i class="fas fa-wallet"></i></div>
+                <div class="stat-icon" style="background:#e3f2fd;color:#1565c0;"><i class="fas fa-wallet"></i></div>
                 <div>
                     <div class="stat-label">Paid Orders</div>
                     <div class="stat-value"><?php echo number_format($order_stats['paid_orders'] ?? 0); ?></div>
+                    <?php $render_stat_change(); ?>
                 </div>
             </div>
         </div>
 
         <div class="col-12 col-md-6 col-xl-4">
             <div class="stat-card">
-                <div class="stat-icon" style="background:#ffebee;color:#c62828;"><i class="fas fa-times-circle"></i></div>
+                <div class="stat-icon" style="background:#ffd9ec;color:#e0559c;"><i class="fas fa-times-circle"></i></div>
                 <div>
                     <div class="stat-label">Cancelled Orders</div>
                     <div class="stat-value"><?php echo number_format($order_stats['cancelled_orders'] ?? 0); ?></div>
+                    <?php $render_stat_change(); ?>
                 </div>
             </div>
         </div>
@@ -191,7 +237,7 @@ $is_admin_only = !$is_staff_view && !$is_reseller_view;
                             <strong style="color:var(--primary-pink-dark);">₱<?php echo number_format($commission_stats['pending_amount'] ?? 0, 2); ?></strong>
                         </div>
                         <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 4px;">
-                            <span style="display:flex;align-items:center;gap:8px;font-weight:600;color:var(--text);font-size:var(--font-size-sm);"><i class="fas fa-circle" style="color: #ee82ee; font-size: 10px;"></i> Approved</span>
+                            <span style="display:flex;align-items:center;gap:8px;font-weight:600;color:var(--text);font-size:var(--font-size-sm);"><i class="fas fa-circle" style="color: #1565c0; font-size: 10px;"></i> Approved</span>
                             <strong style="color:var(--primary-pink-dark);">₱<?php echo number_format($commission_stats['approved_amount'] ?? 0, 2); ?></strong>
                         </div>
                     </div>
@@ -212,6 +258,7 @@ $is_admin_only = !$is_staff_view && !$is_reseller_view;
                     <h3 class="card-title">
                         <i class="fas fa-fire"></i> Top Selling Products
                     </h3>
+                    <a href="<?php echo site_url('admin/product'); ?>" class="card-link-more">View All Products <i class="fas fa-arrow-right"></i></a>
                 </div>
                 <div class="card-body">
                     <?php if (!empty($top_products)): ?>
@@ -246,12 +293,18 @@ $is_admin_only = !$is_staff_view && !$is_reseller_view;
                     <h3 class="card-title">
                         <i class="fas fa-trophy"></i> Top Performing Resellers
                     </h3>
+                    <a href="<?php echo site_url('admin/reseller'); ?>" class="card-link-more">View All Resellers <i class="fas fa-arrow-right"></i></a>
                 </div>
                 <div class="card-body">
                     <?php if (!empty($top_resellers)): ?>
                         <?php foreach ($top_resellers as $index => $reseller): ?>
                             <div class="leaderboard-row">
                                 <div class="leaderboard-rank"><?php echo $index + 1; ?></div>
+                                <?php if (!empty($reseller['profile_image'])): ?>
+                                    <img class="leaderboard-thumb leaderboard-thumb-round" src="<?php echo base_url($reseller['profile_image']); ?>" alt="<?php echo htmlspecialchars($reseller['full_name'] ?? ''); ?>">
+                                <?php else: ?>
+                                    <span class="leaderboard-thumb leaderboard-thumb-round leaderboard-thumb-placeholder"><i class="fas fa-user"></i></span>
+                                <?php endif; ?>
                                 <div class="leaderboard-info">
                                     <div class="leaderboard-title"><?php echo htmlspecialchars($reseller['full_name'] ?? 'N/A'); ?></div>
                                     <div class="leaderboard-meta"><?php echo htmlspecialchars($reseller['email'] ?? 'N/A'); ?></div>
@@ -270,6 +323,29 @@ $is_admin_only = !$is_staff_view && !$is_reseller_view;
         </div>
     </div>
 
+    <?php if ($is_admin_only): ?>
+    <!-- Quick Actions -->
+    <div class="quick-actions-banner">
+        <div class="quick-actions-text">
+            <h3><i class="fas fa-bolt"></i> Quick Actions</h3>
+            <p>Manage your store efficiently with these shortcuts.</p>
+        </div>
+        <div class="quick-actions-buttons">
+            <a href="<?php echo site_url('admin/product/add'); ?>" class="quick-action-btn">
+                <i class="fas fa-box"></i> Add Product
+            </a>
+            <a href="<?php echo site_url('admin/reseller/applications'); ?>" class="quick-action-btn">
+                <i class="fas fa-user-plus"></i> Reseller Applications
+            </a>
+            <a href="<?php echo site_url('admin/order'); ?>" class="quick-action-btn">
+                <i class="fas fa-clipboard-list"></i> View Orders
+            </a>
+            <a href="<?php echo site_url('admin/reports'); ?>" class="quick-action-btn">
+                <i class="fas fa-chart-line"></i> Generate Report
+            </a>
+        </div>
+    </div>
+    <?php endif; ?>
 
 </div>
 
@@ -385,7 +461,7 @@ $is_admin_only = !$is_staff_view && !$is_reseller_view;
                 data: commissionHasData ? [commissionPending, commissionApproved] : [1],
                 backgroundColor: commissionHasData ? [
                     '#ff69b4',
-                    '#ee82ee'
+                    '#1565c0'
                 ] : ['#eee'],
                 borderWidth: 3,
                 borderColor: '#fff',

@@ -243,9 +243,58 @@ class Shop extends CI_Controller {
         }
 
         $data['selected_reseller_id'] = $selected['reseller_id'] ?? NULL;
+        $data['selected_reseller'] = $selected;
         $data['purchasable'] = $selected !== NULL;
         if ($selected) {
             $data['product']['price'] = (float) $selected['commission_price'];
+        }
+
+        // Same product, other shops — other resellers selling this exact
+        // product at their own price, for the "You Might Also Like" cross-sell
+        // shown at the bottom of the product page.
+        $data['otherShopListings'] = array_values(array_filter($data['sellers'], function ($seller) use ($data) {
+            return (int) $seller['reseller_id'] !== (int) $data['selected_reseller_id'];
+        }));
+
+        // Full image gallery for this product (product_image supports many
+        // rows per product_id) — primary image first, then display_order.
+        $data['galleryImages'] = $this->db->select('image_path, is_primary')
+            ->from(PRODUCT_IMAGE_TABLE)
+            ->where('product_id', $id)
+            ->order_by('is_primary', 'DESC')
+            ->order_by('display_order', 'ASC')
+            ->get()->result_array();
+
+        // Shop Information panel — real data about the currently selected
+        // reseller's mini-shop (not the product's own category/global stats).
+        $data['shopInfo'] = NULL;
+        if ($selected) {
+            $reseller_row = $this->db->select('profile_image, business_name, first_name, last_name, created_at')
+                ->from(RESELLER_TABLE)
+                ->where('reseller_id', $selected['reseller_id'])
+                ->get()->row_array();
+
+            $total_products = (int) $this->db
+                ->where('reseller_id', $selected['reseller_id'])
+                ->where('is_published', 1)
+                ->count_all_results(RESELLER_PRODUCTS_TABLE);
+
+            $rating_row = $this->db->select('AVG(pr.rating) as avg_rating, COUNT(pr.review_id) as review_count')
+                ->from('product_reviews pr')
+                ->join(RESELLER_PRODUCTS_TABLE . ' rp', 'rp.reseller_product_id = pr.reseller_product_id')
+                ->where('rp.reseller_id', $selected['reseller_id'])
+                ->where('pr.status', 'approved')
+                ->get()->row_array();
+
+            $data['shopInfo'] = [
+                'reseller_id'    => (int) $selected['reseller_id'],
+                'logo'           => $reseller_row['profile_image'] ?? NULL,
+                'name'           => !empty($reseller_row['business_name']) ? $reseller_row['business_name'] : trim(($reseller_row['first_name'] ?? '') . ' ' . ($reseller_row['last_name'] ?? '')),
+                'joined_at'      => $reseller_row['created_at'] ?? NULL,
+                'total_products' => $total_products,
+                'avg_rating'     => $rating_row['avg_rating'] !== NULL ? (float) $rating_row['avg_rating'] : NULL,
+                'review_count'   => (int) ($rating_row['review_count'] ?? 0),
+            ];
         }
 
         $data['variations'] = $this->db->select('*')->from(PRODUCT_VARIATION_TABLE)

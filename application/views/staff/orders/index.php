@@ -1,30 +1,29 @@
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap5.min.css">
-<style>
-.dataTables_wrapper .dataTables_filter input {
-    border: 1px solid var(--border); border-radius: var(--radius-md);
-    padding: .4rem .75rem; font-size: .85rem; margin-left: .5rem;
-}
-.dataTables_wrapper .dataTables_filter input:focus { outline: none; border-color: var(--primary-pink); }
-table.dataTable thead th { position: relative; }
-table.dataTable thead th.sorting:hover { color: var(--primary-pink); cursor: pointer; }
-</style>
 
-<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-4">
-    <div>
-        <h4 class="fw-bold mb-0" style="color:#1a1a2e;">Order Management</h4>
-        <small class="text-muted">Welcome back, <strong><?php echo htmlspecialchars($user_full_name ?? 'Staff'); ?></strong> — review and fulfill customer orders.</small>
+<div class="ds-hero-card mb-3">
+    <div class="ds-hero-banner">
+        <svg class="ds-hero-wave" viewBox="0 0 1440 200" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M0,110 C240,170 480,50 720,90 C960,130 1200,50 1440,100 L1440,200 L0,200 Z" fill="rgba(255,105,180,0.16)"></path>
+            <path d="M0,140 C280,80 560,180 840,120 C1080,70 1280,140 1440,130 L1440,200 L0,200 Z" fill="rgba(233,30,99,0.22)"></path>
+        </svg>
+        <div class="ds-hero-banner-content">
+            <h4 class="fw-bold mb-0" style="color:#1a1a2e;">Order Management</h4>
+            <small class="text-muted">Welcome back, <strong><?php echo htmlspecialchars($user_full_name ?? 'Staff'); ?></strong> — review and fulfill customer orders.</small>
+        </div>
+    </div>
+
+    <div class="ds-hero-section-row">
+        <span class="section-title"><i class="fas fa-list me-2 text-primary"></i>All Orders</span>
+        <span class="text-muted small" style="white-space:nowrap;"><?php echo number_format(count($orders)); ?> result<?php echo count($orders) != 1 ? 's' : ''; ?></span>
     </div>
 </div>
 
 <div class="row">
     <div class="col col-12">
-        <div class="card">
-            <div class="card-header bg-primary text-white">
-                <h5 class="mb-0"><i class="fas fa-list"></i> All Orders</h5>
-            </div>
+        <div class="card ds-pink-table-card">
             <div class="card-body">
                 <div class="table-responsive">
-                    <table class="table table-striped table-stack" id="staffOrdersTable">
+                    <table class="table inv-table ds-pink-table table-stack" id="staffOrdersTable">
                         <thead>
                             <tr>
                                 <th>Order #</th><th>Customer</th><th>Total</th><th>Delivery</th><th>Status</th><th>Date</th><th>Action</th>
