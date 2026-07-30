@@ -1,6 +1,44 @@
 <?php defined('BASEPATH') OR exit('No direct script access allowed');
 
 /**
+ * Restores stock for every line item on an order — pulled out of
+ * apply_order_status_side_effects() so Refund::complete() can trigger it at
+ * the point the admin actually confirms the returned item is back in hand,
+ * instead of at Refund::approve() (before the item has necessarily arrived).
+ * Restocking on approval risked crediting stock the store doesn't actually
+ * have yet if the customer never sends the item back, while the refund
+ * still goes out — see the call site notes in admin/Refund.php.
+ */
+if (!function_exists('restore_order_stock')) {
+    function restore_order_stock($order_id) {
+        $CI =& get_instance();
+        $CI->load->database();
+        require_once APPPATH . 'services/StockService.php';
+
+        $items = $CI->db->where('order_id', $order_id)->get(ORDER_DETAILS_TABLE)->result_array();
+        foreach ($items as $item) {
+            // Variant/variation lines are deducted from the branch/batch
+            // ledger scoped to their combination or value (see
+            // Checkout.php), so restoring them goes through the same
+            // ledger, scoped the same way — otherwise this would restore
+            // into the wrong pool.
+            if (!empty($item['variant_id'])) {
+                // Mirror Checkout.php's pieces_per_unit multiplier — a
+                // "1 Set (10 pcs)" line deducted 10 pieces, so restoring it
+                // must add back 10, not 1.
+                $piecesPerUnit = StockService::getVariantPiecesPerUnit((int) $item['variant_id']);
+                StockService::restoreStock($item['product_id'], $item['quantity'] * $piecesPerUnit, 'order', $order_id, NULL, NULL, 'ANY', (int) $item['variant_id']);
+            } elseif (!empty($item['variation_id'])) {
+                $piecesPerUnit = StockService::getVariationPiecesPerUnit((int) $item['variation_id']);
+                StockService::restoreStock($item['product_id'], $item['quantity'] * $piecesPerUnit, 'order', $order_id, NULL, NULL, (int) $item['variation_id']);
+            } else {
+                StockService::restoreStock($item['product_id'], $item['quantity'], 'order', $order_id);
+            }
+        }
+    }
+}
+
+/**
  * Side effects that must fire whenever an order's status changes, shared by
  * staff/Orders.php and admin/Order.php so both update paths stay consistent.
  *
@@ -14,13 +52,15 @@
  *   to their dedicated internal e-wallet. releaseCommission() only ever
  *   matches a 'pending' commission row, so re-saving Delivered (or bouncing
  *   through other statuses back to Delivered) does not credit twice.
- * - cancelled / return_refund: undoes the above — restores stock and
- *   reverses the commission (only claws back the wallet if it had already
- *   been released), and flips the payment row to refunded/failed — for
- *   orders that hadn't already been reversed via this same path.
+ * - cancelled / return_refund: undoes the above — restores stock (unless
+ *   $restock is FALSE — Refund::approve() defers this to Refund::complete(),
+ *   see restore_order_stock() above) and reverses the commission (only
+ *   claws back the wallet if it had already been released), and flips the
+ *   payment row to refunded/failed — for orders that hadn't already been
+ *   reversed via this same path.
  */
 if (!function_exists('apply_order_status_side_effects')) {
-    function apply_order_status_side_effects($order, $old_status, $new_status) {
+    function apply_order_status_side_effects($order, $old_status, $new_status, $restock = TRUE) {
         if ($old_status === $new_status) {
             return;
         }
@@ -59,20 +99,8 @@ if (!function_exists('apply_order_status_side_effects')) {
         if ($new_status === 'delivered') {
             CommissionService::releaseCommission($order_id);
         } elseif (in_array($new_status, ['cancelled', 'return_refund'], TRUE) && !in_array($old_status, ['cancelled', 'return_refund'], TRUE)) {
-            $items = $CI->db->where('order_id', $order_id)->get(ORDER_DETAILS_TABLE)->result_array();
-            foreach ($items as $item) {
-                // Variant/variation lines are deducted from the branch/batch
-                // ledger scoped to their combination or value (see
-                // Checkout.php), so restoring them goes through the same
-                // ledger, scoped the same way — otherwise this would restore
-                // into the wrong pool.
-                if (!empty($item['variant_id'])) {
-                    StockService::restoreStock($item['product_id'], $item['quantity'], 'order', $order_id, NULL, NULL, 'ANY', (int) $item['variant_id']);
-                } elseif (!empty($item['variation_id'])) {
-                    StockService::restoreStock($item['product_id'], $item['quantity'], 'order', $order_id, NULL, NULL, (int) $item['variation_id']);
-                } else {
-                    StockService::restoreStock($item['product_id'], $item['quantity'], 'order', $order_id);
-                }
+            if ($restock) {
+                restore_order_stock($order_id);
             }
             CommissionService::reverseCommission($order_id, 'Order ' . $new_status);
 

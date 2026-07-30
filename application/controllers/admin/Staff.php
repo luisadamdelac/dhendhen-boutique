@@ -17,9 +17,10 @@ class Staff extends Authenticated_Controller {
         $data['current_page'] = 'staff';
 
         $data['staffs'] = $this->db
-            ->select('st.*, u.email, u.status')
+            ->select('st.*, u.email, u.status, b.branch_name, b.city AS branch_city')
             ->from(STAFF_TABLE . ' st')
             ->join(USER_ACCOUNT_TABLE . ' u', 'st.user_account_id = u.user_account_id')
+            ->join(BRANCHES_TABLE . ' b', 'st.branch_id = b.branch_id', 'left')
             ->order_by('st.staff_id', 'DESC')
             ->get()->result_array();
 

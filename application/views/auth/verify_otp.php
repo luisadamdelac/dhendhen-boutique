@@ -13,23 +13,23 @@
 
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛍️</text></svg>">
 
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="<?php echo base_url('public/vendor/poppins/poppins.css'); ?>">
+    <link rel="stylesheet" href="<?php echo base_url('public/vendor/fontawesome/css/all.min.css'); ?>">
 
     <style>
         :root {
             --ds-pink: #ff69b4;
-            --ds-pink-dark: #e0559c;
-            --ds-violet: #ee82ee;
-            --ds-purple: #9370db;
-            --ds-gradient: linear-gradient(135deg, var(--ds-pink) 0%, var(--ds-violet) 50%, var(--ds-purple) 100%);
+            --ds-pink-dark: #d6006d;
+            --ds-pink-light: #ff8cc5;
+            --ds-purple: #b8005c;
+            --ds-gradient: linear-gradient(135deg, var(--ds-pink-dark) 0%, var(--ds-purple) 100%);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             font-family: 'Poppins', sans-serif;
-            background: linear-gradient(135deg, #fce4ec 0%, #f3e5f5 50%, #e1bee7 100%);
+            background: radial-gradient(circle at 50% 35%, #fdeef5 0%, #fbd9ea 55%, #f7c6de 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -53,14 +53,16 @@
         }
 
         .brand-header { text-align: center; margin-bottom: 26px; }
-        .brand-logo {
-            font-size: 44px;
-            margin-bottom: 8px;
-            display: inline-block;
-            animation: pulse 2.2s ease-in-out infinite;
+        .brand-logo-wrap {
+            width: 90px;
+            height: 90px;
+            margin: 0 auto 12px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 3px solid #fff;
+            box-shadow: 0 10px 26px rgba(214, 0, 109, 0.28);
         }
-        @media (prefers-reduced-motion: reduce) { .brand-logo { animation: none; } }
-        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
+        .brand-logo-img { display: block; width: 100%; height: 100%; object-fit: cover; }
         .brand-name { font-size: 22px; font-weight: 700; color: #24202b; }
 
         .forgot-icon {
@@ -176,7 +178,7 @@
             justify-content: center;
             gap: 6px;
         }
-        .back-link a:hover { color: var(--ds-violet); }
+        .back-link a:hover { color: var(--ds-pink-light); }
 
         @media (max-width: 480px) {
             .forgot-container { padding: 34px 24px; }
@@ -187,7 +189,9 @@
     <div class="forgot-wrapper">
         <div class="forgot-container">
             <div class="brand-header">
-                <div class="brand-logo">🛍️</div>
+                <div class="brand-logo-wrap">
+                    <img class="brand-logo-img" src="<?php echo base_url('public/uploads/avatars/c6e87fc1363436e5468a05c9c2a59b26.png'); ?>" alt="Dhendhen Beauty Products and Boutique">
+                </div>
                 <div class="brand-name">DropSell</div>
             </div>
 

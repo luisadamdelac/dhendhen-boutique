@@ -54,7 +54,7 @@ $current_page = 'refund';
             <?php if (($refund['status'] ?? '') === 'pending'): ?>
                 <hr style="margin: 20px 0; border: none; border-top: 1px solid var(--border);">
                 <div style="display: flex; gap: 10px;">
-                    <button type="button" class="btn btn-success" onclick="refundAction('approve')">Approve &amp; Restock</button>
+                    <button type="button" class="btn btn-success" onclick="refundAction('approve')">Approve</button>
                     <button type="button" class="btn btn-danger" onclick="refundAction('reject')">Reject</button>
                 </div>
             <?php elseif (($refund['status'] ?? '') === 'approved'): ?>
@@ -64,17 +64,21 @@ $current_page = 'refund';
                         <p style="margin:0 0 12px; font-weight:600;">Mark as Refunded</p>
                         <label style="display:flex; align-items:center; gap:8px; margin-bottom:12px; cursor:pointer;">
                             <input type="checkbox" id="itemReceivedCheck" style="width:16px;height:16px;">
-                            Item received back in good condition
+                            Item received back in good condition — restocks the item once confirmed
                         </label>
                         <div class="row" style="align-items: center;">
                             <div class="col col-6">
                                 <input type="text" id="refund_payment_reference" class="form-control" placeholder="13-digit GCash reference number" inputmode="numeric" maxlength="13">
                             </div>
                             <div class="col col-6">
-                                <button type="button" class="btn btn-primary" onclick="refundAction('complete')">
-                                    <i class="fas fa-check-double"></i> Mark as Refunded
-                                </button>
+                                <label class="form-label small text-muted mb-1" for="refund_payment_proof">Proof of payment (screenshot)</label>
+                                <input type="file" id="refund_payment_proof" class="form-control" accept="image/jpeg,image/png,image/webp">
                             </div>
+                        </div>
+                        <div style="margin-top:12px;">
+                            <button type="button" class="btn btn-primary" onclick="refundAction('complete')">
+                                <i class="fas fa-check-double"></i> Mark as Refunded
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -87,6 +91,12 @@ $current_page = 'refund';
                             &middot; Paid on <?= date('F j, Y g:i A', strtotime($refund['completed_at'])); ?>
                         <?php endif; ?>
                     </p>
+                    <?php if (!empty($refund['payment_proof'])): ?>
+                        <p style="margin:10px 0 4px;font-size:13px;">Proof of payment:</p>
+                        <a href="<?= BASE_URL . htmlspecialchars($refund['payment_proof']); ?>" target="_blank">
+                            <img src="<?= BASE_URL . htmlspecialchars($refund['payment_proof']); ?>" alt="Proof of payment" style="max-width:200px;max-height:200px;border-radius:var(--radius-lg);border:1px solid var(--border);">
+                        </a>
+                    <?php endif; ?>
                 </div>
             <?php endif; ?>
         </div>
@@ -123,9 +133,9 @@ $current_page = 'refund';
 let _pendingRefundAction = null;
 
 const REFUND_ACTION_META = {
-    approve:  { title: 'Approve & Restock', body: 'Approve this refund and restock the returned item(s)?', label: 'Approve', color: '#28a745' },
+    approve:  { title: 'Approve', body: 'Approve this refund request? Stock is restocked separately once the returned item is confirmed received.', label: 'Approve', color: '#28a745' },
     reject:   { title: 'Reject Refund', body: 'Reject this refund request?', label: 'Reject', color: '#dc3545' },
-    complete: { title: 'Mark as Refunded', body: 'Confirm the item was received back in good condition and the refund payment was sent via GCash?', label: 'Mark as Refunded', color: '#4361ee' }
+    complete: { title: 'Mark as Refunded', body: 'Confirm the item was received back in good condition and the refund payment was sent via GCash? This will restock the item.', label: 'Mark as Refunded', color: '#4361ee' }
 };
 
 function refundAction(action) {
@@ -139,6 +149,10 @@ function refundAction(action) {
         }
         if (!/^\d{13}$/.test(document.getElementById('refund_payment_reference').value)) {
             alert('Please enter the 13-digit GCash Reference Number.');
+            return;
+        }
+        if (!document.getElementById('refund_payment_proof').files.length) {
+            alert('Please attach proof of payment (a screenshot of the GCash send confirmation).');
             return;
         }
     }
@@ -176,15 +190,16 @@ document.getElementById('refundActionBtnConfirm').addEventListener('click', func
     document.getElementById('refundActionBtnConfirmSpinner').classList.remove('d-none');
 
     const remarks = action === 'reject' ? document.getElementById('refundAdminRemarks').value : '';
-    const params = new URLSearchParams({ admin_remarks: remarks });
+    const formData = new FormData();
+    formData.set('admin_remarks', remarks);
     if (action === 'complete') {
-        params.set('item_received', document.getElementById('itemReceivedCheck').checked ? '1' : '0');
-        params.set('payment_reference', document.getElementById('refund_payment_reference').value);
+        formData.set('item_received', document.getElementById('itemReceivedCheck').checked ? '1' : '0');
+        formData.set('payment_reference', document.getElementById('refund_payment_reference').value);
+        formData.set('payment_proof', document.getElementById('refund_payment_proof').files[0]);
     }
     fetch('<?= site_url('admin/refund/'); ?>' + action + '/<?= $refund['refund_id']; ?>', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: params.toString()
+        body: formData
     })
         .then(r => r.json())
         .then(data => {

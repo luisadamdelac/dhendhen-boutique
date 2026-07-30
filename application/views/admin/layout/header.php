@@ -8,8 +8,8 @@
     <!-- Favicon with Data URI (no 404 errors) -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛍️</text></svg>">
     
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Google Fonts (self-hosted — see public/vendor/) -->
+    <link rel="stylesheet" href="<?php echo BASE_URL; ?>public/vendor/poppins/poppins.css">
     
     <!-- Font Awesome (self-hosted — see public/vendor/) -->
     <link rel="stylesheet" href="<?php echo BASE_URL; ?>public/vendor/fontawesome/css/all.min.css">
@@ -88,8 +88,11 @@
                             </span>
                         </a>
                         <div id="messagePanel" class="notif-dropdown-panel" style="display:none;">
-                            <div style="padding:12px 16px;border-bottom:1px solid #f0f0f0;">
+                            <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid #f0f0f0;">
                                 <strong style="font-size:14px;">Order Alerts</strong>
+                                <button type="button" id="markAllReadOrdersBtn" style="background:none;border:none;color:var(--primary-pink,#ff69b4);font-size:12px;font-weight:600;cursor:pointer;">
+                                    <i class="fas fa-check-double"></i> Mark all read
+                                </button>
                             </div>
                             <div id="messageList"><div style="padding:20px;text-align:center;color:#999;font-size:13px;">Loading…</div></div>
                             <div style="padding:8px 16px;border-top:1px solid #f0f0f0;text-align:center;">

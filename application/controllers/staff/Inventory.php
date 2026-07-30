@@ -213,9 +213,15 @@ class Inventory extends Authenticated_Controller {
             return;
         }
 
+        // Scoped to the same pool adjustStock() below will actually touch —
+        // previously this used the product's combined total (base + every
+        // variant) as the baseline even when editing "Base product (no
+        // combination)", so the computed delta was sized against the wrong
+        // pool and either under/over-adjusted base-only batches or failed
+        // outright with a false "insufficient stock" error.
         $current_stock = $variant_id
             ? (StockService::getVariantBranchStock($variant_id)[$this->staff_branch_id] ?? 0)
-            : StockService::getAvailableStock($product_id, $this->staff_branch_id);
+            : StockService::getAvailableStock($product_id, $this->staff_branch_id, NULL);
         $delta = $target_quantity - $current_stock;
 
         $ok = StockService::adjustStock($product_id, $this->staff_branch_id, $delta, $this->user_id, 'Staff stock edit', NULL, $variant_id);
@@ -224,7 +230,9 @@ class Inventory extends Authenticated_Controller {
             return;
         }
 
-        $new_stock = StockService::getAvailableStock($product_id, $this->staff_branch_id);
+        $new_stock = $variant_id
+            ? (StockService::getVariantBranchStock($variant_id)[$this->staff_branch_id] ?? 0)
+            : StockService::getAvailableStock($product_id, $this->staff_branch_id, NULL);
 
         $this->activity_log_model->create([
             'user_type'   => 'staff',
@@ -265,7 +273,12 @@ class Inventory extends Authenticated_Controller {
             return;
         }
 
-        $new_stock = StockService::getAvailableStock($product_id, $this->staff_branch_id);
+        // Scoped to match what adjustStock() above actually touched — see
+        // the note in set_stock() above for why the unscoped total misreports
+        // this for products that have variants.
+        $new_stock = $variant_id
+            ? (StockService::getVariantBranchStock($variant_id)[$this->staff_branch_id] ?? 0)
+            : StockService::getAvailableStock($product_id, $this->staff_branch_id, NULL);
 
         $this->activity_log_model->create([
             'user_type'   => 'staff',

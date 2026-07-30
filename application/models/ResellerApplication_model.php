@@ -8,7 +8,7 @@ class ResellerApplication_model extends CI_Model {
     }
 
     private function base_query() {
-        return $this->db->select('ra.*, c.first_name, c.last_name, c.contact_number, c.user_account_id, u.email')
+        return $this->db->select('ra.*, c.first_name, c.last_name, c.contact_number, c.profile_image, c.user_account_id, u.email')
             ->from(RESELLER_APPLICATION_TABLE . ' ra')
             ->join(CUSTOMER_TABLE . ' c', 'ra.customer_id = c.customer_id')
             ->join(USER_ACCOUNT_TABLE . ' u', 'c.user_account_id = u.user_account_id');

@@ -19,9 +19,19 @@ class StockService {
     }
 
     /**
-     * Total available stock for a product, optionally scoped to one branch.
+     * Total available stock for a product, optionally scoped to one branch
+     * and/or one variant combination.
+     *
+     * $variantId: 'ANY' (default) aggregates across the base product and
+     * every variant combination — unchanged behavior for existing callers.
+     * Pass an int to scope to one variant_id, or explicit NULL to scope to
+     * base-product-only batches (no variant). Callers that adjust a specific
+     * scope (e.g. set_stock() editing "Base product (no combination)") must
+     * pass the same scope here that they'll pass to adjustStock(), or the
+     * computed delta is sized against a different pool than the one it's
+     * actually applied to.
      */
-    public static function getAvailableStock($productId, $branchId = NULL) {
+    public static function getAvailableStock($productId, $branchId = NULL, $variantId = 'ANY') {
         $CI =& get_instance();
         $CI->load->database();
 
@@ -30,6 +40,9 @@ class StockService {
             ->where('status', 'active');
         if ($branchId) {
             $query->where('branch_id', $branchId);
+        }
+        if ($variantId !== 'ANY') {
+            $variantId === NULL ? $query->where('variant_id IS NULL', NULL, FALSE) : $query->where('variant_id', $variantId);
         }
         $row = $query->get(INVENTORY_BATCH_TABLE)->row_array();
         return (int) ($row['total'] ?? 0);
@@ -83,6 +96,81 @@ class StockService {
             $out[(int) $row['branch_id']] = (int) $row['qty'];
         }
         return $out;
+    }
+
+    /**
+     * A variant combination's effective "pieces per unit" — the product of
+     * pieces_per_unit across every axis value that makes up the combination
+     * (e.g. a "Package Type: 1 Set (10 pcs)" axis value with
+     * pieces_per_unit=10 makes the whole combination 10). Defaults to 1 for
+     * a NULL variant (no-variation base product) or any value that hasn't
+     * set a multiplier, so ordinary single-piece variations are unaffected.
+     */
+    public static function getVariantPiecesPerUnit($variantId) {
+        if (empty($variantId)) {
+            return 1;
+        }
+
+        $CI =& get_instance();
+        $CI->load->database();
+
+        $variant = $CI->db->select('variation_id_1, variation_id_2')
+            ->from(PRODUCT_VARIANTS_TABLE)
+            ->where('variant_id', $variantId)
+            ->get()->row_array();
+        if (!$variant) {
+            return 1;
+        }
+
+        $axisIds = [(int) $variant['variation_id_1']];
+        if (!empty($variant['variation_id_2'])) {
+            $axisIds[] = (int) $variant['variation_id_2'];
+        }
+
+        $extraRows = $CI->db->select('variation_id')
+            ->from(PRODUCT_VARIANT_EXTRA_VALUES_TABLE)
+            ->where('variant_id', $variantId)
+            ->get()->result_array();
+        foreach ($extraRows as $row) {
+            $axisIds[] = (int) $row['variation_id'];
+        }
+
+        if (empty($axisIds)) {
+            return 1;
+        }
+
+        $valueRows = $CI->db->select('pieces_per_unit')
+            ->from(PRODUCT_VARIATION_TABLE)
+            ->where_in('variation_id', array_unique($axisIds))
+            ->get()->result_array();
+
+        $multiplier = 1;
+        foreach ($valueRows as $row) {
+            $multiplier *= max(1, (int) $row['pieces_per_unit']);
+        }
+
+        return $multiplier;
+    }
+
+    /**
+     * Same idea as getVariantPiecesPerUnit(), for the legacy single-axis
+     * path — a cart line carrying variation_id directly instead of a
+     * product_variants row.
+     */
+    public static function getVariationPiecesPerUnit($variationId) {
+        if (empty($variationId)) {
+            return 1;
+        }
+
+        $CI =& get_instance();
+        $CI->load->database();
+
+        $row = $CI->db->select('pieces_per_unit')
+            ->from(PRODUCT_VARIATION_TABLE)
+            ->where('variation_id', $variationId)
+            ->get()->row_array();
+
+        return $row ? max(1, (int) $row['pieces_per_unit']) : 1;
     }
 
     /**

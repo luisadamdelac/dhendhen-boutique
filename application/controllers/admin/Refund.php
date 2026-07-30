@@ -61,10 +61,15 @@ class Refund extends Authenticated_Controller {
     }
 
     /**
-     * Approve refund: restores stock, reverses the reseller's commission for
-     * the order (if it had already been released), and marks the order
-     * return_refund — mirroring what apply_order_status_side_effects() does
-     * for a direct order-status change.
+     * Approve refund: reverses the reseller's commission for the order (if
+     * it had already been released) and marks the order return_refund —
+     * mirroring what apply_order_status_side_effects() does for a direct
+     * order-status change, EXCEPT stock is deliberately not restored here
+     * ($restock = FALSE below). Restocking on approval — before the item has
+     * necessarily made it back — would credit stock the store doesn't
+     * actually have if the customer never sends it back, while the refund
+     * still goes out. Stock is only restored once complete() confirms the
+     * item was physically received back (see restore_order_stock()).
      */
     public function approve($refund_id = '') {
         if (empty($refund_id) || $this->input->method() !== 'post') {
@@ -102,7 +107,7 @@ class Refund extends Authenticated_Controller {
                 'updated_at' => date('Y-m-d H:i:s'),
             ], ['order_id' => $order['order_id']]);
 
-            apply_order_status_side_effects($order, $order['order_status'], 'return_refund');
+            apply_order_status_side_effects($order, $order['order_status'], 'return_refund', FALSE);
         }
 
         $this->db->trans_complete();
@@ -153,13 +158,56 @@ class Refund extends Authenticated_Controller {
             return;
         }
 
+        if (empty($_FILES['payment_proof']['name'])) {
+            echo json_encode(['success' => FALSE, 'message' => 'Please attach proof of payment (a screenshot of the GCash send confirmation).']);
+            return;
+        }
+
+        $upload_path = FCPATH . 'public/uploads/refunds/';
+        if (!is_dir($upload_path)) {
+            mkdir($upload_path, 0755, TRUE);
+        }
+
+        $this->load->library('upload', [
+            'upload_path'   => $upload_path,
+            'allowed_types' => 'jpg|jpeg|png|webp',
+            'max_size'      => 5120,
+            'encrypt_name'  => TRUE,
+        ]);
+
+        if (!$this->upload->do_upload('payment_proof')) {
+            echo json_encode(['success' => FALSE, 'message' => 'Proof of payment upload failed: ' . $this->upload->display_errors('', '')]);
+            return;
+        }
+
+        $payment_proof = 'public/uploads/refunds/' . $this->upload->data('file_name');
+
+        $this->db->trans_start();
+
+        // The item is confirmed physically back only now — restock here
+        // rather than at approve(), so the store never credits stock it
+        // hasn't actually received (see the note on approve() above).
+        $this->load->helper('order');
+        restore_order_stock($refund['order_id']);
+
         $this->db->update(REFUND_REQUEST_TABLE, [
             'status' => 'completed',
             'item_received' => 1,
             'payment_reference' => $payment_reference,
+            'payment_proof' => $payment_proof,
             'completed_at' => date('Y-m-d H:i:s'),
             'updated_at' => date('Y-m-d H:i:s'),
         ], ['refund_id' => $refund_id]);
+
+        $this->db->trans_complete();
+
+        if ($this->db->trans_status() === FALSE) {
+            if (file_exists(FCPATH . $payment_proof)) {
+                @unlink(FCPATH . $payment_proof);
+            }
+            echo json_encode(['success' => FALSE, 'message' => 'Failed to mark refund as paid. Please try again.']);
+            return;
+        }
 
         require_once APPPATH . 'services/NotificationService.php';
         NotificationService::refundCompleted($refund_id, $refund['customer_id'], $refund['order_id'], (float) $refund['amount']);

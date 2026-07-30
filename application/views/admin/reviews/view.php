@@ -321,8 +321,6 @@
 // Approve review
 function approveReview(reviewId) {
     customConfirm('Are you sure you want to approve this review? It will become visible to all customers.', function() {
-        showLoader();
-
         fetch('<?php echo BASE_URL; ?>review/approve', {
             method: 'POST',
             headers: {
@@ -332,17 +330,12 @@ function approveReview(reviewId) {
         })
         .then(response => response.json())
         .then(data => {
-            hideLoader();
-            if (data.success) {
-                showNotification('success', data.message || 'Review approved successfully');
-                setTimeout(() => location.reload(), 1000);
-            } else {
-                showNotification('error', data.message || 'Failed to approve review');
-            }
+            customAlert(data.message || (data.success ? 'Review approved successfully' : 'Failed to approve review'), {
+                onClose: () => { if (data.success) location.reload(); }
+            });
         })
         .catch(error => {
-            hideLoader();
-            showNotification('error', 'An error occurred');
+            customAlert('An error occurred');
             console.error('Error:', error);
         });
     }, { title: 'Approve Review' });
@@ -351,8 +344,6 @@ function approveReview(reviewId) {
 // Reject review
 function rejectReview(reviewId) {
     customConfirm('Are you sure you want to reject this review? It will not be visible to customers.', function() {
-        showLoader();
-
         fetch('<?php echo BASE_URL; ?>review/reject', {
             method: 'POST',
             headers: {
@@ -362,19 +353,12 @@ function rejectReview(reviewId) {
         })
         .then(response => response.json())
         .then(data => {
-            hideLoader();
-            if (data.success) {
-                showNotification('success', data.message || 'Review rejected successfully');
-                setTimeout(() => {
-                    window.location.href = '<?php echo BASE_URL; ?>admin/reviews';
-                }, 1000);
-            } else {
-                showNotification('error', data.message || 'Failed to reject review');
-            }
+            customAlert(data.message || (data.success ? 'Review rejected successfully' : 'Failed to reject review'), {
+                onClose: () => { if (data.success) window.location.href = '<?php echo BASE_URL; ?>admin/reviews'; }
+            });
         })
         .catch(error => {
-            hideLoader();
-            showNotification('error', 'An error occurred');
+            customAlert('An error occurred');
             console.error('Error:', error);
         });
     }, { title: 'Reject Review' });
@@ -383,8 +367,6 @@ function rejectReview(reviewId) {
 // Delete review
 function deleteReview(reviewId) {
     customConfirm('Are you sure you want to permanently delete this review? This action cannot be undone.', function() {
-        showLoader();
-
         fetch('<?php echo BASE_URL; ?>review/delete', {
             method: 'POST',
             headers: {
@@ -394,19 +376,12 @@ function deleteReview(reviewId) {
         })
         .then(response => response.json())
         .then(data => {
-            hideLoader();
-            if (data.success) {
-                showNotification('success', data.message || 'Review deleted successfully');
-                setTimeout(() => {
-                    window.location.href = '<?php echo BASE_URL; ?>admin/reviews';
-                }, 1000);
-            } else {
-                showNotification('error', data.message || 'Failed to delete review');
-            }
+            customAlert(data.message || (data.success ? 'Review deleted successfully' : 'Failed to delete review'), {
+                onClose: () => { if (data.success) window.location.href = '<?php echo BASE_URL; ?>admin/reviews'; }
+            });
         })
         .catch(error => {
-            hideLoader();
-            showNotification('error', 'An error occurred');
+            customAlert('An error occurred');
             console.error('Error:', error);
         });
     }, { title: 'Delete Review' });

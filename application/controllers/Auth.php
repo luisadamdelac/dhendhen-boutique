@@ -293,10 +293,14 @@ class Auth extends CI_Controller {
         // Queue email
         EmailQueueService::queue($email, $user['email'] ?? 'User',
             'Your DropSell Verification Code',
-            '<p>Hi,</p>' .
-            '<p>We received a request to reset your DropSell password. Enter this verification code to continue:</p>' .
-            '<p style="font-size:28px;font-weight:700;letter-spacing:6px;color:#ff69b4;">' . $otp_code . '</p>' .
-            '<p>This code expires in 15 minutes. If you did not request this, you can safely ignore this email.</p>'
+            EmailQueueService::wrapEmailTemplate('Password Reset Code',
+                '<p>Hi,</p>' .
+                '<p>We received a request to reset your DropSell password. Enter this verification code to continue:</p>' .
+                '<div style="text-align:center;margin:20px 0;">' .
+                '<span style="display:inline-block;padding:14px 28px;background:#faf7fb;border:2px dashed #d6006d;border-radius:10px;font-size:28px;font-weight:700;letter-spacing:6px;color:#d6006d;">' . $otp_code . '</span>' .
+                '</div>' .
+                '<p style="color:#6b7280;font-size:13px;">This code expires in 15 minutes. If you did not request this, you can safely ignore this email.</p>'
+            )
         );
 
         redirect('auth/verify_otp?email=' . urlencode($email));
@@ -408,9 +412,10 @@ class Auth extends CI_Controller {
         $password_confirm = $this->input->post('password_confirm', FALSE);
 
         $this->load->library('form_validation');
-        $this->form_validation->set_rules('password', 'Password', 'required|min_length[8]|regex_match[/^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])/]', array(
-            'regex_match' => 'Password must include an uppercase letter, a lowercase letter, and a number.'
-        ));
+        $this->form_validation->set_rules('password', 'Password',
+            'required|min_length[12]|regex_match[/^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[!@#$%^&*]).{12,}$/]',
+            ['regex_match' => 'Password must be at least 12 characters and include an uppercase letter, lowercase letter, number, and special character (!@#$%^&*).']
+        );
         $this->form_validation->set_rules('password_confirm', 'Confirm Password', 'required|matches[password]');
 
         if ($this->form_validation->run() === FALSE) {
@@ -724,6 +729,13 @@ class Auth extends CI_Controller {
         // customer doesn't have to retype everything (password excluded).
         $data['old'] = $this->input->post();
         unset($data['old']['password'], $data['old']['password_confirm']);
+
+        if (!csrf_token_valid()) {
+            $data['error'] = 'Security token mismatch. Please try again.';
+            $data['error_fields'] = [];
+            $this->load->view('auth/register', $data);
+            return;
+        }
 
         // Validate form
         // Note: registration only ever creates a customer profile. Becoming a

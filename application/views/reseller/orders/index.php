@@ -223,7 +223,11 @@ $showingTo = min($totalFiltered, $currentPage * $perPage);
                                 <td class="ps-3"><strong>#<?php echo str_pad($order['order_id'], 6, '0', STR_PAD_LEFT); ?></strong></td>
                                 <td>
                                     <div class="customer-cell">
-                                        <div class="avatar-circle" style="background:<?php echo $avatarColor; ?>;"><?php echo htmlspecialchars($initials); ?></div>
+                                        <?php if (!empty($order['profile_image'])): ?>
+                                            <img src="<?php echo base_url($order['profile_image']); ?>" alt="" class="avatar-circle" style="object-fit:cover;">
+                                        <?php else: ?>
+                                            <div class="avatar-circle" style="background:<?php echo $avatarColor; ?>;"><?php echo htmlspecialchars($initials); ?></div>
+                                        <?php endif; ?>
                                         <div>
                                             <div class="customer-name"><?php echo htmlspecialchars($order['customer_name'] ?: 'Customer'); ?></div>
                                             <div class="customer-phone"><?php echo htmlspecialchars($order['contact_number'] ?? '—'); ?></div>

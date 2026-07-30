@@ -35,9 +35,13 @@
                     $rBadgeStatus = $rStatus === 'active' ? 'badge-active' : ($rStatus === 'rejected' ? 'badge-rejected' : 'badge-pending');
                     $accountStatus = $reseller['account_status'] ?? 'active';
                 ?>
-                <div style="width:64px;height:64px;border-radius:50%;background:var(--gradient-primary);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:22px;margin:0 auto 14px;">
-                    <?= $initials; ?>
-                </div>
+                <?php if (!empty($reseller['profile_image'])): ?>
+                    <img src="<?= BASE_URL . htmlspecialchars($reseller['profile_image']); ?>" alt="" style="width:64px;height:64px;border-radius:50%;object-fit:cover;margin:0 auto 14px;display:block;">
+                <?php else: ?>
+                    <div style="width:64px;height:64px;border-radius:50%;background:var(--gradient-primary);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:22px;margin:0 auto 14px;">
+                        <?= $initials; ?>
+                    </div>
+                <?php endif; ?>
                 <h4 style="font-size:16px;margin-bottom:4px;">
                     <?= htmlspecialchars(trim(($reseller['first_name'] ?? '') . ' ' . ($reseller['last_name'] ?? ''))); ?>
                 </h4>

@@ -133,6 +133,7 @@ class Order_model extends CI_Model {
             'delivery_city'  => $data['delivery_city'] ?? NULL,
             'delivery_zip_code'=> $data['delivery_zip_code'] ?? NULL,
             'delivery_fee'   => (float)($data['delivery_fee'] ?? 0),
+            'notes'          => $data['notes'] ?? NULL,
             'order_status'   => $data['order_status'] ?? 'pending',
             'created_at'     => date('Y-m-d H:i:s'),
             'updated_at'     => date('Y-m-d H:i:s')

@@ -6,13 +6,12 @@
     <?php if (!defined('SITE_NAME')) { define('SITE_NAME', 'DropSell'); } ?>
     <title><?php echo $page_title ?? 'Shop'; ?> - <?php echo SITE_NAME; ?></title>
     
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts (self-hosted — see public/vendor/) -->
+    <link rel="stylesheet" href="<?php echo BASE_URL; ?>public/vendor/poppins/poppins.css">
+    <link rel="stylesheet" href="<?php echo BASE_URL; ?>public/vendor/inter/inter.css">
+
+    <!-- Font Awesome (self-hosted — see public/vendor/) -->
+    <link rel="stylesheet" href="<?php echo BASE_URL; ?>public/vendor/fontawesome/css/all.min.css">
     
     <!-- Custom CSS — cache-busted so CSS fixes here take effect immediately
          instead of serving a stale cached copy -->

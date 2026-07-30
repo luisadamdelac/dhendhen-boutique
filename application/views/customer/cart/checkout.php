@@ -877,23 +877,40 @@
         }
     }
 
-    // Best-effort attempt to hand off to the GCash mobile app. GCash has no
-    // publicly documented custom URL scheme, so this tries the common
-    // "gcash://" intent — but only on an actual phone. On desktop there's no
-    // OS handler for it at all, so navigating there does nothing visible,
-    // which read as "the button doesn't work" — show a clear message
-    // instead of a silent no-op, and only attempt the deep link where it
-    // could plausibly succeed.
+    // Hand off to the GCash mobile app via its "gcash://" custom URL scheme
+    // (the same scheme GCash's own payment-gateway integrations, e.g.
+    // PayMongo, document handling) — only attempted on an actual phone,
+    // since desktop has no OS handler for it at all and navigating there
+    // does nothing visible (which just reads as "the button doesn't work").
     function openGcashApp() {
         saveCheckoutState();
-        // GCash has no publicly documented/registered custom URL scheme to
-        // launch it programmatically — attempting one (e.g. "gcash://")
-        // just throws a "no registered handler" error on devices without a
-        // matching app association and does nothing on devices with it.
-        // Rather than guess at an unverified scheme, tell the customer
-        // exactly what to do instead — the QR code and number above are the
-        // reliable way to pay.
-        showCheckoutNotice('Open the GCash app on your phone to send payment, or scan the QR code / use the number above.');
+
+        const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '');
+        if (!isMobile) {
+            showCheckoutNotice('Open the GCash app on your phone to send payment, or scan the QR code / use the number above.');
+            return;
+        }
+
+        // Attempting "gcash://" is harmless even without the app installed —
+        // the OS/browser just ignores the unrecognized scheme and the page
+        // stays put, no error thrown. Detect that "stayed put" case (no
+        // blur/visibilitychange within a couple seconds, meaning nothing
+        // intercepted the navigation) and show the fallback instructions
+        // instead of leaving the tap looking like it did nothing.
+        let handedOff = false;
+        const markHandedOff = () => { handedOff = true; };
+        document.addEventListener('visibilitychange', markHandedOff, { once: true });
+        window.addEventListener('blur', markHandedOff, { once: true });
+
+        window.location.href = 'gcash://';
+
+        setTimeout(() => {
+            document.removeEventListener('visibilitychange', markHandedOff);
+            window.removeEventListener('blur', markHandedOff);
+            if (!handedOff) {
+                showCheckoutNotice("Couldn't open the GCash app automatically — make sure it's installed, or scan the QR code / use the number above instead.");
+            }
+        }, 1800);
     }
 
     function showConfirmModal() {

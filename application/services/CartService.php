@@ -46,6 +46,7 @@ class CartService {
     public static function getCartItems($cart) {
         $CI =& get_instance();
         $CI->load->database();
+        require_once APPPATH . 'services/StockService.php';
 
         if (empty($cart)) {
             return [[], 0, []];
@@ -171,7 +172,12 @@ class CartService {
                     continue; // combination removed/deactivated or no longer belongs to this product
                 }
                 $priceAdjustment = (float) $variant['price_adjustment'];
-                $availableStock = array_sum(StockService::getVariantBranchStock($variantId));
+                // Branch stock is tracked in individual pieces, but a value
+                // like "Package Type: 1 Set (10 pcs)" is SOLD in units of 10
+                // pieces — divide down to how many whole units are actually
+                // available to buy (see StockService::getVariantPiecesPerUnit()).
+                $piecesPerUnit = StockService::getVariantPiecesPerUnit($variantId);
+                $availableStock = intdiv(array_sum(StockService::getVariantBranchStock($variantId)), $piecesPerUnit);
                 $variationLabel = $variant['variation_label'];
             } elseif ($variationId) {
                 $variation = $variationsById[$variationId] ?? NULL;
@@ -179,7 +185,8 @@ class CartService {
                     continue; // variation removed/deactivated or no longer belongs to this product
                 }
                 $priceAdjustment = (float) $variation['price_adjustment'];
-                $availableStock = (int) $variation['stock'];
+                $piecesPerUnit = StockService::getVariationPiecesPerUnit($variationId);
+                $availableStock = intdiv((int) $variation['stock'], $piecesPerUnit);
                 $variationLabel = $variation['variation_type'] . ': ' . $variation['variation_value'];
             }
 

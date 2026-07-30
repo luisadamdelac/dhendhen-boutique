@@ -61,7 +61,7 @@ $current_page = 'commission';
     <div class="card ds-pink-table-card mb-2">
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table inv-table ds-pink-table mb-0" id="commissionsTable">
+                <table class="table inv-table ds-pink-table mb-0 table-stack" id="commissionsTable">
                     <thead>
                         <tr><th class="ps-3">Transaction ID</th><th>Reseller</th><th>Amount</th><th>Status</th><th>Date</th></tr>
                     </thead>

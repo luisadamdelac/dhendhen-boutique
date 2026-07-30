@@ -261,6 +261,7 @@ class Reseller extends Authenticated_Controller {
             'first_name' => $application['first_name'],
             'last_name' => $application['last_name'],
             'contact_number' => $application['contact_number'],
+            'profile_image' => $application['profile_image'],
             'street' => $application['business_street'],
             'barangay' => $application['business_barangay'],
             'city' => $application['business_city'],

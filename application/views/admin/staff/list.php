@@ -105,6 +105,7 @@
                     <tr>
                         <th class="ps-3">Staff Member</th>
                         <th>Contact</th>
+                        <th>Branch</th>
                         <th>Status</th>
                         <th class="text-center pe-3">Actions</th>
                     </tr>
@@ -136,6 +137,16 @@
                                 </div>
                             </td>
                             <td><?= htmlspecialchars($staff['contact_number'] ?? '—'); ?></td>
+                            <td>
+                                <?php if (!empty($staff['branch_name'])): ?>
+                                    <div style="font-size:13px;color:#1a1a2e;"><?= htmlspecialchars($staff['branch_name']); ?></div>
+                                    <?php if (!empty($staff['branch_city'])): ?>
+                                        <div style="font-size:11px;color:#8a94ad;"><?= htmlspecialchars($staff['branch_city']); ?></div>
+                                    <?php endif; ?>
+                                <?php else: ?>
+                                    <span class="text-muted">—</span>
+                                <?php endif; ?>
+                            </td>
                             <td>
                                 <span class="badge-status <?= $isActive ? 'badge-active' : 'badge-inactive'; ?>">
                                     <?= $isActive ? 'Active' : 'Inactive'; ?>
@@ -206,11 +217,11 @@ document.getElementById('confirmDeleteStaff').addEventListener('click', function
         .then(d => {
             closeModal(document.getElementById('deleteStaffModal'));
             if (d.success) location.reload();
-            else alert(d.message || 'Delete failed.');
+            else customAlert(d.message || 'Delete failed.');
             this.disabled = false;
             this.textContent = 'Delete';
         })
-        .catch(function() { alert('Request failed.'); });
+        .catch(function() { customAlert('Request failed.'); });
 });
 </script>
 
@@ -219,7 +230,7 @@ document.getElementById('confirmDeleteStaff').addEventListener('click', function
 <script>
 $(function () {
     const table = $('#staffTable').DataTable({
-        columnDefs: [{ orderable: false, targets: [3] }],
+        columnDefs: [{ orderable: false, targets: [4] }],
         language: { search: '_INPUT_', searchPlaceholder: 'Search name or email…', emptyTable: 'No staff found' }
     });
 

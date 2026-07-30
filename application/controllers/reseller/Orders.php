@@ -66,7 +66,7 @@ class Orders extends Authenticated_Controller {
         $offset = ($data['currentPage'] - 1) * self::PER_PAGE;
 
         $data['orders'] = $apply_filters(
-            $this->db->select('o.*, c.first_name, c.last_name, c.contact_number, pay.status as payment_status')
+            $this->db->select('o.*, c.first_name, c.last_name, c.contact_number, c.profile_image, pay.status as payment_status')
                 ->from(ORDER_TABLE . ' o')
         )->order_by('o.order_id', 'DESC')->limit(self::PER_PAGE, $offset)->get()->result_array();
 

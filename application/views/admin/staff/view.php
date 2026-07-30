@@ -114,8 +114,8 @@ function setStaffStatus(staffId, action) {
     customConfirm(action === 'activate' ? 'Activate this staff account?' : 'Deactivate this staff account?', function() {
         fetch('<?php echo site_url('admin/staff/'); ?>' + action + '/' + staffId, { method: 'POST' })
             .then(r => r.json())
-            .then(data => { alert(data.message || ''); if (data.success) location.reload(); })
-            .catch(() => alert('Request failed'));
+            .then(data => { customAlert(data.message || '', { onClose: () => { if (data.success) location.reload(); } }); })
+            .catch(() => customAlert('Request failed'));
     }, { title: action === 'activate' ? 'Activate Staff' : 'Deactivate Staff' });
 }
 

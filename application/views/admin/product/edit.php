@@ -500,7 +500,7 @@ $current_image_path = !empty($primary_image['image_path']) ? $primary_image['ima
                             <table class="table table-sm variation-values-table table-stack" id="variationTypesContainer">
                                 <thead>
                                     <tr>
-                                        <th>Value</th><th>Default Price Adj.</th><th>Default Status</th><th class="text-center">Smart Apply</th><th class="text-center">Remove</th>
+                                        <th>Value</th><th>Default Price Adj.</th><th>Pcs / Unit</th><th>Default Status</th><th class="text-center">Smart Apply</th><th class="text-center">Remove</th>
                                     </tr>
                                 </thead>
                             </table>
@@ -1238,6 +1238,7 @@ function addVariationValueRow(block, value) {
     row.innerHTML =
         '<td><input type="text" class="form-control form-control-sm variation-value-input" placeholder="Value (e.g. Red)" value="' + escHtml(value ? value.variation_value : '') + '"></td>' +
         '<td><input type="number" step="0.01" class="form-control form-control-sm variation-default-price-input" placeholder="+/- Price" value="' + (value ? parseFloat(value.price_adjustment) : 0) + '"></td>' +
+        '<td><input type="number" step="1" min="1" class="form-control form-control-sm variation-pieces-per-unit-input" title="How many individual pieces one unit of this value represents (e.g. 10 for &quot;1 Set (10 pcs)&quot;) — selling 1 unit deducts this many pieces from its stock. Leave at 1 if this value isn\'t a multi-piece bundle." value="' + (value && value.pieces_per_unit ? parseInt(value.pieces_per_unit, 10) : 1) + '"></td>' +
         '<td><select class="form-control form-control-sm variation-default-status-select">' +
             '<option value="active"' + (!value || value.status !== 'inactive' ? ' selected' : '') + '>Active</option>' +
             '<option value="inactive"' + (value && value.status === 'inactive' ? ' selected' : '') + '>Inactive</option>' +
@@ -1298,6 +1299,7 @@ function syncVariationsJson() {
                 type: type,
                 value: value,
                 default_price_adjustment: parseFloat(row.querySelector('.variation-default-price-input').value) || 0,
+                pieces_per_unit: Math.max(1, parseInt(row.querySelector('.variation-pieces-per-unit-input').value, 10) || 1),
                 default_status: row.querySelector('.variation-default-status-select').value,
                 client_row_id: row.dataset.rowId,
             });

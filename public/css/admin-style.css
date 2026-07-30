@@ -1026,11 +1026,15 @@ body.sidebar-open .sidebar-backdrop {
     font-size: var(--font-size-xs);
     color: var(--gray);
     margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .leaderboard-value {
     text-align: right;
     flex-shrink: 0;
+    max-width: 45%;
 }
 
 .leaderboard-value strong {
@@ -1043,6 +1047,9 @@ body.sidebar-open .sidebar-backdrop {
     font-size: var(--font-size-xs);
     color: var(--gray);
     margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /* ============================================
@@ -1560,6 +1567,28 @@ textarea.form-control {
         max-width: 100%;
     }
 
+    /* Stat-tile grids (Total Products/Available Stock/etc.) default to
+       Bootstrap's row-cols-2 (2 per row) even on the narrowest phones,
+       leaving each tile too little width for its label/subtitle text,
+       which then wraps across several cramped lines — go 1-per-row
+       instead so each tile gets the full card width to work with. */
+    .ds-hero-stats .row-cols-2 > *,
+    .ds-hero-stats .row-cols-3 > *,
+    .ds-hero-stats .row-cols-4 > * {
+        flex: 0 0 100%;
+        max-width: 100%;
+        width: 100%;
+    }
+
+    /* The floating-card overlap effect assumes short, single/double-line
+       tiles (true at the wider row-cols-5 desktop layout). Forcing
+       1-per-row above makes each tile noticeably taller, so shrink the
+       pull-up amount to keep it from riding further into the hero banner
+       than intended. */
+    .ds-hero-stats {
+        margin-top: -1rem;
+    }
+
     .main-content {
         padding: var(--spacing-md);
     }
@@ -1697,6 +1726,25 @@ textarea.form-control {
         letter-spacing: .02em;
         flex-shrink: 0;
         text-align: left;
+    }
+
+    /* Cells with more than one value child (e.g. a customer's name + email,
+       both direct <strong>/<p> siblings) default to the same row layout as
+       single-value cells, which forces them side-by-side and squeezes each
+       down to its own min-content width — visible as the name wrapping one
+       word per line and the email silently clipped with no ellipsis. Stack
+       them in a column instead, right-aligned to match single-value cells,
+       and truncate each line on overflow. */
+    table.table-stack td:has(> :nth-child(2)) {
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 2px;
+    }
+    table.table-stack td:has(> :nth-child(2)) > * {
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
 }
 

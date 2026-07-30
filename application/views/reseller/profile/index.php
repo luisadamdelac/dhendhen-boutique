@@ -110,10 +110,27 @@
                         </div>
 
                         <div class="form-group">
-                            <label><i class="fas fa-map-marked-alt"></i> Business Address</label>
-                            <textarea name="business_address" class="form-control" rows="3" 
-                                      placeholder="Complete business address..."><?php echo htmlspecialchars($reseller['business_address'] ?? ''); ?></textarea>
+                            <label><i class="fas fa-map-marked-alt"></i> Street / House No.</label>
+                            <input type="text" name="street" class="form-control"
+                                   value="<?php echo htmlspecialchars($reseller['street'] ?? ''); ?>"
+                                   placeholder="House No., Street">
                         </div>
+
+                        <div class="form-row-grid">
+                            <div class="form-group">
+                                <label><i class="fas fa-map-marked-alt"></i> Municipality / City</label>
+                                <input type="text" class="form-control"
+                                       value="<?php echo htmlspecialchars($reseller['city'] ?? ''); ?>"
+                                       disabled style="background: var(--gray-100); cursor: not-allowed;">
+                            </div>
+                            <div class="form-group">
+                                <label><i class="fas fa-map-marked-alt"></i> Barangay</label>
+                                <input type="text" class="form-control"
+                                       value="<?php echo htmlspecialchars($reseller['barangay'] ?? ''); ?>"
+                                       disabled style="background: var(--gray-100); cursor: not-allowed;">
+                            </div>
+                        </div>
+                        <small style="color: var(--gray-600);">Contact support to change your municipality/barangay.</small>
                     </div>
 
                     <div class="form-section">

@@ -128,6 +128,20 @@ class Product extends Authenticated_Controller {
         $data['error']   = $this->session->flashdata('error');
         $data['success'] = $this->session->flashdata('success');
 
+        // Redisplay what the admin just typed after a validation-failure
+        // bounce-back, instead of a blank form — see the old_input flashdata
+        // set at every error path in _handle_add_product(). set_data() feeds
+        // this into form_validation in place of $_POST (which is empty on
+        // this fresh GET request) purely so set_value()/set_radio() in the
+        // view can read it back.
+        $old_input = $this->session->flashdata('old_input');
+        $data['old_input'] = is_array($old_input) ? $old_input : [];
+        if (!empty($data['old_input'])) {
+            $this->_add_product_validation_rules();
+            $this->form_validation->set_data($data['old_input']);
+            $this->form_validation->run();
+        }
+
         $this->load->view('admin/layout/header', $data);
         $this->load->view('admin/product/add', $data);
         $this->load->view('admin/layout/footer', $data);
@@ -210,22 +224,48 @@ class Product extends Authenticated_Controller {
     }
 
     /**
-     * Process add-product form submission
+     * Registers the Add Product form's validation rules. Shared between
+     * _handle_add_product() (actual validation) and add()'s GET branch
+     * (which re-registers the same fields against flashdata via set_data()
+     * purely so set_value()/set_radio() in the view can repopulate the form
+     * after a validation-failure redirect — see the old_input flashdata set
+     * at every error path below).
      */
-    private function _handle_add_product() {
-        // --- Form validation ---
-        $this->form_validation->set_rules('product_name',        'Product Name',       'required|trim|max_length[150]');
+    private function _add_product_validation_rules() {
+        $this->form_validation->set_rules('product_name',        'Product Name',       'trim|max_length[150]');
         $this->form_validation->set_rules('brand',               'Brand',              'trim|max_length[100]');
         $this->form_validation->set_rules('new_brand_name',      'New Brand',          'trim|max_length[100]');
         $this->form_validation->set_rules('category_id',         'Category',           'integer');
         $this->form_validation->set_rules('new_category_name',   'New Category',       'trim|max_length[100]');
-        $this->form_validation->set_rules('cost_price',          'Cost Price',         'required|numeric');
-        $this->form_validation->set_rules('price',               'Selling Price',      'required|numeric');
-        $this->form_validation->set_rules('min_stock_alert',     'Min Stock Alert',    'required|integer|greater_than_equal_to[1]');
+        $this->form_validation->set_rules('cost_price',          'Cost Price',         'numeric');
+        $this->form_validation->set_rules('price',               'Selling Price',      'numeric');
+        $this->form_validation->set_rules('min_stock_alert',     'Min Stock Alert',    'integer');
+        $this->form_validation->set_rules('status',              'Status',             'trim');
+        $this->form_validation->set_rules('expiry_date',         'Expiry Date',        'trim');
+        $this->form_validation->set_rules('description',         'Description',        'trim|max_length[1000]');
+        $this->form_validation->set_rules('tags',                'Tags',               'trim');
+        $this->form_validation->set_rules('variations_json',     'Variations',         'trim');
+        $this->form_validation->set_rules('combinations_json',   'Combinations',       'trim');
+    }
+
+    /**
+     * Process add-product form submission
+     */
+    private function _handle_add_product() {
+        // --- Form validation ---
+        $this->_add_product_validation_rules();
+        // The shared rule set above uses lenient rules (reused for the
+        // old_input redisplay path too) — the actual "required" constraints
+        // for a real submission are enforced here instead.
+        $this->form_validation->set_rules('product_name',        'Product Name',       'required');
+        $this->form_validation->set_rules('cost_price',          'Cost Price',         'required');
+        $this->form_validation->set_rules('price',               'Selling Price',      'required');
+        $this->form_validation->set_rules('min_stock_alert',     'Min Stock Alert',    'required|greater_than_equal_to[1]');
         $this->form_validation->set_rules('status',              'Status',             'required');
 
         if ($this->form_validation->run() === FALSE) {
             $this->session->set_flashdata('error', validation_errors('<li>', '</li>'));
+            $this->session->set_flashdata('old_input', $this->input->post());
             redirect('admin/product/add');
             return;
         }
@@ -305,6 +345,7 @@ class Product extends Authenticated_Controller {
 
         if (!empty($errors)) {
             $this->session->set_flashdata('error', '<ul class="mb-0">' . implode('', array_map(fn($e) => '<li>' . $e . '</li>', $errors)) . '</ul>');
+            $this->session->set_flashdata('old_input', $this->input->post());
             redirect('admin/product/add');
             return;
         }
@@ -324,6 +365,7 @@ class Product extends Authenticated_Controller {
 
         if (!$this->upload->do_upload('product_image')) {
             $this->session->set_flashdata('error', 'Image upload failed: ' . $this->upload->display_errors('', ''));
+            $this->session->set_flashdata('old_input', $this->input->post());
             redirect('admin/product/add');
             return;
         }
@@ -373,6 +415,7 @@ class Product extends Authenticated_Controller {
                 @unlink(FCPATH . $image_path);
             }
             $this->session->set_flashdata('error', $e->getMessage());
+            $this->session->set_flashdata('old_input', $this->input->post());
             redirect('admin/product/add');
             return;
         }
@@ -385,6 +428,7 @@ class Product extends Authenticated_Controller {
                 @unlink(FCPATH . $image_path);
             }
             $this->session->set_flashdata('error', 'Database error — product could not be saved. Please try again.');
+            $this->session->set_flashdata('old_input', $this->input->post());
             redirect('admin/product/add');
             return;
         }
@@ -971,6 +1015,7 @@ class Product extends Authenticated_Controller {
                 'value'                    => $value,
                 'default_price_adjustment' => (float) ($v['default_price_adjustment'] ?? 0),
                 'default_status'           => in_array($status, ['active', 'inactive'], TRUE) ? $status : 'active',
+                'pieces_per_unit'          => max(1, (int) ($v['pieces_per_unit'] ?? 1)),
                 // Client-side row id — correlates this row to its optional
                 // uploaded file in $_FILES['variation_images'][id], since a
                 // brand new value has no variation_id yet at post time.
@@ -993,6 +1038,7 @@ class Product extends Authenticated_Controller {
                 $variation_id = (int) $existingKeyed[$key]['variation_id'];
                 $this->db->where('variation_id', $variation_id)->update(PRODUCT_VARIATION_TABLE, [
                     'price_adjustment' => $row['default_price_adjustment'],
+                    'pieces_per_unit'  => $row['pieces_per_unit'],
                     'status'           => $row['default_status'],
                     'updated_at'       => $now,
                 ]);
@@ -1002,6 +1048,7 @@ class Product extends Authenticated_Controller {
                     'variation_type'   => $row['type'],
                     'variation_value'  => $row['value'],
                     'price_adjustment' => $row['default_price_adjustment'],
+                    'pieces_per_unit'  => $row['pieces_per_unit'],
                     'stock'            => 0,
                     'status'           => $row['default_status'],
                     'created_at'       => $now,

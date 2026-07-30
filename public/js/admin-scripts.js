@@ -48,6 +48,46 @@ function customConfirm(message, onConfirm, opts) {
     overlay.addEventListener('click', function(e) { if (e.target === overlay) { close(); if (opts.onCancel) opts.onCancel(); } });
 }
 
+// Self-contained info/alert modal — same look as customConfirm() but with a
+// single OK button, for messages that don't need a Cancel option. Use in
+// place of the native alert() dialog.
+function customAlert(message, opts) {
+    opts = opts || {};
+
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px;';
+
+    const box = document.createElement('div');
+    box.style.cssText = 'background:#fff;width:100%;max-width:380px;border-radius:14px;box-shadow:0 8px 32px rgba(0,0,0,.2);padding:24px;font-family:inherit;';
+
+    const title = document.createElement('h4');
+    title.textContent = opts.title || 'Notice';
+    title.style.cssText = 'margin:0 0 10px;font-size:1.05rem;color:#1a1a2e;font-weight:700;';
+
+    const msg = document.createElement('p');
+    msg.textContent = message;
+    msg.style.cssText = 'margin:0 0 20px;font-size:.9rem;color:#475569;line-height:1.5;';
+
+    const actions = document.createElement('div');
+    actions.style.cssText = 'display:flex;justify-content:flex-end;';
+
+    const okBtn = document.createElement('button');
+    okBtn.type = 'button';
+    okBtn.textContent = opts.okText || 'OK';
+    okBtn.style.cssText = 'padding:9px 18px;border-radius:8px;border:none;background:#EC4899;color:#fff;font-weight:600;cursor:pointer;';
+
+    actions.appendChild(okBtn);
+    box.appendChild(title);
+    box.appendChild(msg);
+    box.appendChild(actions);
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+
+    function close() { overlay.remove(); if (opts.onClose) opts.onClose(); }
+    okBtn.addEventListener('click', close);
+    overlay.addEventListener('click', function(e) { if (e.target === overlay) close(); });
+}
+
 // For "remove"-style links that must confirm before navigating — customConfirm
 // is async (unlike native confirm()), so the link's default navigation is
 // prevented and re-triggered manually once the user confirms.
@@ -714,6 +754,22 @@ function initNotificationDropdowns() {
                     loadBellPanel();
                 })
                 .finally(() => { markAllBtn.disabled = false; });
+        });
+    }
+
+    const markAllOrdersBtn = document.getElementById('markAllReadOrdersBtn');
+    if (markAllOrdersBtn) {
+        markAllOrdersBtn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            markAllOrdersBtn.disabled = true;
+            fetch(base + 'admin/notification/mark_all_as_read/order', { method: 'POST' })
+                .then(r => r.json())
+                .then(() => {
+                    const msgBadge = document.getElementById('messageBadge');
+                    if (msgBadge) { msgBadge.textContent = '0'; msgBadge.style.display = 'none'; }
+                    loadMessagePanel();
+                })
+                .finally(() => { markAllOrdersBtn.disabled = false; });
         });
     }
 }

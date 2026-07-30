@@ -101,7 +101,7 @@
     <div class="card ds-pink-table-card mb-2">
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table inv-table ds-pink-table mb-0" id="resellersTable">
+                <table class="table inv-table ds-pink-table mb-0 table-stack" id="resellersTable">
                     <thead>
                         <tr>
                             <th class="ps-3" style="width:35%;">Reseller</th>

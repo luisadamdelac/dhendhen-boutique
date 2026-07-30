@@ -10,6 +10,118 @@
 
 class EmailQueueService {
 
+    // Marks the <img> tag wrapEmailTemplate() emits for the logo, so it can
+    // be swapped wholesale for the plain-emoji fallback at send time if no
+    // logo file turns out to be available (resolveLogoFile() returns NULL).
+    const LOGO_IMG_ID = 'ds-email-logo';
+    // Placeholder swapped for the real "cid:..." reference at actual send
+    // time (see attachLogo()) — the CID itself only exists once the logo is
+    // attached to a specific CI_Email instance, which happens later than
+    // wrapEmailTemplate() (queue-time HTML generation, stored as-is in
+    // email_queue_tbl.body_html until a later processQueue() run sends it).
+    const LOGO_CID_PLACEHOLDER = 'LOGO_CID_PLACEHOLDER';
+    const LOGO_FALLBACK_HTML = '<div style="font-size:34px;line-height:1;">🛍️</div>';
+
+    /**
+     * Resolves the store's actual current logo — the earliest-registered
+     * admin's profile photo (same "shop logo" source used elsewhere in the
+     * app, e.g. the staff sidebar) — dynamically, rather than a fixed
+     * pre-generated file, so re-uploading a new logo in Settings/Profile
+     * picks it up on the very next email with no manual step. The uploaded
+     * original can be a multi-MB photo, so a small square thumbnail is
+     * generated once and cached under a name keyed to the source file's
+     * path + mtime — a later logo change (different file or a re-upload
+     * that touches mtime) naturally busts the cache by producing a new key.
+     *
+     * @return string|null Absolute path to a small PNG thumbnail, or NULL
+     *                      if there's no logo configured / it can't be read.
+     */
+    private static function resolveLogoFile() {
+        $relative = function_exists('get_store_logo_image') ? get_store_logo_image() : '';
+        $sourcePath = $relative ? FCPATH . $relative : NULL;
+        if (!$sourcePath || !is_readable($sourcePath)) {
+            return NULL;
+        }
+
+        $cacheDir = FCPATH . 'public/images/email-logo-cache/';
+        if (!is_dir($cacheDir)) {
+            mkdir($cacheDir, 0755, TRUE);
+        }
+        $cacheFile = $cacheDir . md5($sourcePath . '|' . filemtime($sourcePath)) . '.png';
+        if (is_readable($cacheFile)) {
+            return $cacheFile;
+        }
+
+        $info = @getimagesize($sourcePath);
+        if (!$info) {
+            return NULL;
+        }
+        switch ($info[2]) {
+            case IMAGETYPE_JPEG: $src = @imagecreatefromjpeg($sourcePath); break;
+            case IMAGETYPE_PNG:  $src = @imagecreatefrompng($sourcePath); break;
+            case IMAGETYPE_WEBP: $src = @imagecreatefromwebp($sourcePath); break;
+            default: return NULL;
+        }
+        if (!$src) {
+            return NULL;
+        }
+
+        // Square center-crop thumbnail — matches the circular avatar framing
+        // used for the logo everywhere else in the app.
+        $size = 120;
+        $w = imagesx($src);
+        $h = imagesy($src);
+        $dim = min($w, $h);
+        $srcX = intdiv($w - $dim, 2);
+        $srcY = intdiv($h - $dim, 2);
+
+        $dst = imagecreatetruecolor($size, $size);
+        imagesavealpha($dst, TRUE);
+        $transparent = imagecolorallocatealpha($dst, 0, 0, 0, 127);
+        imagefill($dst, 0, 0, $transparent);
+        imagecopyresampled($dst, $src, 0, 0, $srcX, $srcY, $size, $size, $dim, $dim);
+        imagepng($dst, $cacheFile, 9);
+        imagedestroy($src);
+        imagedestroy($dst);
+
+        return is_readable($cacheFile) ? $cacheFile : NULL;
+    }
+
+    /**
+     * Attaches the store's current logo inline (Content-ID embed) to the
+     * given CI_Email instance and returns the cid: reference to substitute
+     * into the message HTML in place of self::LOGO_CID_PLACEHOLDER. This is
+     * the standard way HTML email clients (including Gmail) display an
+     * embedded image — unlike a base64 "data:" URI, which Gmail strips from
+     * received mail, and unlike a plain <img src="https://...">, which
+     * needs a publicly-reachable URL this app doesn't have yet (base_url()
+     * here only resolves on this dev machine).
+     *
+     * @return string|null "cid:..." string, or NULL if no logo is available.
+     */
+    private static function attachLogo($CI) {
+        $logoPath = self::resolveLogoFile();
+        if (!$logoPath) {
+            return NULL;
+        }
+        $CI->email->attach($logoPath, 'inline');
+        $cid = $CI->email->attachment_cid($logoPath);
+        return $cid ? 'cid:' . $cid : NULL;
+    }
+
+    /**
+     * Substitutes the real embedded-logo reference into a queued/wrapped
+     * email body, falling back to the plain-emoji header if no logo is
+     * configured/readable at send time.
+     */
+    private static function applyLogo($CI, $html) {
+        $logoCid = self::attachLogo($CI);
+        if ($logoCid) {
+            return str_replace(self::LOGO_CID_PLACEHOLDER, $logoCid, $html);
+        }
+        return preg_replace('/<img id="' . preg_quote(self::LOGO_IMG_ID, '/') . '"[^>]*>/', self::LOGO_FALLBACK_HTML, $html);
+    }
+
     /**
      * Queue an email for sending, then attempt delivery immediately if
      * SMTP is enabled (see isSmtpEnabled()).
@@ -186,19 +298,29 @@ class EmailQueueService {
         $companyName = self::getSetting('company_name') ?: 'DropSell';
         $year = date('Y');
 
+        // References the logo via a placeholder swapped for a real
+        // "cid:..." embedded-attachment reference at actual send time (see
+        // attachLogo()) — a base64 "data:" URI doesn't work here since
+        // Gmail strips those from received mail, and a plain
+        // <img src="https://..."> needs a publicly-reachable URL this app
+        // doesn't have yet (base_url() here is this dev machine's own
+        // localhost).
+        $logoTag = '<img id="' . self::LOGO_IMG_ID . '" src="' . self::LOGO_CID_PLACEHOLDER . '" width="56" height="56" alt="' . htmlspecialchars($companyName) . '" '
+            . 'style="width:56px;height:56px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,0.85);display:inline-block;">';
+
         return '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">'
             . '<meta name="viewport" content="width=device-width, initial-scale=1.0"></head>'
-            . '<body style="margin:0;padding:0;background:#f3e5f5;font-family:Arial,Helvetica,sans-serif;">'
-            . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f3e5f5;padding:24px 0;">'
+            . '<body style="margin:0;padding:0;background:#fbd9ea;font-family:Arial,Helvetica,sans-serif;">'
+            . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fbd9ea;padding:24px 0;">'
             . '<tr><td align="center">'
-            . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 8px 24px rgba(133,49,122,0.12);">'
-            . '<tr><td style="background:linear-gradient(135deg,#ff69b4 0%,#ee82ee 50%,#9370db 100%);padding:28px 32px;text-align:center;">'
-            . '<div style="font-size:34px;line-height:1;">🛍️</div>'
+            . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 8px 24px rgba(214,0,109,0.16);">'
+            . '<tr><td style="background:linear-gradient(135deg,#d6006d 0%,#b8005c 100%);padding:28px 32px;text-align:center;">'
+            . $logoTag
             . '<div style="color:#fff;font-size:20px;font-weight:700;margin-top:6px;">' . htmlspecialchars($companyName) . '</div>'
             . '<div style="color:rgba(255,255,255,0.9);font-size:14px;margin-top:4px;">' . htmlspecialchars($title) . '</div>'
             . '</td></tr>'
             . '<tr><td style="padding:32px;color:#24202b;font-size:14px;line-height:1.6;">' . $bodyHtml . '</td></tr>'
-            . '<tr><td style="padding:20px 32px;background:#faf7fb;border-top:1px solid #f0e6f5;text-align:center;color:#9ca3af;font-size:12px;">'
+            . '<tr><td style="padding:20px 32px;background:#fdf5f9;border-top:1px solid #fbe1ec;text-align:center;color:#9ca3af;font-size:12px;">'
             . htmlspecialchars($companyName) . ' &middot; This is an automated message, please do not reply directly.<br>'
             . '&copy; ' . $year . ' ' . htmlspecialchars($companyName) . '. All rights reserved.'
             . '</td></tr>'
@@ -206,6 +328,23 @@ class EmailQueueService {
             . '</td></tr>'
             . '</table>'
             . '</body></html>';
+    }
+
+    /**
+     * Plain-text fallback for the HTML body — CI_Email sends this as the
+     * multipart/alternative text part alongside the HTML part. An HTML-only
+     * message is one of the signals spam filters weigh against a sender;
+     * every send in this file now includes both parts, same as the
+     * transactional mail industry generally recommends.
+     */
+    private static function plainTextFromHtml($html) {
+        $text = preg_replace('/<(script|style)\b[^>]*>.*?<\/\1>/is', '', $html);
+        $text = preg_replace('/<(br|\/p|\/tr|\/div|\/h[1-6])\s*\/?>/i', "\n", $text);
+        $text = strip_tags($text);
+        $text = html_entity_decode($text, ENT_QUOTES, 'UTF-8');
+        $text = preg_replace('/[ \t]+/', ' ', $text);
+        $text = preg_replace('/\n\s*\n+/', "\n\n", $text);
+        return trim($text);
     }
 
     /**
@@ -241,7 +380,9 @@ class EmailQueueService {
             }
             $CI->email->to($toEmail);
             $CI->email->subject('DropSell SMTP Test Email');
-            $CI->email->message(self::wrapEmailTemplate('SMTP Test Email', $bodyHtml));
+            $wrapped = self::applyLogo($CI, self::wrapEmailTemplate('SMTP Test Email', $bodyHtml));
+            $CI->email->message($wrapped);
+            $CI->email->set_alt_message(self::plainTextFromHtml($wrapped));
 
             // CI_Email::send() can trip a raw PHP warning from fsockopen()
             // (e.g. DNS lookup failure on a bad host) that isn't converted
@@ -300,7 +441,9 @@ class EmailQueueService {
                 }
                 $CI->email->to($email['recipient_email']);
                 $CI->email->subject($email['subject']);
-                $CI->email->message($email['body_html']);
+                $bodyHtml = self::applyLogo($CI, $email['body_html']);
+                $CI->email->message($bodyHtml);
+                $CI->email->set_alt_message(self::plainTextFromHtml($bodyHtml));
 
                 // See the matching comment in sendTestEmail() — @ only
                 // silences fsockopen()'s native PHP warning on connect

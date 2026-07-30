@@ -82,6 +82,7 @@ class Checkout extends CI_Controller {
         $this->load->library('form_validation');
         $this->form_validation->set_rules('delivery_type', 'Delivery Method', 'required|in_list[pickup,pasabay_jeep]');
         $this->form_validation->set_rules('address_id', 'Delivery Address', 'required|numeric');
+        $this->form_validation->set_rules('order_notes', 'Order Notes', 'trim|max_length[500]');
 
         // Pick-up is paid in cash at the store — GCash proof is only
         // required when the order is actually going out via Pasabay.
@@ -106,6 +107,8 @@ class Checkout extends CI_Controller {
             echo json_encode(['success' => FALSE, 'message' => 'Cart is empty']);
             return;
         }
+
+        $order_notes = trim((string) $this->input->post('order_notes', TRUE)) ?: NULL;
 
         $address = $this->db->where('address_id', $this->input->post('address_id', TRUE))
             ->where('customer_id', $customer_id)
@@ -179,6 +182,7 @@ class Checkout extends CI_Controller {
                     'delivery_barangay' => $address['barangay'],
                     'delivery_city' => $address['municipality'],
                     'delivery_fee' => $fee_for_this_order,
+                    'notes' => $order_notes,
                     'order_status' => 'pending',
                 ]);
 
@@ -205,11 +209,17 @@ class Checkout extends CI_Controller {
                     // ledger (admin/staff/reseller inventory, customer shop
                     // stock), not just in the cached stock columns.
                     if (!empty($item['variant_id'])) {
-                        if (!$this->_deduct_preferring_branch($preferred_branch_id, $item['product_id'], $item['quantity'], $order_id, 'ANY', (int) $item['variant_id'])) {
+                        // A value like "Package Type: 1 Set (10 pcs)" carries a
+                        // pieces_per_unit multiplier — ordering 1 "Set" must
+                        // deduct 10 pieces from stock, not 1. See
+                        // StockService::getVariantPiecesPerUnit().
+                        $piecesPerUnit = StockService::getVariantPiecesPerUnit((int) $item['variant_id']);
+                        if (!$this->_deduct_preferring_branch($preferred_branch_id, $item['product_id'], $item['quantity'] * $piecesPerUnit, $order_id, 'ANY', (int) $item['variant_id'])) {
                             throw new Exception('Insufficient stock for one or more selected combinations. Please review your cart.');
                         }
                     } elseif (!empty($item['variation_id'])) {
-                        if (!$this->_deduct_preferring_branch($preferred_branch_id, $item['product_id'], $item['quantity'], $order_id, (int) $item['variation_id'])) {
+                        $piecesPerUnit = StockService::getVariationPiecesPerUnit((int) $item['variation_id']);
+                        if (!$this->_deduct_preferring_branch($preferred_branch_id, $item['product_id'], $item['quantity'] * $piecesPerUnit, $order_id, (int) $item['variation_id'])) {
                             throw new Exception('Insufficient stock for one or more selected variations. Please review your cart.');
                         }
                     } else {

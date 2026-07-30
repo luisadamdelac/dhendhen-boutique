@@ -53,13 +53,13 @@ class Notification extends Authenticated_Controller {
     /**
      * Mark all as read
      */
-    public function mark_all_as_read() {
+    public function mark_all_as_read($type = '') {
         if ($this->input->method() !== 'post') {
             show_404();
         }
 
         $user_id = get_user_id();
-        $this->Notification_model->mark_all_as_read($user_id, 'admin');
+        $this->Notification_model->mark_all_as_read($user_id, 'admin', $type ?: NULL);
         echo json_encode(['success' => TRUE, 'message' => 'All notifications marked as read']);
     }
 

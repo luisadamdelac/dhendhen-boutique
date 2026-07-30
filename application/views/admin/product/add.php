@@ -410,11 +410,11 @@
                         </div>
                         <div class="status-options">
                             <div class="status-opt" style="--opt-color:#2e7d32;--opt-bg:#e8f5e9;">
-                                <input type="radio" name="status" id="st_available" value="available" checked>
+                                <input type="radio" name="status" id="st_available" value="available" <?= set_radio('status', 'available', TRUE); ?>>
                                 <label for="st_available"><i class="fas fa-circle-check"></i> Available</label>
                             </div>
                             <div class="status-opt" style="--opt-color:#6c757d;--opt-bg:#f8f9fa;">
-                                <input type="radio" name="status" id="st_not_available" value="not_available">
+                                <input type="radio" name="status" id="st_not_available" value="not_available" <?= set_radio('status', 'not_available'); ?>>
                                 <label for="st_not_available"><i class="fas fa-ban"></i> Not Available</label>
                             </div>
                         </div>
@@ -615,7 +615,7 @@
                     <table class="table table-sm variation-values-table table-stack" id="variationTypesContainer">
                         <thead>
                             <tr>
-                                <th>Value</th><th>Default Price Adj.</th><th>Default Status</th><th class="text-center">Smart Apply</th><th class="text-center">Remove</th>
+                                <th>Value</th><th>Default Price Adj.</th><th>Pcs / Unit</th><th>Default Status</th><th class="text-center">Smart Apply</th><th class="text-center">Remove</th>
                             </tr>
                         </thead>
                     </table>
@@ -965,6 +965,10 @@ nameInput.addEventListener('input', () => {
 descInput.addEventListener('input', () => {
     document.getElementById('descCount').textContent = descInput.value.length;
 });
+// Sync once on load too — a restored value (validation-failure bounce-back)
+// is set via the value/textContent attribute, which doesn't fire 'input'.
+document.getElementById('nameCount').textContent = nameInput.value.length;
+document.getElementById('descCount').textContent = descInput.value.length;
 
 /* ── Tags widget ─────────────────────────────────────────── */
 let tags = [];
@@ -1669,6 +1673,7 @@ function addVariationValueRow(block, value) {
     row.innerHTML =
         '<td><input type="text" class="form-control form-control-sm variation-value-input" placeholder="Value (e.g. Red)" value="' + escHtml(value ? value.variation_value : '') + '"></td>' +
         '<td><input type="number" step="0.01" class="form-control form-control-sm variation-default-price-input" placeholder="+/- Price" value="' + (value ? parseFloat(value.price_adjustment) : 0) + '"></td>' +
+        '<td><input type="number" step="1" min="1" class="form-control form-control-sm variation-pieces-per-unit-input" title="How many individual pieces one unit of this value represents (e.g. 10 for &quot;1 Set (10 pcs)&quot;) — selling 1 unit deducts this many pieces from its stock. Leave at 1 if this value isn\'t a multi-piece bundle." value="' + (value && value.pieces_per_unit ? parseInt(value.pieces_per_unit, 10) : 1) + '"></td>' +
         '<td><select class="form-control form-control-sm variation-default-status-select">' +
             '<option value="active"' + (!value || value.status !== 'inactive' ? ' selected' : '') + '>Active</option>' +
             '<option value="inactive"' + (value && value.status === 'inactive' ? ' selected' : '') + '>Inactive</option>' +
@@ -1738,6 +1743,7 @@ function syncVariationsJson() {
                 type: type,
                 value: value,
                 default_price_adjustment: parseFloat(row.querySelector('.variation-default-price-input').value) || 0,
+                pieces_per_unit: Math.max(1, parseInt(row.querySelector('.variation-pieces-per-unit-input').value, 10) || 1),
                 default_status: row.querySelector('.variation-default-status-select').value,
                 client_row_id: row.dataset.rowId,
             });
@@ -2139,12 +2145,68 @@ function openCombinationImageModal(tr, key, label) {
     imageInput.addEventListener('change', imageInput._modalCloseHandler, { once: true });
 }
 
-/* ── Seed a base (no-variation) row on load so a simple product can have
-   branch stock entered even before any Variation Type is added — without
-   this, Step 3 could never be satisfied for a product with no variations,
-   since stock is only ever entered through this combinations table. ── */
-generateCombinations();
-updateGenerateButtonVisibility();
+/* ── Restore Variations & Branch Stock after a validation-failure
+   bounce-back, so the admin doesn't have to re-enter everything just
+   because e.g. the image upload failed. Mirrors the old_input flashdata
+   set server-side in Product::_handle_add_product(). ── */
+const OLD_VARIATIONS_JSON = <?= json_encode(set_value('variations_json', '')); ?>;
+const OLD_COMBINATIONS_JSON = <?= json_encode(set_value('combinations_json', '')); ?>;
+
+function restoreVariationsAndCombinations() {
+    let oldVariations = [];
+    let oldCombinations = [];
+    try { oldVariations = OLD_VARIATIONS_JSON ? JSON.parse(OLD_VARIATIONS_JSON) : []; } catch (e) { oldVariations = []; }
+    try { oldCombinations = OLD_COMBINATIONS_JSON ? JSON.parse(OLD_COMBINATIONS_JSON) : []; } catch (e) { oldCombinations = []; }
+
+    if (!oldVariations.length && !oldCombinations.length) return false;
+
+    // Seed combinationRows with the admin's actual saved data (sku/barcode/
+    // branch stock/price/status) first — generateCombinations() below will
+    // merge these back in via mergeCombination() instead of starting every
+    // combination from scratch.
+    oldCombinations.forEach(c => {
+        const key = (c.axes || []).map(a => a.type + ':' + a.value).join('|');
+        combinationRows[key] = {
+            axes: c.axes || [],
+            sku: c.sku || '',
+            barcode: c.barcode || '',
+            price_adjustment: parseFloat(c.price_adjustment) || 0,
+            status: c.status || 'active',
+            branch_stock: c.branch_stock || {},
+            row_key: c.row_key || ('restored_' + (++combinationRowSeq)),
+            price_manually_set: true,
+            status_manually_set: true,
+        };
+    });
+
+    // Rebuild each Variation Type block with its previously entered values.
+    const byType = {};
+    oldVariations.forEach(v => {
+        if (!v.type || !v.value) return;
+        (byType[v.type] = byType[v.type] || []).push({
+            variation_value: v.value,
+            price_adjustment: v.default_price_adjustment,
+            pieces_per_unit: v.pieces_per_unit,
+            status: v.default_status,
+        });
+    });
+    Object.keys(byType).forEach(type => tryAddVariationTypeBlock(type, byType[type]));
+
+    // Recompute combinations from the restored values/axes.
+    generateCombinations();
+    updateGenerateButtonVisibility();
+    updateTotalStock();
+    return true;
+}
+
+if (!restoreVariationsAndCombinations()) {
+    /* ── Seed a base (no-variation) row on load so a simple product can have
+       branch stock entered even before any Variation Type is added — without
+       this, Step 3 could never be satisfied for a product with no variations,
+       since stock is only ever entered through this combinations table. ── */
+    generateCombinations();
+    updateGenerateButtonVisibility();
+}
 
 /* ── Initial Summary population — must run down here, after VARIATION_BRANCHES
    and every other const/function it reads have actually been declared

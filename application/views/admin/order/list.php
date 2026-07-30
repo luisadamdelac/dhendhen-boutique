@@ -347,7 +347,7 @@
                                 <label class="text-muted mb-1" style="font-size:12px;">Payment Method</label>
                                 <div class="fw-semibold" id="paymentInfoMethod">—</div>
                             </div>
-                            <div class="col-6">
+                            <div class="col-6" id="paymentInfoReferenceWrap">
                                 <label class="text-muted mb-1" style="font-size:12px;">Reference Number</label>
                                 <div class="fw-semibold" id="paymentInfoReference">—</div>
                             </div>
@@ -439,6 +439,10 @@ function openPaymentModal(btn) {
 
     document.getElementById('paymentInfoMethod').textContent = info.method || '—';
     document.getElementById('paymentInfoReference').textContent = info.reference || '—';
+    // Cash payments have no reference number — hide the field entirely
+    // instead of showing a meaningless "—" placeholder.
+    document.getElementById('paymentInfoReferenceWrap').style.display =
+        (info.method || '').toLowerCase() === 'cash' ? 'none' : '';
     document.getElementById('paymentInfoAmount').textContent = info.amount
         ? ('₱' + Number(info.amount).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }))
         : '—';

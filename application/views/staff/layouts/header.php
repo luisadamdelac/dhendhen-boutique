@@ -5,11 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo $page_title ?? 'Staff Portal'; ?> - DropSell Staff</title>
 
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Google Fonts (self-hosted — see public/vendor/) -->
+    <link rel="stylesheet" href="<?php echo BASE_URL; ?>public/vendor/poppins/poppins.css">
 
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Font Awesome (self-hosted — see public/vendor/) -->
+    <link rel="stylesheet" href="<?php echo BASE_URL; ?>public/vendor/fontawesome/css/all.min.css">
 
     <!-- Bootstrap 5 (self-hosted; base layer — admin-style.css overrides theme portions) -->
     <link rel="stylesheet" href="<?php echo BASE_URL; ?>public/vendor/bootstrap/bootstrap.min.css">

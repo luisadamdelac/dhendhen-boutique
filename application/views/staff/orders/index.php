@@ -36,11 +36,25 @@
                                     <td>#<?php echo (int) $order['customer_id']; ?></td>
                                     <td><?php echo CURRENCY . number_format($order['total_amount'], 2); ?></td>
                                     <td><?php echo ucfirst($order['delivery_method']); ?></td>
-                                    <?php if ($order['order_status'] === 'pending'): ?>
+                                    <?php
+                                        // Mirrors staff/Orders.php::update_status()'s exact allowed-status
+                                        // check — showing the editable dropdown/Update button for any other
+                                        // status (e.g. delivered, cancelled, return_refund) let staff pick a
+                                        // status and click Update only to get a rejection error back, since
+                                        // the controller would refuse it anyway.
+                                        $isActionable = in_array($order['order_status'], ['paid', 'processing', 'to_ship'], TRUE);
+                                    ?>
+                                    <?php if (!$isActionable): ?>
                                         <td>
-                                            <span class="badge bg-warning text-dark" style="font-size:.75rem;white-space:normal;">
-                                                <i class="fas fa-hourglass-half"></i> Awaiting payment verification by admin
-                                            </span>
+                                            <?php if ($order['order_status'] === 'pending'): ?>
+                                                <span class="badge bg-warning text-dark" style="font-size:.75rem;white-space:normal;">
+                                                    <i class="fas fa-hourglass-half"></i> Awaiting payment verification by admin
+                                                </span>
+                                            <?php else: ?>
+                                                <span class="badge bg-secondary" style="font-size:.75rem;white-space:normal;">
+                                                    <i class="fas fa-check"></i> <?php echo ucfirst(str_replace('_', ' ', $order['order_status'])); ?> — no further action needed
+                                                </span>
+                                            <?php endif; ?>
                                         </td>
                                         <td><small><?php echo date('M d, Y', strtotime($order['created_at'])); ?></small></td>
                                         <td><span class="text-muted small">Not yet actionable</span></td>

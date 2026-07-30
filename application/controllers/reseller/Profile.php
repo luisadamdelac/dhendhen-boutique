@@ -32,7 +32,6 @@ class Profile extends Authenticated_Controller {
         // reseller reaching this page is implicitly approved.
         $data['reseller'] = $reseller + [
             'approval_status' => 'approved',
-            'business_address' => trim(implode(', ', array_filter([$reseller['street'], $reseller['barangay'], $reseller['city']]))),
         ];
 
         $this->load->view('reseller/layouts/header', $data);
@@ -51,6 +50,7 @@ class Profile extends Authenticated_Controller {
             'last_name' => trim((string) $this->input->post('last_name', TRUE)),
             'contact_number' => $this->input->post('phone', TRUE),
             'business_name' => $this->input->post('business_name', TRUE),
+            'street' => $this->input->post('street', TRUE),
             'gcash_number' => $this->input->post('gcash_number', TRUE),
             'gcash_name' => $this->input->post('gcash_name', TRUE),
             'updated_at' => date('Y-m-d H:i:s'),

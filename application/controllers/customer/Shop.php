@@ -165,7 +165,11 @@ class Shop extends CI_Controller {
             $variant_id = (int) $c['variant_id'];
             $c['variant_id'] = $variant_id;
             $c['price_adjustment'] = (float) $c['price_adjustment'];
-            $c['total_stock'] = array_sum(StockService::getVariantBranchStock($variant_id));
+            // Branch stock is tracked in individual pieces, but a value like
+            // "Package Type: 1 Set (10 pcs)" is SOLD in units of 10 pieces —
+            // show/limit by how many whole units are actually purchasable.
+            $piecesPerUnit = StockService::getVariantPiecesPerUnit($variant_id);
+            $c['total_stock'] = intdiv(array_sum(StockService::getVariantBranchStock($variant_id)), $piecesPerUnit);
 
             $axisIds = [(int) $c['variation_id_1']];
             if (!empty($c['variation_id_2'])) {

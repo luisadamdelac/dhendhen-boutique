@@ -184,9 +184,14 @@ class Orders extends CI_Controller {
         $items = $this->db->where('order_id', $id)->get(ORDER_DETAILS_TABLE)->result_array();
         foreach ($items as $item) {
             if (!empty($item['variant_id'])) {
-                StockService::restoreStock($item['product_id'], $item['quantity'], 'order', $id, NULL, NULL, 'ANY', (int) $item['variant_id']);
+                // Mirror Checkout.php's pieces_per_unit multiplier — a
+                // "1 Set (10 pcs)" line deducted 10 pieces, so restoring it
+                // must add back 10, not 1.
+                $piecesPerUnit = StockService::getVariantPiecesPerUnit((int) $item['variant_id']);
+                StockService::restoreStock($item['product_id'], $item['quantity'] * $piecesPerUnit, 'order', $id, NULL, NULL, 'ANY', (int) $item['variant_id']);
             } elseif (!empty($item['variation_id'])) {
-                StockService::restoreStock($item['product_id'], $item['quantity'], 'order', $id, NULL, NULL, (int) $item['variation_id']);
+                $piecesPerUnit = StockService::getVariationPiecesPerUnit((int) $item['variation_id']);
+                StockService::restoreStock($item['product_id'], $item['quantity'] * $piecesPerUnit, 'order', $id, NULL, NULL, (int) $item['variation_id']);
             } else {
                 StockService::restoreStock($item['product_id'], $item['quantity'], 'order', $id);
             }

@@ -13,16 +13,15 @@
   <title>DropSell – Dropshipping Management System</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛍️</text></svg>">
 
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="<?php echo base_url('public/vendor/poppins/poppins.css'); ?>">
+  <link rel="stylesheet" href="<?php echo base_url('public/vendor/fontawesome/css/all.min.css'); ?>">
 
   <style>
     :root{
       --pink:#ff69b4;
       --pink-light:#ffb6c1;
-      --pink-dark:#db7093;
-      --violet:#ee82ee;
-      --purple:#9370db;
+      --pink-dark:#d6006d;
+      --pink-deep:#b8005c;
       --white:#ffffff;
       --text:#2b2b2b;
       --muted:rgba(43,43,43,0.65);
@@ -45,9 +44,9 @@
       color:var(--text);
       background:
         radial-gradient(1200px 600px at 10% 10%, rgba(255,105,180,0.25), transparent 60%),
-        radial-gradient(900px 500px at 80% 20%, rgba(238,130,238,0.18), transparent 55%),
-        radial-gradient(900px 500px at 30% 90%, rgba(147,112,219,0.15), transparent 55%),
-        linear-gradient(135deg, #fff 0%, #fff 35%, #ffe6f2 70%, #f3e5f5 100%);
+        radial-gradient(900px 500px at 80% 20%, rgba(255,140,197,0.18), transparent 55%),
+        radial-gradient(900px 500px at 30% 90%, rgba(214,0,109,0.10), transparent 55%),
+        linear-gradient(135deg, #fff 0%, #fff 35%, #ffe6f2 70%, #fbd9ea 100%);
       overflow-x:hidden;
     }
 
@@ -86,7 +85,7 @@
     .brand-badge{
       width:42px; height:42px; border-radius:14px;
       display:flex; align-items:center; justify-content:center;
-      background:linear-gradient(135deg, var(--pink) 0%, var(--violet) 50%, var(--purple) 100%);
+      background:linear-gradient(135deg, var(--pink-dark) 0%, var(--pink-deep) 100%);
       box-shadow: var(--shadow-soft);
       color:white;
     }
@@ -105,7 +104,7 @@
       position:absolute;
       left:0; bottom:0;
       width:0; height:2px;
-      background:linear-gradient(90deg, var(--pink) 0%, var(--violet) 55%, var(--purple) 100%);
+      background:linear-gradient(90deg, var(--pink-dark) 0%, var(--pink-deep) 100%);
       transition:width 0.25s ease;
     }
     .nav-links a:hover:after{ width:100%; }
@@ -131,7 +130,7 @@
     .btn-primary{
       border:none;
       color:white;
-      background:linear-gradient(135deg, var(--pink) 0%, var(--violet) 45%, var(--purple) 100%);
+      background:linear-gradient(135deg, var(--pink-dark) 0%, var(--pink-deep) 100%);
     }
     .btn-ghost{
       background:rgba(255,255,255,0.55);
@@ -170,8 +169,8 @@
       position:absolute;
       inset:-2px;
       background: radial-gradient(600px 220px at 20% 10%, rgba(255,105,180,0.35), transparent 55%),
-                  radial-gradient(520px 200px at 90% 10%, rgba(238,130,238,0.25), transparent 50%),
-                  radial-gradient(420px 180px at 40% 100%, rgba(147,112,219,0.20), transparent 55%);
+                  radial-gradient(520px 200px at 90% 10%, rgba(255,140,197,0.25), transparent 50%),
+                  radial-gradient(420px 180px at 40% 100%, rgba(214,0,109,0.18), transparent 55%);
       pointer-events:none;
     }
     .hero-card > *{ position:relative; z-index:1; }
@@ -200,7 +199,7 @@
     .mini-icon{
       width:44px; height:44px; border-radius:14px; flex-shrink:0;
       display:flex; align-items:center; justify-content:center;
-      background:linear-gradient(135deg, var(--pink) 0%, var(--violet) 50%, var(--purple) 100%);
+      background:linear-gradient(135deg, var(--pink-dark) 0%, var(--pink-deep) 100%);
       color:white; font-size:18px;
     }
     .mini-title{ font-weight:900; font-size:15px; }
@@ -231,7 +230,7 @@
       border-radius:var(--radius-xl);
       padding:48px;
       text-align:center;
-      background:linear-gradient(135deg, var(--pink) 0%, var(--violet) 50%, var(--purple) 100%);
+      background:linear-gradient(135deg, var(--pink-dark) 0%, var(--pink-deep) 100%);
       color:white;
       box-shadow: var(--shadow);
     }

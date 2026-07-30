@@ -99,8 +99,12 @@ class Notification_model extends CI_Model {
     /**
      * Mark all as read for user
      */
-    public function mark_all_as_read($user_id, $user_type) {
-        return $this->db->update($this->table, ['is_read' => 1], ['user_id' => $user_id, 'user_type' => $user_type]);
+    public function mark_all_as_read($user_id, $user_type, $type = NULL) {
+        $where = ['user_id' => $user_id, 'user_type' => $user_type];
+        if (!empty($type)) {
+            $where['type'] = $type;
+        }
+        return $this->db->update($this->table, ['is_read' => 1], $where);
     }
 
     /**
