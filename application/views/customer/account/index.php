@@ -190,6 +190,32 @@
             grid-template-columns: 1fr;
         }
     }
+
+    @media (max-width: 600px) {
+        .account-card,
+        .password-section {
+            padding: 20px 16px;
+        }
+
+        .account-profile-row {
+            flex-direction: column;
+            align-items: flex-start !important;
+            gap: 15px !important;
+        }
+
+        .password-fields-grid,
+        .business-fields-grid {
+            grid-template-columns: 1fr !important;
+        }
+
+        .eligibility-grid {
+            grid-template-columns: repeat(2, 1fr) !important;
+        }
+
+        .stat-value {
+            font-size: 28px;
+        }
+    }
 </style>
 
 <h1><i class="fas fa-user-circle"></i> My Account</h1>
@@ -222,7 +248,7 @@
                     ? BASE_URL . $avatarImage
                     : BASE_URL . default_avatar_url();
             ?>
-            <div style="display:flex; align-items:center; gap:20px; margin-bottom:25px;">
+            <div class="account-profile-row" style="display:flex; align-items:center; gap:20px; margin-bottom:25px;">
                 <div style="width:90px;height:90px;border-radius:50%;overflow:hidden;border:3px solid var(--primary-light, #eee);flex-shrink:0;">
                     <img id="currentPhoto" src="<?php echo $avatarSrc; ?>" alt="Profile Photo" style="width:100%;height:100%;object-fit:cover;">
                 </div>
@@ -361,7 +387,7 @@
                 <?php endif; ?>
 
                 <!-- Eligibility progress -->
-                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)); gap:14px; margin-bottom:12px;">
+                <div class="eligibility-grid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)); gap:14px; margin-bottom:12px;">
                     <div>
                         <small class="text-muted d-block">Your Largest Single Order</small>
                         <strong style="font-size:1.1rem;">₱<?php echo number_format($best_single_order ?? 0, 2); ?></strong>
@@ -400,7 +426,7 @@
                         <label>Province</label>
                         <input type="text" value="Oriental Mindoro" readonly>
                     </div>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+                    <div class="business-fields-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
                         <div class="form-group">
                             <label for="business_city">City *</label>
                             <select id="business_city" name="business_city" required>
@@ -433,7 +459,7 @@
         </h2>
         
         <form method="POST" action="<?php echo BASE_URL; ?>account/change_password">
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+            <div class="password-fields-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
                 <div class="form-group">
                     <label for="current_password">Current Password *</label>
                     <div class="has-toggle">

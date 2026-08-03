@@ -557,6 +557,7 @@
 </div>
 <?php endif; ?>
 
+<?php if (!is_logged_in()): ?>
 <div class="shop-header">
     <div class="shop-back">
         <a class="landing-back-link" href="<?php echo BASE_URL; ?>landing">
@@ -564,6 +565,7 @@
         </a>
     </div>
 </div>
+<?php endif; ?>
 
 <div class="shop-title-row">
     <div>

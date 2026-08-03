@@ -18,11 +18,9 @@
     </div>
 </div>
 
-<div class="row">
-    <div class="col col-12">
-        <div class="card ds-pink-table-card">
-            <div class="card-body">
-                <div class="table-responsive">
+<div class="card ds-pink-table-card">
+    <div class="card-body">
+        <div class="table-responsive">
                     <table class="table inv-table ds-pink-table table-stack" id="staffOrdersTable">
                         <thead>
                             <tr>
@@ -82,8 +80,6 @@
                 </div>
             </div>
         </div>
-    </div>
-</div>
 
 <!-- Confirm Modal -->
 <div class="modal" id="statusConfirmModal">

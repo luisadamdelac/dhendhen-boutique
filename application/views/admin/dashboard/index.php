@@ -1,4 +1,57 @@
 <!-- Dashboard Overview -->
+<style>
+/* Plain CSS Grid instead of Bootstrap row/col-12/col-md-6/col-xl-N — no
+   negative-margin/padding gutter math to keep in sync with the hero card
+   above, and min-width:0 stops long card content from forcing a column
+   (and the whole row) wider than the viewport. */
+.adb-stats-grid-4,
+.adb-stats-grid-3 {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+}
+.adb-stats-grid-4 > *,
+.adb-stats-grid-3 > * {
+    min-width: 0;
+}
+@media (min-width: 576px) {
+    .adb-stats-grid-4 { grid-template-columns: repeat(2, 1fr); }
+    .adb-stats-grid-3 { grid-template-columns: repeat(2, 1fr); }
+}
+@media (min-width: 1200px) {
+    .adb-stats-grid-4 { grid-template-columns: repeat(4, 1fr); }
+    .adb-stats-grid-3 { grid-template-columns: repeat(3, 1fr); }
+}
+
+/* Same reasoning — these two rows used bare .col-8/.col-4 and .col-6/.col-6
+   (no responsive prefix), which Bootstrap applies unconditionally at every
+   width, so the cards were forced into a cramped fractional width even on
+   phones instead of stacking to full width. */
+.adb-row-8-4,
+.adb-row-6-6 {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+}
+.adb-row-8-4 > *,
+.adb-row-6-6 > * {
+    min-width: 0;
+}
+@media (min-width: 1200px) {
+    .adb-row-8-4 { grid-template-columns: 2fr 1fr; }
+    .adb-row-6-6 { grid-template-columns: 1fr 1fr; }
+}
+
+/* Single flex-column gap for the space BETWEEN stat-card rows, instead of
+   a margin-top utility on each row — so it's the exact same spacing
+   mechanism (and guaranteed identical value) as the grid `gap` used
+   BETWEEN cards inside each row, with nothing to fall out of sync. */
+.adb-stats-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+</style>
 <div class="container-fluid py-4 fade-in">
 
 <?php
@@ -49,149 +102,129 @@ $is_admin_only = !$is_staff_view && !$is_reseller_view;
         </div>
     </div>
 
+    <div class="adb-stats-stack">
     <!-- Statistics Cards Row -->
-    <div class="row g-3">
+    <div class="adb-stats-grid-4">
         <?php if ($is_admin_only): ?>
         <!-- Total Sales - Admin Only -->
-            <div class="col-12 col-md-6 col-xl-3">
-                <div class="stat-card">
-                    <div class="stat-icon" style="background:#ffd9ec;color:#e0559c;"><i class="fas fa-dollar-sign"></i></div>
-                    <div>
-                        <div class="stat-label">Total Sales</div>
-                        <div class="stat-value">₱<?php echo number_format($order_stats['total_sales'] ?? 0, 2); ?></div>
-                        <?php $render_stat_change($order_stats['sales_change_pct'] ?? null); ?>
-                    </div>
+            <div class="stat-card">
+                <div class="stat-icon" style="background:#ffd9ec;color:#e0559c;"><i class="fas fa-dollar-sign"></i></div>
+                <div>
+                    <div class="stat-label">Total Sales</div>
+                    <div class="stat-value">₱<?php echo number_format($order_stats['total_sales'] ?? 0, 2); ?></div>
+                    <?php $render_stat_change($order_stats['sales_change_pct'] ?? null); ?>
                 </div>
             </div>
         <?php endif; ?>
 
         <!-- Total Orders -->
-        <div class="col-12 col-md-6 col-xl-3">
-            <div class="stat-card">
-                <div class="stat-icon" style="background:#e3f2fd;color:#1565c0;"><i class="fas fa-shopping-cart"></i></div>
-                <div>
-                    <div class="stat-label">Total Orders</div>
-                    <div class="stat-value"><?php echo number_format($order_stats['total_orders'] ?? 0); ?></div>
-                    <?php $render_stat_change($order_stats['orders_change_pct'] ?? null); ?>
-                </div>
+        <div class="stat-card">
+            <div class="stat-icon" style="background:#e3f2fd;color:#1565c0;"><i class="fas fa-shopping-cart"></i></div>
+            <div>
+                <div class="stat-label">Total Orders</div>
+                <div class="stat-value"><?php echo number_format($order_stats['total_orders'] ?? 0); ?></div>
+                <?php $render_stat_change($order_stats['orders_change_pct'] ?? null); ?>
             </div>
         </div>
 
         <?php if ($is_admin_only): ?>
         <!-- Active Resellers - Admin Only -->
-        <div class="col-12 col-md-6 col-xl-3">
-            <div class="stat-card">
-                <div class="stat-icon" style="background:#ffd9ec;color:#e0559c;"><i class="fas fa-users"></i></div>
-                <div>
-                    <div class="stat-label">Active Resellers</div>
-                    <div class="stat-value"><?php echo number_format($reseller_stats['approved_count'] ?? 0); ?></div>
-                    <?php $render_stat_change($reseller_stats['change_pct'] ?? null); ?>
-                </div>
+        <div class="stat-card">
+            <div class="stat-icon" style="background:#ffd9ec;color:#e0559c;"><i class="fas fa-users"></i></div>
+            <div>
+                <div class="stat-label">Active Resellers</div>
+                <div class="stat-value"><?php echo number_format($reseller_stats['approved_count'] ?? 0); ?></div>
+                <?php $render_stat_change($reseller_stats['change_pct'] ?? null); ?>
             </div>
         </div>
         <?php endif; ?>
 
         <!-- Total Products -->
-        <div class="col-12 col-md-6 col-xl-3">
-            <div class="stat-card">
-                <div class="stat-icon" style="background:#e3f2fd;color:#1565c0;"><i class="fas fa-boxes"></i></div>
-                <div>
-                    <div class="stat-label">Total Products</div>
-                    <div class="stat-value"><?php echo number_format($product_stats['total_products'] ?? 0); ?></div>
-                    <?php $render_stat_change(); ?>
-                </div>
+        <div class="stat-card">
+            <div class="stat-icon" style="background:#e3f2fd;color:#1565c0;"><i class="fas fa-boxes"></i></div>
+            <div>
+                <div class="stat-label">Total Products</div>
+                <div class="stat-value"><?php echo number_format($product_stats['total_products'] ?? 0); ?></div>
+                <?php $render_stat_change(); ?>
             </div>
         </div>
     </div>
 
     <!-- Order Status Cards -->
-    <div class="row g-3 mt-1">
-        <div class="col-12 col-md-6 col-xl-3">
-            <div class="stat-card">
-                <div class="stat-icon" style="background:#ffd9ec;color:#e0559c;"><i class="fas fa-clock"></i></div>
-                <div>
-                    <div class="stat-label">Pending Orders</div>
-                    <div class="stat-value"><?php echo number_format($order_stats['pending_orders'] ?? 0); ?></div>
-                    <?php $render_stat_change(); ?>
-                </div>
+    <div class="adb-stats-grid-4">
+        <div class="stat-card">
+            <div class="stat-icon" style="background:#ffd9ec;color:#e0559c;"><i class="fas fa-clock"></i></div>
+            <div>
+                <div class="stat-label">Pending Orders</div>
+                <div class="stat-value"><?php echo number_format($order_stats['pending_orders'] ?? 0); ?></div>
+                <?php $render_stat_change(); ?>
             </div>
         </div>
 
-        <div class="col-12 col-md-6 col-xl-3">
-            <div class="stat-card">
-                <div class="stat-icon" style="background:#e3f2fd;color:#1565c0;"><i class="fas fa-cog fa-spin"></i></div>
-                <div>
-                    <div class="stat-label">Processing</div>
-                    <div class="stat-value"><?php echo number_format($order_stats['processing_orders'] ?? 0); ?></div>
-                    <?php $render_stat_change(); ?>
-                </div>
+        <div class="stat-card">
+            <div class="stat-icon" style="background:#e3f2fd;color:#1565c0;"><i class="fas fa-cog fa-spin"></i></div>
+            <div>
+                <div class="stat-label">Processing</div>
+                <div class="stat-value"><?php echo number_format($order_stats['processing_orders'] ?? 0); ?></div>
+                <?php $render_stat_change(); ?>
             </div>
         </div>
 
-        <div class="col-12 col-md-6 col-xl-3">
-            <div class="stat-card">
-                <div class="stat-icon" style="background:#ffd9ec;color:#e0559c;"><i class="fas fa-truck"></i></div>
-                <div>
-                    <div class="stat-label">To Ship</div>
-                    <div class="stat-value"><?php echo number_format($order_stats['shipped_orders'] ?? 0); ?></div>
-                    <?php $render_stat_change(); ?>
-                </div>
+        <div class="stat-card">
+            <div class="stat-icon" style="background:#ffd9ec;color:#e0559c;"><i class="fas fa-truck"></i></div>
+            <div>
+                <div class="stat-label">To Ship</div>
+                <div class="stat-value"><?php echo number_format($order_stats['shipped_orders'] ?? 0); ?></div>
+                <?php $render_stat_change(); ?>
             </div>
         </div>
 
-        <div class="col-12 col-md-6 col-xl-3">
-            <div class="stat-card">
-                <div class="stat-icon" style="background:#e3f2fd;color:#1565c0;"><i class="fas fa-check-circle"></i></div>
-                <div>
-                    <div class="stat-label">Delivered</div>
-                    <div class="stat-value"><?php echo number_format($order_stats['delivered_orders'] ?? 0); ?></div>
-                    <?php $render_stat_change(); ?>
-                </div>
+        <div class="stat-card">
+            <div class="stat-icon" style="background:#e3f2fd;color:#1565c0;"><i class="fas fa-check-circle"></i></div>
+            <div>
+                <div class="stat-label">Delivered</div>
+                <div class="stat-value"><?php echo number_format($order_stats['delivered_orders'] ?? 0); ?></div>
+                <?php $render_stat_change(); ?>
             </div>
         </div>
     </div>
 
     <!-- Additional Status Cards -->
-    <div class="row g-3 mt-1">
-        <div class="col-12 col-md-6 col-xl-4">
-            <div class="stat-card">
-                <div class="stat-icon" style="background:#ffd9ec;color:#e0559c;"><i class="fas fa-undo"></i></div>
-                <div>
-                    <div class="stat-label">Return / Refund</div>
-                    <div class="stat-value"><?php echo number_format($refund_stats['pending_requests'] ?? 0); ?></div>
-                    <?php $render_stat_change(); ?>
-                </div>
+    <div class="adb-stats-grid-3">
+        <div class="stat-card">
+            <div class="stat-icon" style="background:#ffd9ec;color:#e0559c;"><i class="fas fa-undo"></i></div>
+            <div>
+                <div class="stat-label">Return / Refund</div>
+                <div class="stat-value"><?php echo number_format($refund_stats['pending_requests'] ?? 0); ?></div>
+                <?php $render_stat_change(); ?>
             </div>
         </div>
 
-        <div class="col-12 col-md-6 col-xl-4">
-            <div class="stat-card">
-                <div class="stat-icon" style="background:#e3f2fd;color:#1565c0;"><i class="fas fa-wallet"></i></div>
-                <div>
-                    <div class="stat-label">Paid Orders</div>
-                    <div class="stat-value"><?php echo number_format($order_stats['paid_orders'] ?? 0); ?></div>
-                    <?php $render_stat_change(); ?>
-                </div>
+        <div class="stat-card">
+            <div class="stat-icon" style="background:#e3f2fd;color:#1565c0;"><i class="fas fa-wallet"></i></div>
+            <div>
+                <div class="stat-label">Paid Orders</div>
+                <div class="stat-value"><?php echo number_format($order_stats['paid_orders'] ?? 0); ?></div>
+                <?php $render_stat_change(); ?>
             </div>
         </div>
 
-        <div class="col-12 col-md-6 col-xl-4">
-            <div class="stat-card">
-                <div class="stat-icon" style="background:#ffd9ec;color:#e0559c;"><i class="fas fa-times-circle"></i></div>
-                <div>
-                    <div class="stat-label">Cancelled Orders</div>
-                    <div class="stat-value"><?php echo number_format($order_stats['cancelled_orders'] ?? 0); ?></div>
-                    <?php $render_stat_change(); ?>
-                </div>
+        <div class="stat-card">
+            <div class="stat-icon" style="background:#ffd9ec;color:#e0559c;"><i class="fas fa-times-circle"></i></div>
+            <div>
+                <div class="stat-label">Cancelled Orders</div>
+                <div class="stat-value"><?php echo number_format($order_stats['cancelled_orders'] ?? 0); ?></div>
+                <?php $render_stat_change(); ?>
             </div>
         </div>
+    </div>
     </div>
 
     <?php if (!$is_staff_view): ?>
     <!-- Charts Row -->
-    <div class="row">
+    <div class="adb-row-8-4">
         <!-- Sales Chart -->
-        <div class="col col-8">
+        <div>
             <div class="card">
                 <div class="card-header">
                     <h3 class="card-title">
@@ -216,7 +249,7 @@ $is_admin_only = !$is_staff_view && !$is_reseller_view;
         </div>
 
         <!-- Commission Statistics -->
-        <div class="col col-4">
+        <div>
             <div class="card">
                 <div class="card-header">
                     <h3 class="card-title">
@@ -250,9 +283,9 @@ $is_admin_only = !$is_staff_view && !$is_reseller_view;
     <!-- (Removed Data Tables Row: Recent Orders + Pending Reseller Applications) -->
 
     <!-- Top Products and Resellers -->
-    <div class="row">
+    <div class="adb-row-6-6">
         <!-- Top Products -->
-        <div class="col col-6">
+        <div>
             <div class="card">
                 <div class="card-header">
                     <h3 class="card-title">
@@ -287,7 +320,7 @@ $is_admin_only = !$is_staff_view && !$is_reseller_view;
         </div>
 
         <!-- Top Resellers -->
-        <div class="col col-6">
+        <div>
             <div class="card">
                 <div class="card-header">
                     <h3 class="card-title">

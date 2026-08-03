@@ -234,6 +234,14 @@
                         </a>
                     </li>
 
+                    <!-- Walk-in Sale -->
+                    <li class="nav-item">
+                        <a href="<?php echo site_url('admin/walkin'); ?>" class="nav-link <?php echo (isset($page_title) && strpos($page_title, 'Walk-in') !== false) ? 'active' : ''; ?>">
+                            <i class="fas fa-cash-register"></i>
+                            <span>Walk-in Sale</span>
+                        </a>
+                    </li>
+
                     <!-- Settings -->
                     <li class="nav-item">
                         <a href="<?php echo site_url('admin/settings'); ?>" class="nav-link <?php echo (isset($page_title) && strpos($page_title, 'Settings') !== false) ? 'active' : ''; ?>">

@@ -384,6 +384,38 @@
             grid-template-columns: 1fr;
         }
     }
+
+    @media (max-width: 600px) {
+        .pdp-top,
+        .pdp-section {
+            padding: 16px;
+        }
+
+        .pdp-info h1 {
+            font-size: 20px;
+        }
+
+        .pdp-price-current {
+            font-size: 24px;
+        }
+
+        .pdp-price-box {
+            padding: 14px 16px;
+        }
+
+        .pdp-actions {
+            flex-direction: column;
+        }
+
+        .pdp-actions .btn {
+            min-width: 0;
+            width: 100%;
+        }
+
+        .pdp-shop-row .btn {
+            width: 100%;
+        }
+    }
 </style>
 
 <!-- 1 & 2: Product Gallery + Product Information -->

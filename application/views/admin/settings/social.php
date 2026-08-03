@@ -17,11 +17,9 @@ $current_page = 'settings';
 
     <?php include __DIR__ . '/../partials/settings_tabs.php'; ?>
 
-    <div class="row">
-        <div class="col">
-            <div class="card border-0 shadow-sm" style="border-radius:12px;overflow:hidden;">
-                <div class="card-body">
-                    <form method="post">
+    <div class="card border-0 shadow-sm" style="border-radius:12px;overflow:hidden;">
+        <div class="card-body">
+            <form method="post">
                         <div class="row">
                             <div class="col col-6">
                                 <div class="form-group">
@@ -59,6 +57,4 @@ $current_page = 'settings';
                     </form>
                 </div>
             </div>
-        </div>
-    </div>
 </div>

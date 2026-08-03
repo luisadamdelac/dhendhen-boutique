@@ -255,6 +255,53 @@
             grid-template-columns: 1fr;
         }
     }
+
+    @media (max-width: 600px) {
+        .checkout-container {
+            gap: 16px;
+        }
+
+        .checkout-section {
+            padding: 16px;
+        }
+
+        .section-title {
+            font-size: 17px;
+        }
+
+        .delivery-option,
+        .payment-option {
+            padding: 12px;
+        }
+
+        .gcash-details-card {
+            padding: 14px !important;
+        }
+
+        .gcash-qr-card,
+        .gcash-info-card {
+            padding: 12px !important;
+        }
+
+        .gcash-qr-card img {
+            width: 140px !important;
+            height: 140px !important;
+        }
+
+        .gcash-number-row {
+            flex-wrap: wrap;
+            gap: 6px !important;
+        }
+
+        .confirm-modal-box {
+            padding: 20px !important;
+        }
+
+        .confirm-modal-icon {
+            width: 50px !important;
+            height: 50px !important;
+        }
+    }
 </style>
 
 <h1><i class="fas fa-credit-card"></i> Checkout</h1>
@@ -361,7 +408,7 @@
                         </div>
 
                     <!-- GCash Payment Details (shown when GCash is selected) -->
-                    <div id="gcashPaymentSection" style="margin-top:20px; background:linear-gradient(135deg, #007DFF10, #007DFF05); border:2px solid #007DFF40; border-radius:12px; padding:20px;">
+                    <div id="gcashPaymentSection" class="gcash-details-card" style="margin-top:20px; background:linear-gradient(135deg, #007DFF10, #007DFF05); border:2px solid #007DFF40; border-radius:12px; padding:20px;">
                         <div style="text-align:center; margin-bottom:15px;">
                             <div style="width:50px; height:50px; background:#007DFF; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; margin-bottom:10px;">
                                 <i class="fas fa-mobile-alt" style="font-size:24px; color:white;"></i>
@@ -370,7 +417,7 @@
                         </div>
 
                         <?php if (!empty($gcash_qr_code)): ?>
-                        <div style="background:white; border-radius:10px; padding:20px; margin-bottom:15px; text-align:center;">
+                        <div class="gcash-qr-card" style="background:white; border-radius:10px; padding:20px; margin-bottom:15px; text-align:center;">
                             <img src="<?php echo BASE_URL . htmlspecialchars($gcash_qr_code); ?>" alt="GCash QR Code" style="width:180px; height:180px; object-fit:contain; display:block; margin:0 auto;">
                             <p style="margin:10px 0 0; font-size:12px; color:#666;"><i class="fas fa-qrcode"></i> Scan this QR code using your GCash app to pay</p>
                             <a href="<?php echo BASE_URL . htmlspecialchars($gcash_qr_code); ?>" download="GCash-QR-Code"
@@ -384,12 +431,12 @@
                         </div>
                         <?php endif; ?>
 
-                        <div style="background:white; border-radius:10px; padding:15px; margin-bottom:15px;">
+                        <div class="gcash-info-card" style="background:white; border-radius:10px; padding:15px; margin-bottom:15px;">
                             <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #eee;">
                                 <span style="color:#666; font-size:13px;">Account Name:</span>
                                 <span style="font-weight:600; color:#333;"><?php echo htmlspecialchars($gcash_name); ?></span>
                             </div>
-                            <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid #eee;">
+                            <div class="gcash-number-row" style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid #eee;">
                                 <span style="color:#666; font-size:13px;">GCash Number:</span>
                                 <span style="display:flex; align-items:center; gap:8px;">
                                     <span style="font-weight:600; color:#007DFF; font-size:16px;" id="gcash-display-number"><?php echo htmlspecialchars($gcash_number); ?></span>
@@ -545,9 +592,9 @@
 
 <!-- Order Confirmation Modal -->
 <div id="confirmModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:9999; align-items:center; justify-content:center;">
-    <div style="background:white; border-radius:16px; max-width:500px; width:90%; margin:auto; padding:35px; box-shadow:0 20px 60px rgba(0,0,0,0.3); animation:modalSlideIn 0.3s ease-out; position:relative; top:50%; transform:translateY(-50%); max-height:90vh; overflow-y:auto;">
+    <div class="confirm-modal-box" style="background:white; border-radius:16px; max-width:500px; width:90%; margin:auto; padding:35px; box-shadow:0 20px 60px rgba(0,0,0,0.3); animation:modalSlideIn 0.3s ease-out; position:relative; top:50%; transform:translateY(-50%); max-height:90vh; overflow-y:auto;">
         <div style="text-align:center; margin-bottom:25px;">
-            <div style="width:70px; height:70px; background:linear-gradient(135deg, #EC4899, #DB2777); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 15px;">
+            <div class="confirm-modal-icon" style="width:70px; height:70px; background:linear-gradient(135deg, #EC4899, #DB2777); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 15px;">
                 <i class="fas fa-shopping-bag" style="font-size:30px; color:white;"></i>
             </div>
             <h2 style="font-size:22px; color:#333; margin-bottom:5px;">Confirm Your Order</h2>
@@ -885,8 +932,10 @@
     function openGcashApp() {
         saveCheckoutState();
 
-        const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '');
-        if (!isMobile) {
+        const ua = navigator.userAgent || '';
+        const isAndroid = /Android/i.test(ua);
+        const isIOS = /iPhone|iPad|iPod/i.test(ua);
+        if (!isAndroid && !isIOS) {
             showCheckoutNotice('Open the GCash app on your phone to send payment, or scan the QR code / use the number above.');
             return;
         }
@@ -902,13 +951,35 @@
         document.addEventListener('visibilitychange', markHandedOff, { once: true });
         window.addEventListener('blur', markHandedOff, { once: true });
 
-        window.location.href = 'gcash://';
+        if (isAndroid) {
+            // Chrome on Android silently drops bare custom-scheme navigations
+            // (window.location.href = 'gcash://') — it only honors the
+            // "intent://" syntax, which is what actually triggers the app
+            // chooser / opens the installed app. Its browser_fallback_url
+            // also makes Chrome itself redirect to the Play Store when GCash
+            // isn't installed, so this works whether or not the app is
+            // already on the phone. See:
+            // https://developer.chrome.com/docs/multidevice/android/intents/
+            const fallback = encodeURIComponent('https://play.google.com/store/apps/details?id=com.globe.gcash.android');
+            window.location.href = 'intent://#Intent;scheme=gcash;package=com.globe.gcash.android;S.browser_fallback_url=' + fallback + ';end';
+        } else {
+            window.location.href = 'gcash://';
+        }
 
         setTimeout(() => {
             document.removeEventListener('visibilitychange', markHandedOff);
             window.removeEventListener('blur', markHandedOff);
             if (!handedOff) {
-                showCheckoutNotice("Couldn't open the GCash app automatically — make sure it's installed, or scan the QR code / use the number above instead.");
+                if (isIOS) {
+                    // iOS custom schemes have no built-in store fallback like
+                    // Android's intent:// does, so send the user to install
+                    // the app ourselves instead of leaving the tap looking
+                    // like it did nothing.
+                    showCheckoutNotice("GCash isn't installed — opening the App Store so you can install it.");
+                    window.location.href = 'https://apps.apple.com/ph/app/gcash/id520020791';
+                } else {
+                    showCheckoutNotice("Couldn't open the GCash app automatically — make sure it's installed, or scan the QR code / use the number above instead.");
+                }
             }
         }, 1800);
     }

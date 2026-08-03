@@ -40,12 +40,25 @@ class Reports extends Authenticated_Controller {
     }
 
     private function _sales_data($start, $end) {
+        require_once APPPATH . 'services/WalkinSaleService.php';
+
         $summary = $this->db->select('COUNT(*) as total_orders, COALESCE(SUM(total_amount), 0) as total_revenue')
             ->from(ORDER_TABLE)
             ->where('DATE(created_at) >=', $start)
             ->where('DATE(created_at) <=', $end)
             ->where_not_in('order_status', ['cancelled'])
             ->get()->row_array();
+
+        // Walk-in (in-store) sales never create an order_tbl row — see
+        // WalkinSaleService — so they're merged in here rather than being
+        // invisible next to online orders in every figure below.
+        $walkin_summary = WalkinSaleService::getTotalSales(NULL, $start, $end);
+        $summary['online_orders'] = (int) $summary['total_orders'];
+        $summary['online_revenue'] = (float) $summary['total_revenue'];
+        $summary['walkin_orders'] = $walkin_summary['count'];
+        $summary['walkin_revenue'] = $walkin_summary['total'];
+        $summary['total_orders'] = $summary['online_orders'] + $walkin_summary['count'];
+        $summary['total_revenue'] = $summary['online_revenue'] + $walkin_summary['total'];
 
         $by_status = $this->db->select('order_status, COUNT(*) as total, COALESCE(SUM(total_amount), 0) as revenue')
             ->from(ORDER_TABLE)
@@ -63,19 +76,69 @@ class Reports extends Authenticated_Controller {
             ->order_by('month', 'ASC')
             ->get()->result_array();
 
-        $top_products = $this->db->select('p.product_name, SUM(od.quantity) as total_sold, SUM(od.total_price) as revenue')
+        // Merge the walk-in monthly totals into the same month rows (by
+        // month key) so "Monthly Sales" reflects true combined revenue,
+        // keeping the online/walk-in split visible per month.
+        $walkin_monthly = WalkinSaleService::getMonthlySales($start, $end);
+        $monthly_by_month = [];
+        foreach ($monthly as $row) {
+            $monthly_by_month[$row['month']] = [
+                'month' => $row['month'],
+                'online_orders' => (int) $row['total_orders'],
+                'online_sales' => (float) $row['total_sales'],
+                'walkin_orders' => 0,
+                'walkin_sales' => 0.0,
+            ];
+        }
+        foreach ($walkin_monthly as $month => $w) {
+            if (!isset($monthly_by_month[$month])) {
+                $monthly_by_month[$month] = ['month' => $month, 'online_orders' => 0, 'online_sales' => 0.0, 'walkin_orders' => 0, 'walkin_sales' => 0.0];
+            }
+            $monthly_by_month[$month]['walkin_orders'] = $w['total_orders'];
+            $monthly_by_month[$month]['walkin_sales'] = $w['total_sales'];
+        }
+        ksort($monthly_by_month);
+        $monthly = array_values(array_map(function ($m) {
+            $m['total_orders'] = $m['online_orders'] + $m['walkin_orders'];
+            $m['total_sales'] = $m['online_sales'] + $m['walkin_sales'];
+            return $m;
+        }, $monthly_by_month));
+
+        $top_products = $this->db->select('od.product_id, p.product_name, SUM(od.quantity) as total_sold, SUM(od.total_price) as revenue')
             ->from(ORDER_DETAILS_TABLE . ' od')
             ->join(ORDER_TABLE . ' o', 'o.order_id = od.order_id')
             ->join(PRODUCT_TABLE . ' p', 'p.product_id = od.product_id')
             ->where('DATE(o.created_at) >=', $start)
             ->where('DATE(o.created_at) <=', $end)
             ->group_by('od.product_id')
-            ->order_by('total_sold', 'DESC')
-            ->limit(10)
             ->get()->result_array();
+
+        // Combine with walk-in product sales (same product across both
+        // channels adds up into one true "top seller" ranking) before
+        // taking the top 10 — otherwise a product that only sells well
+        // in-store would never appear here at all.
+        $combined_products = [];
+        foreach ($top_products as $row) {
+            $combined_products[$row['product_id']] = [
+                'product_name' => $row['product_name'],
+                'total_sold' => (int) $row['total_sold'],
+                'revenue' => (float) $row['revenue'],
+            ];
+        }
+        foreach (WalkinSaleService::getProductSales($start, $end) as $row) {
+            $pid = $row['product_id'];
+            if (!isset($combined_products[$pid])) {
+                $combined_products[$pid] = ['product_name' => $row['product_name'], 'total_sold' => 0, 'revenue' => 0.0];
+            }
+            $combined_products[$pid]['total_sold'] += (int) $row['total_sold'];
+            $combined_products[$pid]['revenue'] += (float) $row['revenue'];
+        }
+        usort($combined_products, fn($a, $b) => $b['total_sold'] <=> $a['total_sold']);
+        $top_products = array_slice($combined_products, 0, 10);
 
         return [
             'summary' => $summary,
+            'walkin_summary' => $walkin_summary,
             'by_status' => $by_status,
             'monthly' => $monthly,
             'top_products' => $top_products,
@@ -190,11 +253,19 @@ class Reports extends Authenticated_Controller {
     }
 
     private function _financial_data($start, $end) {
-        $revenue = (float) ($this->db->select_sum('total_amount')
+        require_once APPPATH . 'services/WalkinSaleService.php';
+
+        $online_revenue = (float) ($this->db->select_sum('total_amount')
             ->from(ORDER_TABLE)
             ->where('DATE(created_at) >=', $start)->where('DATE(created_at) <=', $end)
             ->where_not_in('order_status', ['cancelled'])
             ->get()->row()->total_amount ?? 0);
+
+        // Walk-in (in-store) sales never create an order_tbl row, so they're
+        // added in here rather than being invisible from total revenue.
+        $walkin_sales = WalkinSaleService::getTotalSales(NULL, $start, $end);
+        $walkin_revenue = $walkin_sales['total'];
+        $revenue = $online_revenue + $walkin_revenue;
 
         $commissions_released = (float) ($this->db->select_sum('amount')
             ->from(COMMISSIONS_TABLE)
@@ -232,6 +303,9 @@ class Reports extends Authenticated_Controller {
 
         return [
             'revenue' => $revenue,
+            'online_revenue' => $online_revenue,
+            'walkin_revenue' => $walkin_revenue,
+            'walkin_count' => $walkin_sales['count'],
             'commissions_released' => $commissions_released,
             'commissions_pending' => $commissions_pending,
             'withdrawals_completed' => $withdrawals_completed,
@@ -375,13 +449,27 @@ class Reports extends Authenticated_Controller {
                 $title = 'Sales Performance Report';
                 $subtitle = "Period: $start to $end";
                 $sections = [
-                    'Orders by Status' => [
+                    'Summary' => [
+                        'headers' => ['Channel', 'Orders', 'Revenue'],
+                        'rows' => [
+                            ['Online (Checkout)', $d['summary']['online_orders'], number_format($d['summary']['online_revenue'], 2)],
+                            ['Walk-in (In-Store)', $d['summary']['walkin_orders'], number_format($d['summary']['walkin_revenue'], 2)],
+                            ['Total', $d['summary']['total_orders'], number_format($d['summary']['total_revenue'], 2)],
+                        ],
+                    ],
+                    'Online Orders by Status' => [
                         'headers' => ['Status', 'Orders', 'Revenue'],
                         'rows' => array_map(fn($r) => [ucfirst(str_replace('_', ' ', $r['order_status'])), $r['total'], number_format($r['revenue'], 2)], $d['by_status']),
                     ],
                     'Monthly Sales' => [
-                        'headers' => ['Month', 'Orders', 'Sales'],
-                        'rows' => array_map(fn($r) => [date('F Y', strtotime($r['month'] . '-01')), $r['total_orders'], number_format($r['total_sales'], 2)], $d['monthly']),
+                        'headers' => ['Month', 'Online Orders', 'Online Sales', 'Walk-in Sales', 'Total Sales'],
+                        'rows' => array_map(fn($r) => [
+                            date('F Y', strtotime($r['month'] . '-01')),
+                            $r['online_orders'],
+                            number_format($r['online_sales'], 2),
+                            number_format($r['walkin_sales'], 2),
+                            number_format($r['total_sales'], 2),
+                        ], $d['monthly']),
                     ],
                     'Top Selling Products' => [
                         'headers' => ['Product', 'Sold', 'Revenue'],
@@ -437,7 +525,9 @@ class Reports extends Authenticated_Controller {
                     'Summary' => [
                         'headers' => ['Metric', 'Amount'],
                         'rows' => [
-                            ['Revenue (period)', number_format($d['revenue'], 2)],
+                            ['Revenue (period) — Online', number_format($d['online_revenue'], 2)],
+                            ['Revenue (period) — Walk-in', number_format($d['walkin_revenue'], 2)],
+                            ['Revenue (period) — Total', number_format($d['revenue'], 2)],
                             ['Commissions Released (period)', number_format($d['commissions_released'], 2)],
                             ['Commissions Pending (all time)', number_format($d['commissions_pending'], 2)],
                             ['Withdrawals Completed (period)', number_format($d['withdrawals_completed'], 2)],

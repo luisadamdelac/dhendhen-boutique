@@ -131,6 +131,8 @@ $route['admin/settings/(:any)'] = 'admin/Settings/$1';
 $route['admin/notification'] = 'admin/Notification';
 $route['admin/notification/(:any)/(:any)'] = 'admin/Notification/$1/$2';
 $route['admin/notification/(:any)'] = 'admin/Notification/$1';
+$route['admin/walkin'] = 'admin/Walkin';
+$route['admin/walkin/(:any)'] = 'admin/Walkin/$1';
 
 // Staff Routes
 $route['staff/dashboard'] = 'staff/Dashboard';
@@ -138,6 +140,8 @@ $route['staff/profile'] = 'staff/Profile';
 $route['staff/profile/(:any)'] = 'staff/Profile/$1';
 $route['staff/inventory'] = 'staff/Inventory';
 $route['staff/inventory/(:any)'] = 'staff/Inventory/$1';
+$route['staff/walkin'] = 'staff/Walkin';
+$route['staff/walkin/(:any)'] = 'staff/Walkin/$1';
 $route['staff/orders'] = 'staff/Orders';
 $route['staff/orders/(:any)'] = 'staff/Orders/$1';
 $route['staff/notifications'] = 'staff/Notifications';

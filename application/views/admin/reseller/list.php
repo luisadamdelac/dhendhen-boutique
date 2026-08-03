@@ -120,7 +120,7 @@
                     ?>
                     <tr data-status="<?= htmlspecialchars($rStatus); ?>">
                         <td class="ps-3">
-                            <div class="d-flex align-items-center gap-2">
+                            <div class="d-flex align-items-center gap-2" style="min-width:0;">
                                 <?php if (!empty($r['profile_image'])): ?>
                                     <img src="<?= BASE_URL . htmlspecialchars($r['profile_image']); ?>" alt="<?= $fullName; ?>" style="width:40px;height:40px;border-radius:50%;object-fit:cover;flex-shrink:0;">
                                 <?php else: ?>
@@ -128,12 +128,12 @@
                                         <?= $initials; ?>
                                     </div>
                                 <?php endif; ?>
-                                <div>
-                                    <div class="fw-semibold" style="font-size:13px;color:#1a1a2e;"><?= $fullName; ?></div>
+                                <div style="min-width:0;">
+                                    <div class="fw-semibold" style="font-size:13px;color:#1a1a2e;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><?= $fullName; ?></div>
                                     <?php if (!empty($r['business_name'])): ?>
-                                        <div style="font-size:11px;color:#8a94ad;"><?= htmlspecialchars($r['business_name']); ?></div>
+                                        <div style="font-size:11px;color:#8a94ad;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><?= htmlspecialchars($r['business_name']); ?></div>
                                     <?php else: ?>
-                                        <div style="font-size:11px;color:#8a94ad;"><?= htmlspecialchars($r['email'] ?? ''); ?></div>
+                                        <div style="font-size:11px;color:#8a94ad;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><?= htmlspecialchars($r['email'] ?? ''); ?></div>
                                     <?php endif; ?>
                                 </div>
                             </div>

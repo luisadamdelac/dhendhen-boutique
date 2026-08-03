@@ -21,6 +21,21 @@ $trendPill = function ($pct) {
 
 .sr-trend { font-size: .74rem; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; margin-top: 2px; }
 
+/* Plain CSS Grid instead of Bootstrap row/col-6/col-md-3 — no negative-
+   margin/padding gutter math to keep in sync with the hero card above. */
+.sr-stats-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+}
+@media (min-width: 576px) {
+    .sr-stats-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (min-width: 768px) {
+    .sr-stats-grid { grid-template-columns: repeat(4, 1fr); }
+}
+.sr-stats-grid > * { min-width: 0; }
+
 .sr-chart-card .card-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
 .sr-range-select {
     display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--primary-pink-dark);
@@ -70,7 +85,7 @@ $trendPill = function ($pct) {
 </div>
 
 <!-- Summary stat cards -->
-<div class="row g-3 mb-3">
+<div class="sr-stats-grid mb-3">
     <?php
         $statCards = [
             ['icon' => 'fa-dollar-sign', 'bg' => '#ffe3ee', 'fg' => '#e0559c', 'label' => 'Total Sales', 'value' => '₱' . number_format($summary['total_sales'], 2), 'change' => $summary['total_sales_change']],
@@ -81,14 +96,12 @@ $trendPill = function ($pct) {
     ?>
     <?php foreach ($statCards as $card): ?>
         <?php $trend = $trendPill($card['change']); ?>
-        <div class="col-6 col-md-3">
-            <div class="ds-stat-tile">
-                <div class="ds-stat-tile-icon" style="background:<?php echo $card['bg']; ?>;color:<?php echo $card['fg']; ?>;"><i class="fas <?php echo $card['icon']; ?>"></i></div>
-                <div>
-                    <div class="ds-stat-tile-label"><?php echo $card['label']; ?></div>
-                    <div class="ds-stat-tile-value"><?php echo $card['value']; ?></div>
-                    <div class="sr-trend" style="color:<?php echo $trend['color']; ?>;"><i class="fas <?php echo $trend['icon']; ?>"></i> <?php echo $trend['text']; ?></div>
-                </div>
+        <div class="ds-stat-tile">
+            <div class="ds-stat-tile-icon" style="background:<?php echo $card['bg']; ?>;color:<?php echo $card['fg']; ?>;"><i class="fas <?php echo $card['icon']; ?>"></i></div>
+            <div>
+                <div class="ds-stat-tile-label"><?php echo $card['label']; ?></div>
+                <div class="ds-stat-tile-value"><?php echo $card['value']; ?></div>
+                <div class="sr-trend" style="color:<?php echo $trend['color']; ?>;"><i class="fas <?php echo $trend['icon']; ?>"></i> <?php echo $trend['text']; ?></div>
             </div>
         </div>
     <?php endforeach; ?>

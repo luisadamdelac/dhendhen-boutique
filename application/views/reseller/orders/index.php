@@ -131,7 +131,7 @@ $showingTo = min($totalFiltered, $currentPage * $perPage);
 
     <div class="filter-bar">
         <form method="get" class="row g-2 align-items-center">
-            <div class="col-lg-3 col-md-6">
+            <div class="col-12 col-lg-3 col-md-6">
                 <div class="input-group">
                     <span class="input-group-text"><i class="fas fa-search"></i></span>
                     <input type="text" name="search" class="form-control" placeholder="Search by Order ID or Customer…" value="<?php echo htmlspecialchars($search); ?>">
@@ -153,7 +153,7 @@ $showingTo = min($totalFiltered, $currentPage * $perPage);
                     <?php endforeach; ?>
                 </select>
             </div>
-            <div class="col-lg-3 col-md-6">
+            <div class="col-12 col-lg-3 col-md-6">
                 <div class="input-group">
                     <span class="input-group-text"><i class="fas fa-calendar"></i></span>
                     <input type="date" name="start_date" class="form-control" value="<?php echo htmlspecialchars($startDate); ?>" title="Start Date">
@@ -161,7 +161,7 @@ $showingTo = min($totalFiltered, $currentPage * $perPage);
                     <input type="date" name="end_date" class="form-control" value="<?php echo htmlspecialchars($endDate); ?>" title="End Date">
                 </div>
             </div>
-            <div class="col-lg-2 col-md-6 d-flex gap-2">
+            <div class="col-12 col-lg-2 col-md-6 d-flex gap-2">
                 <button type="submit" class="btn btn-primary flex-fill"><i class="fas fa-filter me-1"></i> Filter</button>
                 <?php if ($search || $statusFilter || $paymentFilter || $startDate || $endDate): ?>
                     <a href="<?php echo site_url('reseller/orders'); ?>" class="btn ds-clear-btn" title="Reset filters">

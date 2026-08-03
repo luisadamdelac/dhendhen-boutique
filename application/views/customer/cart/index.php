@@ -77,6 +77,56 @@
         margin-top: 30px;
         gap: 15px;
     }
+
+    @media (max-width: 600px) {
+        .cart-container {
+            padding: 16px;
+        }
+
+        .cart-item td {
+            padding: 10px;
+        }
+
+        .cart-item-image {
+            width: 60px;
+            height: 60px;
+        }
+
+        .cart-item-name {
+            font-size: 14px;
+        }
+
+        .cart-item-price {
+            font-size: 15px;
+        }
+
+        .cart-td-total-amount {
+            font-size: 16px !important;
+        }
+
+        .cart-qty-controls input[type="number"] {
+            width: 55px !important;
+        }
+
+        .cart-summary {
+            padding: 16px;
+        }
+
+        .summary-total {
+            font-size: 19px;
+        }
+
+        .cart-actions,
+        .cart-actions-right {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .cart-actions .btn,
+        .cart-actions-right .btn {
+            width: 100%;
+        }
+    }
 </style>
 
 <h1><i class="fas fa-shopping-cart"></i> Shopping Cart</h1>
@@ -128,7 +178,7 @@
                         </form>
                     </td>
                     <td class="cart-td-total">
-                        <div style="font-size: 20px; font-weight: bold; color: var(--dark);">
+                        <div class="cart-td-total-amount" style="font-size: 20px; font-weight: bold; color: var(--dark);">
                             ₱<?php echo number_format($item['item_total'], 2); ?>
                         </div>
                     </td>
@@ -161,7 +211,7 @@
                 <i class="fas fa-arrow-left"></i> Continue Shopping
             </a>
 
-            <div style="display: flex; gap: 15px;">
+            <div class="cart-actions-right" style="display: flex; gap: 15px;">
                 <a href="<?php echo BASE_URL; ?>cart/clear" class="btn btn-secondary btn-lg" onclick="event.preventDefault(); openCartConfirmModal('Clear Cart?', 'All items in your cart will be removed.', this.href, 'Yes, Clear Cart');">
                     <i class="fas fa-trash"></i> Clear Cart
                 </a>

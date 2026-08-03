@@ -36,6 +36,25 @@ $donutBreakdown = [
 .stat-trend-line.flat { color: var(--gray); }
 .stat-trend-line span.muted { color: var(--gray); font-weight: 500; }
 
+/* Plain CSS Grid instead of Bootstrap row/col-6/col-xl-3 — no negative-
+   margin/padding gutter math to keep in sync with the hero card above,
+   and min-width:0 stops any long card content from forcing the column
+   (and the whole row) wider than the viewport. */
+.rinv-stats-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+}
+.rinv-stats-grid > * {
+    min-width: 0;
+}
+@media (min-width: 576px) {
+    .rinv-stats-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (min-width: 1200px) {
+    .rinv-stats-grid { grid-template-columns: repeat(4, 1fr); }
+}
+
 .minishop-card { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; padding: 1.1rem 1.3rem; }
 .minishop-icon { width: 54px; height: 54px; border-radius: 15px; background: var(--primary-pink-light); color: var(--primary-pink-dark); display: flex; align-items: center; justify-content: center; font-size: 1.3rem; flex-shrink: 0; }
 .minishop-info { flex: 1; min-width: 220px; }
@@ -395,26 +414,24 @@ $donutBreakdown = [
 </div>
 
 <!-- Stat Cards (trend-line variant — left as plain .stat-card, not merged into the hero card) -->
-<div class="row g-3 mt-3">
+<div class="rinv-stats-grid mt-3">
     <?php foreach ($statCards as $card): ?>
         <?php
             $pct = $trend[$card['trendKey']] ?? 0;
             $trendClass = $pct > 0.05 ? 'up' : ($pct < -0.05 ? 'down' : 'flat');
             $trendIcon = $trendClass === 'up' ? 'fa-arrow-up' : ($trendClass === 'down' ? 'fa-arrow-down' : 'fa-minus');
         ?>
-        <div class="col-6 col-xl-3">
-            <div class="stat-card stat-card-mini">
-                <div class="stat-card-mini-top">
-                    <div class="stat-icon" style="background:<?php echo $card['bg']; ?>;color:<?php echo $card['fg']; ?>;"><i class="fas <?php echo $card['icon']; ?>"></i></div>
-                    <div>
-                        <div class="stat-label"><?php echo $card['label']; ?></div>
-                        <div class="stat-value"><?php echo $card['value']; ?><?php if ($card['suffix']): ?><small><?php echo $card['suffix']; ?></small><?php endif; ?></div>
-                        <?php if ($card['tag']): ?><span class="stat-tag"><?php echo $card['tag']; ?></span><?php endif; ?>
-                    </div>
+        <div class="stat-card stat-card-mini">
+            <div class="stat-card-mini-top">
+                <div class="stat-icon" style="background:<?php echo $card['bg']; ?>;color:<?php echo $card['fg']; ?>;"><i class="fas <?php echo $card['icon']; ?>"></i></div>
+                <div>
+                    <div class="stat-label"><?php echo $card['label']; ?></div>
+                    <div class="stat-value"><?php echo $card['value']; ?><?php if ($card['suffix']): ?><small><?php echo $card['suffix']; ?></small><?php endif; ?></div>
+                    <?php if ($card['tag']): ?><span class="stat-tag"><?php echo $card['tag']; ?></span><?php endif; ?>
                 </div>
-                <div class="stat-trend-line <?php echo $trendClass; ?>">
-                    <i class="fas <?php echo $trendIcon; ?>"></i> <?php echo number_format(abs($pct), 1); ?>% <span class="muted">vs last month</span>
-                </div>
+            </div>
+            <div class="stat-trend-line <?php echo $trendClass; ?>">
+                <i class="fas <?php echo $trendIcon; ?>"></i> <?php echo number_format(abs($pct), 1); ?>% <span class="muted">vs last month</span>
             </div>
         </div>
     <?php endforeach; ?>
@@ -450,11 +467,12 @@ function copyShopUrl() {
 </script>
 
 <!-- Published Listings (full width so the table has room to breathe) -->
-<div class="row g-3 mt-1">
-    <div class="col-12">
-        <div class="card ds-pink-table-card">
-            <div class="card-header">
-                <h3 class="card-title"><i class="fas fa-store"></i> Published Listings <span class="badge badge-primary" style="margin-left:6px;"><?php echo count($myListings); ?> Products</span></h3>
+<div class="card ds-pink-table-card mt-1">
+    <div class="card-header">
+                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                    <h3 class="card-title" style="white-space:normal;"><i class="fas fa-store"></i> Published Listings</h3>
+                    <span class="badge badge-primary"><?php echo count($myListings); ?> Products</span>
+                </div>
                 <div class="section-toolbar">
                     <div class="search-box">
                         <i class="fas fa-search"></i>
@@ -565,8 +583,6 @@ function copyShopUrl() {
                 <?php endif; ?>
             </div>
         </div>
-    </div>
-</div>
 
 <!-- Inventory summary sidebar cards, now side-by-side below the full-width table -->
 <div class="row g-3 mt-1">

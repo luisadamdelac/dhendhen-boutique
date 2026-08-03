@@ -18,7 +18,7 @@
                     <p style="color: var(--gray-600); margin-top: 0.25rem;">
                         <i class="fas fa-envelope"></i> <?php echo htmlspecialchars($user['email']); ?>
                     </p>
-                    <div style="margin-top: 0.75rem;">
+                    <div class="profile-approval-row" style="margin-top: 0.75rem; display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem 1rem;">
                         <span class="badge badge-<?php
                             echo match($reseller['approval_status']) {
                                 'pending' => 'warning',
@@ -26,17 +26,17 @@
                                 'rejected' => 'danger',
                                 default => 'secondary'
                             };
-                        ?>" style="font-size: 0.875rem; padding: 0.4rem 0.75rem;">
+                        ?>" style="font-size: 0.875rem; padding: 0.4rem 0.75rem; white-space: nowrap;">
                             <i class="fas fa-<?php echo $reseller['approval_status'] === 'approved' ? 'check-circle' : ($reseller['approval_status'] === 'pending' ? 'clock' : 'times-circle'); ?>"></i>
                             <?php echo ucfirst($reseller['approval_status']); ?>
                         </span>
-                        <span style="margin-left: 1rem; color: var(--gray-600);">
+                        <span style="color: var(--gray-600); white-space: nowrap;">
                             <i class="fas fa-calendar"></i> Member since <?php echo date('M Y', strtotime($user['created_at'])); ?>
                         </span>
                     </div>
                     <form method="POST" action="<?php echo BASE_URL; ?>reseller/profile/update_photo" enctype="multipart/form-data" id="photoForm">
                         <input type="file" id="photoInput" name="photo" accept="image/*" style="display: none;" onchange="previewAndUpload(this)">
-                        <div style="margin-top: 0.75rem; display: flex; gap: 10px;">
+                        <div style="margin-top: 0.75rem; display: flex; flex-wrap: wrap; gap: 10px;">
                             <button type="button" class="btn btn-primary" onclick="document.getElementById('photoInput').click();">
                                 <i class="fas fa-upload"></i> Upload Photo
                             </button>
@@ -420,9 +420,17 @@
         flex-direction: column;
         text-align: center;
     }
-    
+
     .profile-info {
         width: 100%;
+    }
+
+    .profile-approval-row {
+        justify-content: center;
+    }
+
+    .profile-info form > div {
+        justify-content: center !important;
     }
 }
 </style>

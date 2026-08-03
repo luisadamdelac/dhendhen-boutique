@@ -9,8 +9,16 @@ class Dashboard extends Authenticated_Controller {
     public function index() {
         $data = $this->set_view_data();
         $data['page_title'] = 'Staff Dashboard';
+
+        // Walk-in (in-store) sales at this staff member's own branch never
+        // create an order_tbl row (see WalkinSaleService), so they're folded
+        // into Total Orders here instead of being invisible.
+        require_once APPPATH . 'services/WalkinSaleService.php';
+        $staff_branch_id = (int) ($this->db->select('branch_id')->where('staff_id', $this->user_id)->get(STAFF_TABLE)->row_array()['branch_id'] ?? 0);
+        $walkin = WalkinSaleService::getTotalSales($staff_branch_id ?: NULL);
+
         $data['order_stats'] = [
-            'total_orders' => $this->db->from(ORDER_TABLE)->count_all_results(),
+            'total_orders' => $this->db->from(ORDER_TABLE)->count_all_results() + $walkin['count'],
             'pending_orders' => $this->db->from(ORDER_TABLE)->where('order_status', 'pending')->count_all_results(),
             'processing_orders' => $this->db->from(ORDER_TABLE)->where('order_status', 'processing')->count_all_results(),
             'to_ship_orders' => $this->db->from(ORDER_TABLE)->where('order_status', 'to_ship')->count_all_results(),

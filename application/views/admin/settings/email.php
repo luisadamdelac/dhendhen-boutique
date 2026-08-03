@@ -2,6 +2,21 @@
 $page_title = 'Email Settings';
 $current_page = 'settings';
 ?>
+<style>
+/* Two side-by-side buttons with no wrap/stacking rule squeeze each other's
+   text onto multiple lines (or clip it) once the row is narrower than
+   both buttons' natural single-line width — stack them instead below
+   this width so each gets the full row to itself. */
+@media (max-width: 600px) {
+    .settings-action-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .settings-action-row .btn {
+        width: 100%;
+    }
+}
+</style>
 <div class="container-fluid py-4 fade-in">
     <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-4">
         <div class="d-flex align-items-center gap-3">
@@ -17,11 +32,9 @@ $current_page = 'settings';
 
     <?php include __DIR__ . '/../partials/settings_tabs.php'; ?>
 
-    <div class="row">
-        <div class="col">
-            <div class="card border-0 shadow-sm" style="border-radius:12px;overflow:hidden;">
-                <div class="card-body">
-                    <form method="post">
+    <div class="card border-0 shadow-sm" style="border-radius:12px;overflow:hidden;">
+        <div class="card-body">
+            <form method="post">
                         <div class="page-section" style="margin-top:0;">
                             <span class="section-title"><i class="fas fa-server me-2"></i>SMTP Configuration</span>
                             <hr>
@@ -98,7 +111,7 @@ $current_page = 'settings';
                             </div>
                         </div>
 
-                        <div class="form-group d-flex gap-2" style="margin-top: 30px;">
+                        <div class="form-group d-flex gap-2 settings-action-row" style="margin-top: 30px;">
                             <button type="submit" class="btn btn-primary">
                                 <i class="fas fa-save"></i> Save Email Settings
                             </button>
@@ -109,8 +122,6 @@ $current_page = 'settings';
                     </form>
                 </div>
             </div>
-        </div>
-    </div>
 </div>
 
 <!-- Send Test Email Modal -->

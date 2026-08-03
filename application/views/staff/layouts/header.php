@@ -107,6 +107,12 @@
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a href="<?php echo BASE_URL; ?>staff/walkin" class="nav-link <?php echo (isset($page_title) && strpos($page_title, 'Walk-in') !== false) ? 'active' : ''; ?>">
+                            <i class="fas fa-cash-register"></i>
+                            <span>Walk-in Sale</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a href="<?php echo BASE_URL; ?>staff/profile" class="nav-link <?php echo (isset($page_title) && strpos($page_title, 'Profile') !== false) ? 'active' : ''; ?>">
                             <i class="fas fa-user"></i>
                             <span>Profile</span>

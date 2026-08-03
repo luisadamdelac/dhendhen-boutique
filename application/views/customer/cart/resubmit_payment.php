@@ -26,6 +26,11 @@
         font-family: inherit;
         box-sizing: border-box;
     }
+
+    @media (max-width: 600px) {
+        .resubmit-wrap { margin: 16px auto; }
+        .resubmit-card { padding: 16px; }
+    }
 </style>
 
 <div class="resubmit-wrap">

@@ -14,11 +14,9 @@
 
     <?php include __DIR__ . '/../partials/settings_tabs.php'; ?>
 
-    <div class="row">
-        <div class="col">
-            <div class="card border-0 shadow-sm" style="border-radius:12px;overflow:hidden;">
-                <div class="card-body">
-                    <form method="POST" action="<?php echo site_url('admin/settings'); ?>">
+    <div class="card border-0 shadow-sm" style="border-radius:12px;overflow:hidden;">
+        <div class="card-body">
+            <form method="POST" action="<?php echo site_url('admin/settings'); ?>">
                         <div class="page-section" style="margin-top:0;">
                             <span class="section-title"><i class="fas fa-store me-2"></i>Business Information</span>
                             <hr>
@@ -99,6 +97,4 @@
                     </form>
                 </div>
             </div>
-        </div>
-    </div>
 </div>

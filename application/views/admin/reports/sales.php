@@ -48,6 +48,7 @@ table.dataTable thead th.sorting:hover { color: var(--primary-pink); cursor: poi
                 <div>
                     <div class="stat-label">Total Orders</div>
                     <div class="stat-value"><?= number_format($summary['total_orders'] ?? 0); ?></div>
+                    <small class="text-muted"><?= number_format($summary['online_orders'] ?? 0); ?> online + <?= number_format($summary['walkin_orders'] ?? 0); ?> walk-in</small>
                 </div>
             </div>
         </div>
@@ -57,15 +58,27 @@ table.dataTable thead th.sorting:hover { color: var(--primary-pink); cursor: poi
                 <div>
                     <div class="stat-label">Total Revenue</div>
                     <div class="stat-value">₱<?= number_format($summary['total_revenue'] ?? 0, 2); ?></div>
+                    <small class="text-muted">₱<?= number_format($summary['online_revenue'] ?? 0, 2); ?> online + ₱<?= number_format($summary['walkin_revenue'] ?? 0, 2); ?> walk-in</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon" style="background:#fce4ec;color:#c2185b;"><i class="fas fa-cash-register"></i></div>
+                <div>
+                    <div class="stat-label">Walk-in Sales</div>
+                    <div class="stat-value"><?= number_format($walkin_summary['count'] ?? 0); ?></div>
+                    <small class="text-muted">₱<?= number_format($walkin_summary['total'] ?? 0, 2); ?> in-store revenue</small>
                 </div>
             </div>
         </div>
     </div>
 
     <div class="page-section">
-        <span class="section-title"><i class="fas fa-list me-2 text-primary"></i>Orders by Status</span>
+        <span class="section-title"><i class="fas fa-list me-2 text-primary"></i>Online Orders by Status</span>
         <hr>
     </div>
+    <p class="text-muted small mb-2" style="margin-top:-10px;">Walk-in (in-store) sales don't have a delivery status — see the "Walk-in Sales" figures above and the breakdown in Monthly Sales below.</p>
     <div class="card border-0 shadow-sm mb-3" style="border-radius:12px;overflow:hidden;">
         <div class="card-body">
             <div class="table-responsive">
@@ -116,12 +129,14 @@ table.dataTable thead th.sorting:hover { color: var(--primary-pink); cursor: poi
         <div class="card-body">
             <div class="table-responsive">
                 <table class="table inv-table mb-0" id="salesMonthlyTable">
-                    <thead><tr><th class="ps-3">Month</th><th>Orders</th><th>Sales</th></tr></thead>
+                    <thead><tr><th class="ps-3">Month</th><th>Online Orders</th><th>Online Sales</th><th>Walk-in Sales</th><th>Total Sales</th></tr></thead>
                     <tbody>
                     <?php foreach ($monthly as $row): ?>
                         <tr>
                             <td class="ps-3"><?= date('F Y', strtotime($row['month'] . '-01')); ?></td>
-                            <td><?= number_format($row['total_orders']); ?></td>
+                            <td><?= number_format($row['online_orders']); ?></td>
+                            <td>₱<?= number_format($row['online_sales'], 2); ?></td>
+                            <td>₱<?= number_format($row['walkin_sales'], 2); ?></td>
                             <td>₱<?= number_format($row['total_sales'], 2); ?></td>
                         </tr>
                     <?php endforeach; ?>

@@ -1,5 +1,19 @@
 <?php
 $statusFilter = $statusFilter ?? 'all';
+$dateRange = $dateRange ?? 'all';
+$startDate = $startDate ?? '';
+$endDate = $endDate ?? '';
+
+$dateRangeLabels = [
+    'all'    => 'All Time',
+    'today'  => 'Today',
+    '7days'  => 'Last 7 Days',
+    '30days' => 'Last 30 Days',
+    '90days' => 'Last 90 Days',
+    'year'   => 'This Year',
+    'custom' => 'Custom Range',
+];
+$dateRangeLabel = $dateRangeLabels[$dateRange] ?? 'All Time';
 $statusCounts = $statusCounts ?? [];
 $totalOrdersCount = $totalOrdersCount ?? 0;
 $totalFiltered = $totalFiltered ?? count($orders);
@@ -64,6 +78,56 @@ $showingTo = min($totalFiltered, $currentPage * $perPage);
         font-size: 13.5px;
         font-weight: 600;
         cursor: pointer;
+        font-family: inherit;
+    }
+
+    .orders-time-filter-wrap {
+        position: relative;
+    }
+
+    .orders-time-dropdown {
+        display: none;
+        position: absolute;
+        top: calc(100% + 6px);
+        left: 0;
+        z-index: 50;
+        background: var(--white);
+        border: 1px solid var(--gray-200);
+        border-radius: 8px;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+        padding: 6px;
+        min-width: 170px;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .orders-time-dropdown.show {
+        display: flex;
+    }
+
+    .orders-time-option {
+        display: block;
+        width: 100%;
+        text-align: left;
+        padding: 8px 10px;
+        border: none;
+        background: none;
+        border-radius: 6px;
+        font-size: 13.5px;
+        font-weight: 500;
+        color: var(--gray-700);
+        cursor: pointer;
+        font-family: inherit;
+    }
+
+    .orders-time-option:hover {
+        background: var(--gray-100);
+    }
+
+    .orders-time-option.active {
+        background: var(--primary-pink-light, #fce4ec);
+        color: var(--primary-pink-dark);
+        font-weight: 700;
     }
 
     .orders-container {
@@ -436,8 +500,17 @@ $showingTo = min($totalFiltered, $currentPage * $perPage);
         <p class="orders-page-subtitle">View and track all your orders in one place.</p>
     </div>
     <div class="orders-page-actions">
-        <div class="orders-time-filter"><i class="far fa-calendar"></i> All Time <i class="fas fa-chevron-down" style="font-size:10px;"></i></div>
-        <button type="button" class="orders-filter-btn"><i class="fas fa-filter"></i> Filter</button>
+        <div class="orders-time-filter-wrap">
+            <button type="button" class="orders-time-filter" onclick="toggleDateDropdown()">
+                <i class="far fa-calendar"></i> <?php echo htmlspecialchars($dateRangeLabel); ?> <i class="fas fa-chevron-down" style="font-size:10px;"></i>
+            </button>
+            <div class="orders-time-dropdown" id="dateRangeDropdown">
+                <?php foreach (['all' => 'All Time', 'today' => 'Today', '7days' => 'Last 7 Days', '30days' => 'Last 30 Days', '90days' => 'Last 90 Days', 'year' => 'This Year'] as $key => $label): ?>
+                    <button type="button" class="orders-time-option <?php echo $dateRange === $key ? 'active' : ''; ?>" onclick="applyDateRange('<?php echo $key; ?>')"><?php echo $label; ?></button>
+                <?php endforeach; ?>
+            </div>
+        </div>
+        <button type="button" class="orders-filter-btn" onclick="openModal('dateFilterModal')"><i class="fas fa-filter"></i> Filter</button>
     </div>
 </div>
 
@@ -551,6 +624,12 @@ $showingTo = min($totalFiltered, $currentPage * $perPage);
                 <div class="orders-pagination">
                     <?php
                         $baseQs = $statusFilter !== 'all' ? ['status' => $statusFilter] : [];
+                        if ($dateRange === 'custom') {
+                            if ($startDate) $baseQs['start_date'] = $startDate;
+                            if ($endDate) $baseQs['end_date'] = $endDate;
+                        } elseif ($dateRange !== 'all') {
+                            $baseQs['date_range'] = $dateRange;
+                        }
                         $pageUrl = fn($p) => BASE_URL . 'orders?' . http_build_query(array_merge($baseQs, ['page' => $p]));
                     ?>
                     <a class="page-btn <?php echo $currentPage <= 1 ? 'disabled' : ''; ?>" href="<?php echo $pageUrl(max(1, $currentPage - 1)); ?>"><i class="fas fa-chevron-left"></i></a>
@@ -562,6 +641,32 @@ $showingTo = min($totalFiltered, $currentPage * $perPage);
             <?php endif; ?>
         </div>
     <?php endif; ?>
+</div>
+
+<!-- Custom Date Range Filter Modal -->
+<div class="modal" id="dateFilterModal">
+    <div class="modal-content modal-sm">
+        <div class="modal-header">
+            <h3 class="modal-title"><i class="fas fa-filter"></i> Filter by Date</h3>
+            <button type="button" class="modal-close" onclick="closeModal(document.getElementById('dateFilterModal'))">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label>Start Date</label>
+                <input type="date" id="filterStartDate" class="form-control" value="<?php echo htmlspecialchars($startDate); ?>">
+            </div>
+            <div class="form-group" style="margin-top:14px;">
+                <label>End Date</label>
+                <input type="date" id="filterEndDate" class="form-control" value="<?php echo htmlspecialchars($endDate); ?>">
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary btn-sm" onclick="clearCustomDateRange()">Clear</button>
+            <button type="button" class="btn btn-primary btn-sm" onclick="applyCustomDateRange()">Apply Filter</button>
+        </div>
+    </div>
 </div>
 
 <!-- Rate Products modals — one per delivered order, each listing that order's items -->
@@ -613,13 +718,60 @@ $showingTo = min($totalFiltered, $currentPage * $perPage);
 <?php endforeach; ?>
 
 <script>
-    function filterOrders(status) {
-        if (status === 'all') {
-            window.location.href = '<?php echo BASE_URL; ?>orders';
-        } else {
-            window.location.href = '<?php echo BASE_URL; ?>orders?status=' + status;
+    const currentStatusFilter = <?php echo json_encode($statusFilter); ?>;
+    const currentDateRange = <?php echo json_encode($dateRange); ?>;
+    const currentStartDate = <?php echo json_encode($startDate); ?>;
+    const currentEndDate = <?php echo json_encode($endDate); ?>;
+
+    // Builds the /orders URL for a given status, carrying over whatever
+    // date filter (preset or custom) is currently active, so switching
+    // status tabs doesn't silently drop the date filter (and vice versa).
+    function buildOrdersUrl(status, dateRange, startDate, endDate) {
+        const params = new URLSearchParams();
+        if (status && status !== 'all') params.set('status', status);
+        if (dateRange === 'custom') {
+            if (startDate) params.set('start_date', startDate);
+            if (endDate) params.set('end_date', endDate);
+        } else if (dateRange && dateRange !== 'all') {
+            params.set('date_range', dateRange);
         }
+        const qs = params.toString();
+        return '<?php echo BASE_URL; ?>orders' + (qs ? '?' + qs : '');
     }
+
+    function filterOrders(status) {
+        window.location.href = buildOrdersUrl(status, currentDateRange, currentStartDate, currentEndDate);
+    }
+
+    function applyDateRange(range) {
+        window.location.href = buildOrdersUrl(currentStatusFilter, range, '', '');
+    }
+
+    function applyCustomDateRange() {
+        const start = document.getElementById('filterStartDate').value;
+        const end = document.getElementById('filterEndDate').value;
+        if (!start && !end) {
+            alert('Please pick at least a start or end date.');
+            return;
+        }
+        window.location.href = buildOrdersUrl(currentStatusFilter, 'custom', start, end);
+    }
+
+    function clearCustomDateRange() {
+        window.location.href = buildOrdersUrl(currentStatusFilter, 'all', '', '');
+    }
+
+    function toggleDateDropdown() {
+        document.getElementById('dateRangeDropdown').classList.toggle('show');
+    }
+
+    document.addEventListener('click', function (e) {
+        const wrap = document.querySelector('.orders-time-filter-wrap');
+        const dropdown = document.getElementById('dateRangeDropdown');
+        if (wrap && dropdown && !wrap.contains(e.target)) {
+            dropdown.classList.remove('show');
+        }
+    });
 
     const orderRatings = {};
 

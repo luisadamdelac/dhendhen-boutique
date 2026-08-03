@@ -39,6 +39,45 @@ $statusBreakdown = [
 .stat-trend.flat { color: var(--gray); }
 .stat-sparkline-wrap { width: 84px; height: 28px; flex-shrink: 0; }
 
+/* Stat card grid built with plain CSS Grid instead of Bootstrap
+   row/col-6/col-md-4/col-xl — grid's own box is exactly the available
+   width with no negative-margin/padding gutter compensation to keep in
+   sync, so its left/right edges always match the hero card above it. */
+.rdb-stats-grid,
+.rdb-row-8-4,
+.rdb-row-5-4-3 {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+}
+
+/* Grid items default to min-width:auto, i.e. they refuse to shrink below
+   the natural width of their content (a Chart.js canvas, nowrap text like
+   "Last 7 Days") — without this, that content pushes the column (and the
+   whole row) wider than the viewport instead of fitting inside it. */
+.rdb-stats-grid > *,
+.rdb-row-8-4 > *,
+.rdb-row-5-4-3 > * {
+    min-width: 0;
+}
+@media (min-width: 576px) {
+    .rdb-stats-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (min-width: 768px) {
+    .rdb-stats-grid { grid-template-columns: repeat(3, 1fr); }
+}
+@media (min-width: 1200px) {
+    .rdb-stats-grid { grid-template-columns: repeat(5, 1fr); }
+}
+
+/* These two rows only ever split into columns at the xl breakpoint
+   (Bootstrap's old col-12 col-xl-N pattern), so they stay single-column
+   until then — see the shared base rule above. */
+@media (min-width: 1200px) {
+    .rdb-row-8-4 { grid-template-columns: 2fr 1fr; }
+    .rdb-row-5-4-3 { grid-template-columns: 5fr 4fr 3fr; }
+}
+
 .order-row { display: flex; align-items: center; gap: .85rem; padding: 12px 4px; border-bottom: 1px solid var(--border); }
 .order-row:last-child { border-bottom: none; }
 .order-avatar { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: 13px; flex-shrink: 0; }
@@ -128,7 +167,7 @@ $statusBreakdown = [
     </div>
 </div>
 
-<div class="row g-3 mt-3">
+<div class="rdb-stats-grid mt-3">
     <?php foreach ($statCards as $card): ?>
         <?php
             $pct = $trend[$card['key']] ?? 0;
@@ -136,28 +175,26 @@ $statusBreakdown = [
             $trendIcon = $trendClass === 'up' ? 'fa-arrow-up' : ($trendClass === 'down' ? 'fa-arrow-down' : 'fa-minus');
             $sparkValues = array_column($this_week, $card['field']);
         ?>
-        <div class="col-6 col-md-4 col-xl">
-            <div class="stat-card stat-card-trend">
-                <div class="stat-card-trend-top">
-                    <div class="stat-icon" style="background:<?php echo $card['bg']; ?>;color:<?php echo $card['fg']; ?>;"><i class="fas <?php echo $card['icon']; ?>"></i></div>
-                    <div>
-                        <div class="stat-label"><?php echo $card['label']; ?></div>
-                        <div class="stat-value"><?php echo $card['value']; ?></div>
-                    </div>
+        <div class="stat-card stat-card-trend">
+            <div class="stat-card-trend-top">
+                <div class="stat-icon" style="background:<?php echo $card['bg']; ?>;color:<?php echo $card['fg']; ?>;"><i class="fas <?php echo $card['icon']; ?>"></i></div>
+                <div>
+                    <div class="stat-label"><?php echo $card['label']; ?></div>
+                    <div class="stat-value"><?php echo $card['value']; ?></div>
                 </div>
-                <div class="stat-card-trend-bottom">
-                    <span class="stat-trend <?php echo $trendClass; ?>">
-                        <i class="fas <?php echo $trendIcon; ?>"></i> <?php echo number_format(abs($pct), 1); ?>% vs last 7 days
-                    </span>
-                    <div class="stat-sparkline-wrap"><canvas class="stat-sparkline" data-values='<?php echo json_encode($sparkValues); ?>' data-color="<?php echo $card['fg']; ?>"></canvas></div>
-                </div>
+            </div>
+            <div class="stat-card-trend-bottom">
+                <span class="stat-trend <?php echo $trendClass; ?>">
+                    <i class="fas <?php echo $trendIcon; ?>"></i> <?php echo number_format(abs($pct), 1); ?>% vs last 7 days
+                </span>
+                <div class="stat-sparkline-wrap"><canvas class="stat-sparkline" data-values='<?php echo json_encode($sparkValues); ?>' data-color="<?php echo $card['fg']; ?>"></canvas></div>
             </div>
         </div>
     <?php endforeach; ?>
 </div>
 
-<div class="row g-3 mt-1">
-    <div class="col-12 col-xl-8">
+<div class="rdb-row-8-4 mt-1">
+    <div>
         <div class="card h-100">
             <div class="card-header">
                 <h3 class="card-title"><i class="fas fa-chart-area"></i> Sales Overview</h3>
@@ -170,7 +207,7 @@ $statusBreakdown = [
             </div>
         </div>
     </div>
-    <div class="col-12 col-xl-4">
+    <div>
         <div class="card h-100">
             <div class="card-header">
                 <h3 class="card-title"><i class="fas fa-bullseye"></i> Performance Summary</h3>
@@ -197,8 +234,8 @@ $statusBreakdown = [
     </div>
 </div>
 
-<div class="row g-3 mt-1">
-    <div class="col-12 col-xl-5">
+<div class="rdb-row-5-4-3 mt-1">
+    <div>
         <div class="card h-100">
             <div class="card-header">
                 <h3 class="card-title"><i class="fas fa-receipt"></i> Recent Orders</h3>
@@ -242,7 +279,7 @@ $statusBreakdown = [
         </div>
     </div>
 
-    <div class="col-12 col-xl-4">
+    <div>
         <div class="card h-100">
             <div class="card-header">
                 <h3 class="card-title"><i class="fas fa-wallet"></i> Commission Summary</h3>
@@ -277,7 +314,7 @@ $statusBreakdown = [
         </div>
     </div>
 
-    <div class="col-12 col-xl-3">
+    <div>
         <div class="card h-100">
             <div class="card-header">
                 <h3 class="card-title"><i class="fas fa-fire"></i> Top Selling Products</h3>

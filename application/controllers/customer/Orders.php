@@ -25,6 +25,39 @@ class Orders extends CI_Controller {
         $valid_statuses = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
         $data['statusFilter'] = in_array($status_filter, $valid_statuses, TRUE) ? $status_filter : 'all';
 
+        // Date range: either a quick preset ("date_range") or an explicit
+        // custom start_date/end_date pair from the Filter modal — custom
+        // dates win whenever at least one of them is actually set, since
+        // picking a custom date implies "ignore the preset".
+        $date_range = $this->input->get('date_range');
+        $valid_ranges = ['today', '7days', '30days', '90days', 'year'];
+        $data['dateRange'] = in_array($date_range, $valid_ranges, TRUE) ? $date_range : 'all';
+        $data['startDate'] = $this->input->get('start_date') ?: '';
+        $data['endDate'] = $this->input->get('end_date') ?: '';
+        $has_custom_range = $data['startDate'] || $data['endDate'];
+        if ($has_custom_range) {
+            $data['dateRange'] = 'custom';
+        }
+
+        // Resolves the active preset/custom range into a concrete
+        // [start, end] pair of Y-m-d dates (either bound may be null),
+        // applied identically to both the count query and the main query.
+        $range_bounds = function () use ($data, $has_custom_range) {
+            if ($has_custom_range) {
+                return [$data['startDate'] ?: null, $data['endDate'] ?: null];
+            }
+            $today = date('Y-m-d');
+            switch ($data['dateRange']) {
+                case 'today':  return [$today, $today];
+                case '7days':  return [date('Y-m-d', strtotime('-6 days')), $today];
+                case '30days': return [date('Y-m-d', strtotime('-29 days')), $today];
+                case '90days': return [date('Y-m-d', strtotime('-89 days')), $today];
+                case 'year':   return [date('Y-01-01'), $today];
+                default:       return [null, null];
+            }
+        };
+        [$rangeStart, $rangeEnd] = $range_bounds();
+
         // Tab badge counts — always reflect the customer's full order set,
         // regardless of which tab is currently active.
         $status_rows = $this->db->select('order_status, COUNT(*) as cnt')
@@ -49,6 +82,8 @@ class Orders extends CI_Controller {
         if ($data['statusFilter'] !== 'all') {
             $count_query->where('order_status', $data['statusFilter']);
         }
+        if ($rangeStart) $count_query->where('DATE(created_at) >=', $rangeStart);
+        if ($rangeEnd)   $count_query->where('DATE(created_at) <=', $rangeEnd);
         $data['totalFiltered'] = $count_query->count_all_results();
         $data['totalPages'] = max(1, (int) ceil($data['totalFiltered'] / $limit));
 
@@ -56,6 +91,8 @@ class Orders extends CI_Controller {
         if ($data['statusFilter'] !== 'all') {
             $query->where('order_status', $data['statusFilter']);
         }
+        if ($rangeStart) $query->where('DATE(created_at) >=', $rangeStart);
+        if ($rangeEnd)   $query->where('DATE(created_at) <=', $rangeEnd);
         $data['orders'] = $query->order_by('order_id', 'DESC')->limit($limit, $offset)->get()->result_array();
 
         // Line items for every order on this page — used for the thumbnail +

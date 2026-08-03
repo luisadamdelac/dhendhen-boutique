@@ -1514,11 +1514,25 @@ table td {
         align-items: center;
     }
     .cart-table tr:last-child { border-bottom: none; }
-    .cart-td-image { grid-area: image; width: auto; }
-    .cart-td-info { grid-area: info; }
-    .cart-td-qty { grid-area: qty; width: auto; }
-    .cart-td-total { grid-area: total; width: auto; text-align: left; }
-    .cart-td-remove { grid-area: remove; width: auto; text-align: right; }
+    .cart-td-image { grid-area: image; width: auto; min-width: 0; }
+    .cart-td-info { grid-area: info; min-width: 0; }
+    .cart-td-qty { grid-area: qty; width: auto; min-width: 0; }
+    .cart-td-total { grid-area: total; width: auto; min-width: 0; text-align: left; }
+    .cart-td-remove { grid-area: remove; width: auto; min-width: 0; text-align: right; }
+
+    /* Grid items refuse to shrink below their content's natural (unwrapped)
+       width by default (min-width:auto) — without this, a long product
+       name or the qty/max-stock text doesn't wrap, it just pushes the row
+       wider than the phone screen so everything past the fold gets cut off. */
+    .cart-td-info,
+    .cart-td-qty,
+    .cart-td-total,
+    .cart-item-name,
+    .cart-item-price,
+    .cart-qty-controls {
+        overflow-wrap: break-word;
+    }
+    .cart-qty-controls { flex-wrap: wrap; }
 }
 
 .cart-summary {

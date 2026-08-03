@@ -813,6 +813,12 @@ body.sidebar-open .sidebar-backdrop {
     margin-top: var(--spacing-sm);
     padding: var(--spacing-xs) var(--spacing-sm);
     border-radius: var(--radius-md);
+    /* Without this, longer labels (e.g. "100.0% vs last 30 days") wrap to a
+       second line inside the flex box, ballooning it into a tall block —
+       very different in size from the short single-line "No change" pill
+       right next to it on other cards. Now every card's badge stays a
+       compact single-line pill, wide instead of tall when text is long. */
+    white-space: nowrap;
 }
 
 .stat-change.positive {
@@ -939,6 +945,24 @@ body.sidebar-open .sidebar-backdrop {
     font-family: "Font Awesome 6 Free"; font-weight: 900; content: "\f002";
     position: absolute; left: .8rem; top: 50%; transform: translateY(-50%);
     color: var(--primary-pink-dark); font-size: .78rem; pointer-events: none; z-index: 1;
+}
+
+/* On phones the length control and search stack full-width (Bootstrap's
+   col-sm-6 collapses to 100%), but the search <input> itself only had a
+   fixed 230px min-width with no width:100% — so it stopped short of the
+   card's edge instead of matching the width of everything else on the
+   page (hero stats, section header, etc.), leaving a dead gap. */
+@media (max-width: 767.98px) {
+    .ds-pink-table-card .dataTables_wrapper .dataTables_filter {
+        margin-left: 0;
+        width: 100%;
+    }
+    .ds-pink-table-card .dataTables_wrapper .dataTables_filter input {
+        width: 100%;
+        min-width: 0;
+        margin-left: 0;
+        box-sizing: border-box;
+    }
 }
 .ds-pink-table-card table.dataTable thead th { position: relative; }
 .ds-pink-table-card table.dataTable thead th.sorting:hover { color: #fff; cursor: pointer; opacity: .9; }
@@ -1419,7 +1443,15 @@ textarea.form-control {
 .row {
     display: flex;
     flex-wrap: wrap;
-    margin: 0 calc(var(--spacing-md) * -1);
+    /* Match Bootstrap's own row/col gutter formula (half of --bs-gutter-x,
+       negated) instead of a hardcoded --spacing-md. Bootstrap's native
+       .col-N classes size their padding off --bs-gutter-x (which utilities
+       like .g-3/.g-4 change per row), so hardcoding this margin to a fixed
+       16px meant it only ever matched Bootstrap's padding by coincidence —
+       any row using .g-3 (--bs-gutter-x:1rem, i.e. 8px padding per side)
+       ended up 8px per side wider than intended, throwing multi-column
+       rows out of alignment with unwrapped full-width cards next to them. */
+    margin: 0 calc(var(--bs-gutter-x, 1.5rem) * -0.5);
     max-width: 100%;
 }
 
@@ -1433,7 +1465,10 @@ textarea.form-control {
    previously made 4-field form rows (e.g. product add/edit) render as
    evenly-squeezed ~120px columns instead of their intended 8/4/6/6 split. */
 .col {
-    padding: 0 var(--spacing-md);
+    /* Same reasoning as .row above — match whatever gutter the row actually
+       has (via --bs-gutter-x) instead of a fixed --spacing-md, so bare .col
+       elements stay in sync with their row's negative margin. */
+    padding: 0 calc(var(--bs-gutter-x, 1.5rem) * 0.5);
     margin-bottom: var(--spacing-xl);
     min-width: 0;
     box-sizing: border-box;
@@ -1593,6 +1628,17 @@ textarea.form-control {
         padding: var(--spacing-md);
     }
 
+    /* Every page wraps its content in Bootstrap's .container-fluid, which
+       adds its own 0.75rem left/right gutter on top of .main-content's own
+       padding above — that doubled-up gutter is what eats into the usable
+       width on phones. .main-content already provides the single outer
+       margin from the screen edge, so the nested container doesn't need a
+       second one. */
+    .main-content > .container-fluid {
+        padding-left: 0;
+        padding-right: 0;
+    }
+
     .header-search input {
         width: 150px;
     }
@@ -1745,6 +1791,16 @@ textarea.form-control {
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
+    }
+
+    /* Flex items default to min-width:auto — they refuse to shrink below
+       their content's natural (unwrapped) width. Without this, a cell
+       whose content is wider than the available space (e.g. an avatar +
+       name/shop-name pair) pushes past the cell's right edge instead of
+       actually using the ellipsis truncation rule above, which only takes
+       effect once the item is allowed to shrink in the first place. */
+    table.table-stack td > * {
+        min-width: 0;
     }
 }
 
@@ -2039,7 +2095,16 @@ textarea.form-control {
    PAGE TABS (Order section tabs)
    ============================================ */
 .page-tabs {
-    display: flex;
+    /* Grid instead of flex-wrap + flex:1 — flex-wrap decides how many items
+       fit per line based on each item's own unwrapped text width, then
+       flex:1 stretches whatever landed on that line to fill it. With more
+       than a handful of tabs (e.g. Settings' 7), later lines end up with
+       only one or two items each, so those get stretched to take up half
+       or all of the row's width — the visibly uneven, staggered layout.
+       Grid fixes the column count once for the whole component, so every
+       row lines up the same way. */
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
     gap: 4px;
     background: white;
     border: 1px solid var(--border);
@@ -2047,14 +2112,12 @@ textarea.form-control {
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-sm);
     margin-bottom: 20px;
-    flex-wrap: wrap;
 }
 
 .page-tab {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    flex: 1;
     gap: 8px;
     padding: 10px 20px;
     border-radius: var(--radius-md);
@@ -2414,16 +2477,35 @@ textarea.form-control {
     margin-bottom: 24px;
     box-shadow: 0 20px 60px rgba(15, 23, 42, 0.05);
 }
+/* Previously transparent/borderless, which left the icon floating with no
+   visible box next to the input's own fully-rounded border — looked like
+   two disconnected controls instead of one joined search/date field. Now
+   it shares a border with the input(s) beside it, rounded only on the
+   outer corners of the group (first element's left, last form-control's
+   right), like a normal Bootstrap input-group. */
 .filter-bar .input-group-text {
-    background: transparent;
-    border: none;
+    background: var(--page-bg);
+    border: 1px solid var(--border);
+    border-right: none;
+    border-radius: 0;
     color: var(--gray);
+}
+.filter-bar .input-group-text:first-child {
+    border-radius: var(--radius-md) 0 0 var(--radius-md);
 }
 .filter-bar .form-control,
 .filter-bar .form-select {
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
     min-height: 48px;
+}
+.filter-bar .input-group .form-control {
+    border-radius: 0;
+    border-right: none;
+}
+.filter-bar .input-group .form-control:last-child {
+    border-radius: 0 var(--radius-md) var(--radius-md) 0;
+    border-right: 1px solid var(--border);
 }
 .filter-bar .form-control:focus,
 .filter-bar .form-select:focus {

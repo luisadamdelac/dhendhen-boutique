@@ -200,10 +200,35 @@
         .items-table {
             font-size: 14px;
         }
-        
+
         .item-image {
             width: 60px;
             height: 60px;
+        }
+    }
+
+    @media (max-width: 600px) {
+        .order-header,
+        .detail-card,
+        .items-card {
+            padding: 16px;
+        }
+
+        .order-title {
+            font-size: 21px;
+        }
+
+        .status-badge {
+            padding: 8px 16px;
+            font-size: 13px;
+        }
+
+        .action-buttons {
+            flex-direction: column;
+        }
+
+        .action-buttons .btn {
+            width: 100%;
         }
     }
 </style>

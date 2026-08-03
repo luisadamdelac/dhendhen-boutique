@@ -24,6 +24,21 @@
     box-shadow: 0 4px 15px rgba(0,0,0,0.08);
 }
 
+@media (max-width: 576px) {
+    .profile-card .card-header {
+        padding: 1rem 1.25rem;
+    }
+    .profile-card .card-body {
+        padding: 1.25rem;
+    }
+    .profile-avatar {
+        width: 130px;
+        height: 130px;
+        border-width: 3px;
+        margin-bottom: 14px;
+    }
+}
+
 .has-toggle { position: relative; }
 .has-toggle input { padding-right: 42px !important; }
 
@@ -78,6 +93,30 @@ input[type="password"]::-webkit-clear-button {
     width: 0;
     height: 0;
 }
+
+/* Profile Photo + Personal Information side-by-side on desktop — built as
+   a plain flex row instead of Bootstrap's .row/.col-xl-4/.col-xl-8 so both
+   cards share the exact same edges on mobile (no row negative-margin +
+   col gutter-padding math to keep in sync with the rest of the page). */
+.profile-top-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+@media (min-width: 1200px) {
+    .profile-top-grid {
+        flex-direction: row;
+        align-items: flex-start;
+    }
+    .profile-top-grid > .profile-photo-col {
+        flex: 0 0 33.3333%;
+        max-width: 33.3333%;
+    }
+    .profile-top-grid > .profile-info-col {
+        flex: 1 1 0;
+        min-width: 0;
+    }
+}
 </style>
 <div class="container-fluid py-4 fade-in">
     <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-4">
@@ -87,9 +126,9 @@ input[type="password"]::-webkit-clear-button {
         </div>
     </div>
 
-    <div class="row g-4">
+    <div class="profile-top-grid">
         <!-- Profile Photo -->
-        <div class="col col-12 col-xl-4">
+        <div class="profile-photo-col">
             <div class="card profile-card">
                 <div class="card-header">
                     <h5 class="card-title mb-0"><i class="fas fa-camera"></i> Profile Photo</h5>
@@ -143,7 +182,7 @@ input[type="password"]::-webkit-clear-button {
         </div>
 
         <!-- Basic Info -->
-        <div class="col col-12 col-xl-8">
+        <div class="profile-info-col">
             <div class="card profile-card">
                 <div class="card-header">
                     <h5 class="card-title mb-0"><i class="fas fa-id-badge"></i> Personal Information</h5>
@@ -192,12 +231,10 @@ input[type="password"]::-webkit-clear-button {
         </div>
     </div>
 
-    <div class="row g-4 mt-1">
-        <div class="col col-12">
-            <div class="card profile-card">
-                <div class="card-header">
-                    <h5 class="card-title mb-0"><i class="fas fa-lock"></i> Change Password</h5>
-                </div>
+    <div class="card profile-card mt-4">
+        <div class="card-header">
+            <h5 class="card-title mb-0"><i class="fas fa-lock"></i> Change Password</h5>
+        </div>
                 <div class="card-body">
                     <div id="passwordAlert"></div>
                     <form id="changePasswordForm">
@@ -251,8 +288,6 @@ input[type="password"]::-webkit-clear-button {
                     </form>
                 </div>
             </div>
-        </div>
-    </div>
 </div>
 
 <script>

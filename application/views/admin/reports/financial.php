@@ -48,6 +48,17 @@ table.dataTable thead th.sorting:hover { color: var(--primary-pink); cursor: poi
                 <div>
                     <div class="stat-label">Revenue (period)</div>
                     <div class="stat-value">₱<?= number_format($revenue, 2); ?></div>
+                    <small class="text-muted">₱<?= number_format($online_revenue, 2); ?> online + ₱<?= number_format($walkin_revenue, 2); ?> walk-in</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-4">
+            <div class="stat-card">
+                <div class="stat-icon" style="background:#fce4ec;color:#c2185b;"><i class="fas fa-cash-register"></i></div>
+                <div>
+                    <div class="stat-label">Walk-in Sales (period)</div>
+                    <div class="stat-value"><?= number_format($walkin_count); ?></div>
+                    <small class="text-muted">₱<?= number_format($walkin_revenue, 2); ?> in-store revenue</small>
                 </div>
             </div>
         </div>

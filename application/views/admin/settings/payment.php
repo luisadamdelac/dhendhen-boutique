@@ -17,11 +17,9 @@ $current_page = 'settings';
 
     <?php include __DIR__ . '/../partials/settings_tabs.php'; ?>
 
-    <div class="row">
-        <div class="col">
-            <div class="card border-0 shadow-sm" style="border-radius:12px;overflow:hidden;">
-                <div class="card-body">
-                    <form method="post" enctype="multipart/form-data">
+    <div class="card border-0 shadow-sm" style="border-radius:12px;overflow:hidden;">
+        <div class="card-body">
+            <form method="post" enctype="multipart/form-data">
                         <div class="page-section" style="margin-top:0;">
                             <span class="section-title"><i class="fas fa-mobile-alt me-2"></i>GCash</span>
                             <hr>
@@ -69,6 +67,4 @@ $current_page = 'settings';
                     </form>
                 </div>
             </div>
-        </div>
-    </div>
 </div>

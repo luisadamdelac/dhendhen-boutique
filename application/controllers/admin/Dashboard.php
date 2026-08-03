@@ -64,9 +64,15 @@ class Dashboard extends Authenticated_Controller {
     private function _get_order_stats() {
         $total_sales = $this->db->select_sum('total_amount')->from(ORDER_TABLE)->get()->row();
 
+        // Walk-in (in-store) sales never create an order_tbl row (see
+        // WalkinSaleService), so they'd otherwise be invisible in these
+        // totals despite being real revenue — folded in here instead.
+        require_once APPPATH . 'services/WalkinSaleService.php';
+        $walkin = WalkinSaleService::getTotalSales();
+
         return [
-            'total_sales' => $total_sales->total_amount ?? 0,
-            'total_orders' => $this->db->from(ORDER_TABLE)->count_all_results(),
+            'total_sales' => ($total_sales->total_amount ?? 0) + $walkin['total'],
+            'total_orders' => $this->db->from(ORDER_TABLE)->count_all_results() + $walkin['count'],
             'pending_orders' => $this->db->from(ORDER_TABLE)->where('order_status', 'pending')->count_all_results(),
             'processing_orders' => $this->db->from(ORDER_TABLE)->where('order_status', 'processing')->count_all_results(),
             'shipped_orders' => $this->db->from(ORDER_TABLE)->where('order_status', 'shipped')->count_all_results(),

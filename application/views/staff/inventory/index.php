@@ -99,11 +99,9 @@
 
 </div>
 
-<div class="row">
-    <div class="col col-12">
-        <div class="card ds-pink-table-card mb-2">
-            <div class="card-body">
-                <div class="table-responsive">
+<div class="card ds-pink-table-card mb-2">
+    <div class="card-body">
+        <div class="table-responsive">
                     <table class="table inv-table ds-pink-table table-stack" id="staffInventoryTable">
                         <thead>
                             <tr><th></th><th>Product</th><th>SKU</th><th>Branch</th><th>Category</th><th>Stock</th><th>Expiry</th><th>Status</th><th>Actions</th></tr>
@@ -171,8 +169,6 @@
                 </div>
             </div>
         </div>
-    </div>
-</div>
 
 <!-- View Product Modal -->
 <div class="staff-modal-overlay" id="viewProductModal">
