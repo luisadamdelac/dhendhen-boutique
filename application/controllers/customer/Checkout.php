@@ -21,6 +21,7 @@ class Checkout extends CI_Controller {
         require_once APPPATH . 'services/StockService.php';
         require_once APPPATH . 'services/CommissionService.php';
         require_once APPPATH . 'services/NotificationService.php';
+        require_once APPPATH . 'services/ImageService.php';
     }
 
     public function index() {
@@ -142,7 +143,9 @@ class Checkout extends CI_Controller {
                 echo json_encode(['success' => FALSE, 'message' => 'Receipt upload failed: ' . $this->upload->display_errors('', '')]);
                 return;
             }
-            $receipt_image = 'public/uploads/receipts/' . $this->upload->data('file_name');
+            $uploaded_name = $this->upload->data('file_name');
+            $file_name = ImageService::convertToWebp($upload_path, $uploaded_name) ?? $uploaded_name;
+            $receipt_image = 'public/uploads/receipts/' . $file_name;
             $gcash_reference = $this->input->post('gcash_reference', TRUE);
         }
 
@@ -365,7 +368,9 @@ class Checkout extends CI_Controller {
                 echo json_encode(['success' => FALSE, 'message' => 'Receipt upload failed: ' . $this->upload->display_errors('', '')]);
                 return;
             }
-            $receipt_image = 'public/uploads/receipts/' . $this->upload->data('file_name');
+            $uploaded_name = $this->upload->data('file_name');
+            $file_name = ImageService::convertToWebp($upload_path, $uploaded_name) ?? $uploaded_name;
+            $receipt_image = 'public/uploads/receipts/' . $file_name;
 
             $this->db->where('payment_id', $payment['payment_id'])->update(PAYMENTS_TABLE, [
                 'payment_reference' => $this->input->post('gcash_reference', TRUE),

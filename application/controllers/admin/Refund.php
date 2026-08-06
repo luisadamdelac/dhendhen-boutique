@@ -6,6 +6,7 @@ class Refund extends Authenticated_Controller {
         parent::__construct();
         $this->require_role('admin');
         $this->load->model(['Refund_model', 'Activity_log_model']);
+        require_once APPPATH . 'services/ImageService.php';
     }
 
     /**
@@ -180,7 +181,9 @@ class Refund extends Authenticated_Controller {
             return;
         }
 
-        $payment_proof = 'public/uploads/refunds/' . $this->upload->data('file_name');
+        $uploaded_name = $this->upload->data('file_name');
+        $file_name = ImageService::convertToWebp($upload_path, $uploaded_name) ?? $uploaded_name;
+        $payment_proof = 'public/uploads/refunds/' . $file_name;
 
         $this->db->trans_start();
 

@@ -8,6 +8,7 @@ class Product extends Authenticated_Controller {
         $this->load->model(['Product_model', 'Activity_log_model']);
         $this->load->library('form_validation');
         require_once APPPATH . 'services/StockService.php';
+        require_once APPPATH . 'services/ImageService.php';
     }
 
     /**
@@ -219,6 +220,53 @@ class Product extends Authenticated_Controller {
         return $this->_json_out(['success' => TRUE, 'category' => ['category_id' => $category_id, 'category_name' => $name]]);
     }
 
+    /**
+     * AJAX: quick-create a subcategory under a chosen parent category, from
+     * the Add/Edit Product page's subcategory picker. Mirrors
+     * quick_create_category() but scopes the dedupe check to the parent, so
+     * the same subcategory name is free to exist under different categories
+     * (e.g. "Accessories" under both Furniture and Electronics).
+     */
+    public function quick_create_subcategory() {
+        if ($this->input->method() !== 'post') {
+            show_404();
+        }
+
+        $name = trim((string) $this->input->post('name', TRUE));
+        $parent_id = (int) $this->input->post('parent_id');
+
+        if ($parent_id <= 0) {
+            return $this->_json_out(['success' => FALSE, 'message' => 'Please select a category first.']);
+        }
+        if ($name === '') {
+            return $this->_json_out(['success' => FALSE, 'message' => 'Subcategory name is required.']);
+        }
+        if (mb_strlen($name) > 100) {
+            return $this->_json_out(['success' => FALSE, 'message' => 'Subcategory name must be 100 characters or fewer.']);
+        }
+
+        $parent = $this->db->where('category_id', $parent_id)->get(CATEGORY_TABLE)->row_array();
+        if (!$parent) {
+            return $this->_json_out(['success' => FALSE, 'message' => 'Selected category no longer exists.']);
+        }
+
+        $existing = $this->db
+            ->from(CATEGORY_TABLE)
+            ->where('LOWER(category_name)', strtolower($name))
+            ->where('parent_id', $parent_id)
+            ->get()
+            ->row_array();
+
+        if ($existing) {
+            return $this->_json_out(['success' => FALSE, 'message' => 'This subcategory already exists under ' . $parent['category_name'] . '.']);
+        }
+
+        $this->db->insert(CATEGORY_TABLE, ['category_name' => $name, 'parent_id' => $parent_id]);
+        $subcategory_id = $this->db->insert_id();
+
+        return $this->_json_out(['success' => TRUE, 'subcategory' => ['category_id' => $subcategory_id, 'category_name' => $name, 'parent_id' => $parent_id]]);
+    }
+
     private function _json_out($payload) {
         $this->output->set_content_type('application/json')->set_output(json_encode($payload));
     }
@@ -237,6 +285,8 @@ class Product extends Authenticated_Controller {
         $this->form_validation->set_rules('new_brand_name',      'New Brand',          'trim|max_length[100]');
         $this->form_validation->set_rules('category_id',         'Category',           'integer');
         $this->form_validation->set_rules('new_category_name',   'New Category',       'trim|max_length[100]');
+        $this->form_validation->set_rules('subcategory_id',      'Subcategory',        'integer');
+        $this->form_validation->set_rules('new_subcategory_name','New Subcategory',    'trim|max_length[100]');
         $this->form_validation->set_rules('cost_price',          'Cost Price',         'numeric');
         $this->form_validation->set_rules('price',               'Selling Price',      'numeric');
         $this->form_validation->set_rules('min_stock_alert',     'Min Stock Alert',    'integer');
@@ -276,6 +326,8 @@ class Product extends Authenticated_Controller {
         $new_brand_name      = trim($this->input->post('new_brand_name', TRUE) ?? '');
         $category_id         = (int) $this->input->post('category_id') ?: NULL;
         $new_category_name   = trim($this->input->post('new_category_name', TRUE) ?? '');
+        $subcategory_id      = (int) $this->input->post('subcategory_id') ?: NULL;
+        $new_subcategory_name = trim($this->input->post('new_subcategory_name', TRUE) ?? '');
         $sku                 = $this->_generate_sku();
         $cost_price          = (float) $this->input->post('cost_price');
         $price               = (float) $this->input->post('price');
@@ -311,6 +363,34 @@ class Product extends Authenticated_Controller {
                 $this->db->insert(CATEGORY_TABLE, ['category_name' => $new_category_name]);
                 $category_id = $this->db->insert_id();
             }
+        }
+
+        if ($new_subcategory_name !== '' && $category_id) {
+            $existing_subcategory = $this->db
+                ->from(CATEGORY_TABLE)
+                ->where('LOWER(category_name)', strtolower($new_subcategory_name))
+                ->where('parent_id', $category_id)
+                ->get()
+                ->row_array();
+
+            if ($existing_subcategory) {
+                $subcategory_id = (int) $existing_subcategory['category_id'];
+            } else {
+                $this->db->insert(CATEGORY_TABLE, ['category_name' => $new_subcategory_name, 'parent_id' => $category_id]);
+                $subcategory_id = $this->db->insert_id();
+            }
+        }
+
+        // A subcategory only makes sense under the chosen category — guard
+        // against a stale subcategory_id left over from switching category
+        // client-side without the picker resetting it.
+        if ($subcategory_id && $category_id) {
+            $sub = $this->db->select('parent_id')->from(CATEGORY_TABLE)->where('category_id', $subcategory_id)->get()->row_array();
+            if (!$sub || (int) $sub['parent_id'] !== (int) $category_id) {
+                $subcategory_id = NULL;
+            }
+        } elseif (!$category_id) {
+            $subcategory_id = NULL;
         }
 
         if ($cost_price <= 0) {
@@ -371,7 +451,8 @@ class Product extends Authenticated_Controller {
         }
 
         $upload_data = $this->upload->data();
-        $image_path  = 'uploads/products/' . $upload_data['file_name'];
+        $file_name   = ImageService::convertToWebp($upload_path, $upload_data['file_name']) ?? $upload_data['file_name'];
+        $image_path  = 'uploads/products/' . $file_name;
 
         // --- Persist in a transaction ---
         $this->db->trans_start();
@@ -382,6 +463,7 @@ class Product extends Authenticated_Controller {
             'product_name'         => $product_name,
             'brand'                => $brand,
             'category_id'          => $category_id,
+            'subcategory_id'       => $subcategory_id,
             'price'                => $price,
             'cost_price'           => $cost_price,
             'reseller_commission'  => $reseller_commission,
@@ -452,18 +534,22 @@ class Product extends Authenticated_Controller {
     }
 
     /**
-     * Generate next DHB-XXXXXX SKU
+     * Generate next DHBXXXXXX SKU. Matches both the current no-hyphen
+     * format and the older "DHB-XXXXXX" one (existing products keep their
+     * hyphenated SKU as-is — this only changes what NEW products get) so
+     * the running number keeps counting up across both, instead of
+     * restarting from 1 and colliding with old SKUs.
      */
     private function _generate_sku(): string {
         $row = $this->db->query(
-            "SELECT MAX(CAST(SUBSTRING_INDEX(sku, '-', -1) AS UNSIGNED)) AS max_num
-             FROM " . PRODUCT_TABLE . " WHERE sku REGEXP '^DHB-[0-9]+$'"
+            "SELECT MAX(CAST(REPLACE(SUBSTRING(sku, 4), '-', '') AS UNSIGNED)) AS max_num
+             FROM " . PRODUCT_TABLE . " WHERE sku REGEXP '^DHB-?[0-9]+$'"
         )->row_array();
         $num = !empty($row['max_num']) ? (int) $row['max_num'] + 1 : 1;
 
         // Guarantee uniqueness
         do {
-            $sku    = 'DHB-' . str_pad($num, 6, '0', STR_PAD_LEFT);
+            $sku    = 'DHB' . str_pad($num, 6, '0', STR_PAD_LEFT);
             $exists = $this->db->where('sku', $sku)->count_all_results(PRODUCT_TABLE);
             $num++;
         } while ($exists);
@@ -807,8 +893,21 @@ class Product extends Authenticated_Controller {
         }
 
         $category_id = (int) $this->input->post('category_id');
+        $subcategory_id = (int) $this->input->post('subcategory_id') ?: NULL;
         $price = (float) $this->input->post('price');
         $cost_price = (float) $this->input->post('cost_price');
+
+        // A subcategory only makes sense under the chosen category — guard
+        // against a stale subcategory_id left over from switching category
+        // client-side without the picker resetting it.
+        if ($subcategory_id && $category_id) {
+            $sub = $this->db->select('parent_id')->from(CATEGORY_TABLE)->where('category_id', $subcategory_id)->get()->row_array();
+            if (!$sub || (int) $sub['parent_id'] !== $category_id) {
+                $subcategory_id = NULL;
+            }
+        } elseif (!$category_id) {
+            $subcategory_id = NULL;
+        }
 
         $errors = [];
         if ($cost_price <= 0) {
@@ -831,6 +930,7 @@ class Product extends Authenticated_Controller {
             'price'            => $price,
             'cost_price'       => $cost_price,
             'category_id'      => $category_id ?: NULL,
+            'subcategory_id'   => $subcategory_id,
             'min_stock_alert'  => (int) $this->input->post('min_stock_alert'),
             'expiry_date'      => $this->input->post('expiry_date', TRUE) ?: NULL,
             'tags'             => $this->input->post('tags', TRUE) ?: NULL,
@@ -856,7 +956,9 @@ class Product extends Authenticated_Controller {
                 return;
             }
 
-            $new_image_path = 'uploads/products/' . $this->upload->data('file_name');
+            $uploaded_name  = $this->upload->data('file_name');
+            $file_name      = ImageService::convertToWebp($upload_path, $uploaded_name) ?? $uploaded_name;
+            $new_image_path = 'uploads/products/' . $file_name;
             $existing_image = $this->db->select('image_id, image_path')->from(PRODUCT_IMAGE_TABLE)
                 ->where('product_id', $product_id)->where('is_primary', 1)->get()->row_array();
 
@@ -1128,7 +1230,9 @@ class Product extends Authenticated_Controller {
             return;
         }
 
-        $new_image_path = 'uploads/variations/' . $this->upload->data('file_name');
+        $uploaded_name  = $this->upload->data('file_name');
+        $file_name      = ImageService::convertToWebp($upload_path, $uploaded_name) ?? $uploaded_name;
+        $new_image_path = 'uploads/variations/' . $file_name;
         $this->db->where('variation_id', $variation_id)->update(PRODUCT_VARIATION_TABLE, ['image_path' => $new_image_path]);
 
         if (!empty($previous_image_path) && file_exists(FCPATH . $previous_image_path)) {
@@ -1182,7 +1286,9 @@ class Product extends Authenticated_Controller {
             return;
         }
 
-        $new_image_path = 'uploads/variants/' . $this->upload->data('file_name');
+        $uploaded_name  = $this->upload->data('file_name');
+        $file_name      = ImageService::convertToWebp($upload_path, $uploaded_name) ?? $uploaded_name;
+        $new_image_path = 'uploads/variants/' . $file_name;
         $existing_image = $this->db->select('variant_image_id, image_path')->from(PRODUCT_VARIANT_IMAGES_TABLE)
             ->where('variant_id', $variant_id)->where('is_primary', 1)->get()->row_array();
 

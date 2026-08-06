@@ -437,20 +437,22 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
-            border: 2px solid #f5cee0;
-            color: #d6006d;
-            padding: 12px 10px;
+            gap: 6px;
+            background: linear-gradient(135deg, #d6006d 0%, #b8005c 100%);
+            border: none;
+            color: white;
+            padding: 9px 8px;
             border-radius: 10px;
             font-weight: 600;
-            font-size: 13px;
+            font-size: 12px;
+            white-space: nowrap;
             text-decoration: none;
-            transition: all 0.2s ease;
+            transition: all 0.3s ease;
         }
 
         .btn-outline:hover {
-            background: #fff0f6;
-            border-color: #d6006d;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(214, 0, 109, 0.4);
         }
 
         .divider {
@@ -513,6 +515,16 @@
 
             .login-box h2 {
                 font-size: 26px;
+            }
+        }
+
+        /* Below this width, "Customer Sign Up"/"Reseller Sign Up" side by
+           side don't have room to stay on one line each (white-space:nowrap
+           above needs it) — stack them full-width instead of letting the
+           text overflow past the button/card edge. */
+        @media (max-width: 420px) {
+            .signup-buttons {
+                flex-direction: column;
             }
         }
     </style>

@@ -231,6 +231,7 @@ class Product_model extends CI_Model {
             'brand'                => $data['brand'] ?? NULL,
             'description'          => $data['description'] ?? NULL,
             'category_id'          => $data['category_id'] ?? NULL,
+            'subcategory_id'       => $data['subcategory_id'] ?? NULL,
             'price'                => (float) $data['price'],
             'cost_price'           => isset($data['cost_price']) ? (float) $data['cost_price'] : 0,
             'reseller_commission'  => isset($data['reseller_commission']) ? (float) $data['reseller_commission'] : 0,
@@ -267,7 +268,7 @@ class Product_model extends CI_Model {
         // the old value stuck around forever.
         $update_data = ['updated_at' => date('Y-m-d H:i:s')];
 
-        foreach (['sku', 'product_name', 'brand', 'description', 'category_id', 'expiry_date', 'status', 'tags'] as $field) {
+        foreach (['sku', 'product_name', 'brand', 'description', 'category_id', 'subcategory_id', 'expiry_date', 'status', 'tags'] as $field) {
             if (array_key_exists($field, $data)) {
                 $update_data[$field] = $data[$field];
             }

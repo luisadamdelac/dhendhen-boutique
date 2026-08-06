@@ -631,14 +631,22 @@
                         <?php $soldCount = (int) ($product['total_sold'] ?? 0); ?>
                         <span class="product-sold">Sold <?php echo $soldCount >= 1000 ? number_format($soldCount / 1000, 1) . 'k' : $soldCount; ?></span>
                     </div>
-                    <?php if ($product['stock'] <= 0): ?>
+                    <?php
+                        $isPublished = $product['purchasable'] ?? true;
+                        $canBuy = $isPublished && $product['stock'] > 0;
+                        // Published by a reseller but temporarily out of stock — pre-order
+                        // rather than a flat "unavailable", since it's expected to restock.
+                        $isPreOrder = $isPublished && $product['stock'] <= 0;
+                    ?>
+                    <?php if ($isPreOrder): ?>
+                        <div class="stock-indicator low-stock">Pre Order</div>
+                    <?php elseif ($product['stock'] <= 0): ?>
                         <div class="stock-indicator out-of-stock">Sold Out</div>
                     <?php elseif ($product['stock'] <= 10): ?>
                         <div class="stock-indicator low-stock">Low Stock</div>
                     <?php else: ?>
                         <div class="stock-indicator in-stock">In Stock</div>
                     <?php endif; ?>
-                    <?php $canBuy = ($product['purchasable'] ?? true) && $product['stock'] > 0; ?>
                     <?php
                         // No static "no-image" file to keep in sync — the placeholder is
                         // generated inline, same idea as the onerror fallback below, so
@@ -664,9 +672,9 @@
                             onclick="event.stopPropagation(); <?php echo $canBuy ? 'openAddToCartModal(' . $atcPayload . ", 'buy')" : ''; ?>">
                             <i class="fas fa-bolt"></i> Buy Now
                         </button>
-                        <button class="btn btn-outline btn-sm w-100" style="white-space: nowrap;" <?php echo $canBuy ? '' : 'disabled title="Not currently available from a reseller"'; ?>
+                        <button class="btn btn-outline btn-sm w-100" style="white-space: nowrap;" <?php echo $canBuy ? '' : ('disabled title="' . ($isPreOrder ? 'Currently out of stock — check back soon' : 'Not currently available from a reseller') . '"'); ?>
                             onclick="event.stopPropagation(); <?php echo $canBuy ? 'openAddToCartModal(' . $atcPayload . ", 'cart')" : ''; ?>">
-                            <i class="fas fa-cart-plus"></i> <?php echo $canBuy ? 'Add to Cart' : 'Unavailable'; ?>
+                            <i class="fas fa-cart-plus"></i> <?php echo $canBuy ? 'Add to Cart' : ($isPreOrder ? 'Pre Order' : 'Unavailable'); ?>
                         </button>
                     </div>
                 </div>

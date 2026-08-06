@@ -462,16 +462,16 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col col-6">
+                            <div class="col col-4">
                                 <div class="form-group">
                                     <label for="sku">SKU *</label>
                                     <input type="text" class="form-control sku-field" id="sku" name="sku"
-                                        maxlength="30" placeholder="DHB-000001"
+                                        maxlength="30" placeholder="DHB000001"
                                         value="<?= htmlspecialchars($suggested_sku); ?>" readonly>
-                                    <small style="color: var(--gray);">Auto-generated SKU — not editable</small>
+                                    <small style="color: var(--gray);">Auto-generated SKU, not editable</small>
                                 </div>
                             </div>
-                            <div class="col col-6">
+                            <div class="col col-4">
                                 <div class="form-group">
                                     <label for="category_search">Category</label>
                                     <?php
@@ -498,6 +498,37 @@
                                         <div class="smart-select-dropdown" hidden></div>
                                     </div>
                                     <input type="hidden" id="category_id" name="category_id" value="<?= htmlspecialchars($selected_category_id ?: '0'); ?>">
+                                    <small style="color: var(--gray);">Top-level section (e.g. Beauty, Furniture, Food)</small>
+                                </div>
+                            </div>
+                            <div class="col col-4">
+                                <div class="form-group">
+                                    <label for="subcategory_search">Subcategory</label>
+                                    <?php
+                                        $selected_subcategory_id = set_value('subcategory_id');
+                                        $selected_subcategory_label = '';
+                                        if (!empty($selected_subcategory_id)) {
+                                            foreach ($categories as $cat) {
+                                                if ((string) $cat['category_id'] === (string) $selected_subcategory_id) {
+                                                    $selected_subcategory_label = $cat['category_name'];
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                    ?>
+                                    <div class="smart-select" id="subcategorySmartSelect">
+                                        <div class="smart-select-input-wrap">
+                                            <input type="text" class="form-control smart-select-input" id="subcategory_search"
+                                                maxlength="100" placeholder="<?= empty($selected_category_id) ? 'Select a category first' : 'Select existing or type a subcategory'; ?>"
+                                                value="<?= htmlspecialchars($selected_subcategory_label); ?>" autocomplete="off" <?= empty($selected_category_id) ? 'disabled' : ''; ?>>
+                                            <button type="button" class="smart-select-add-btn" title="Add new subcategory" aria-label="Add new subcategory">
+                                                <i class="fas fa-plus"></i>
+                                            </button>
+                                        </div>
+                                        <div class="smart-select-dropdown" hidden></div>
+                                    </div>
+                                    <input type="hidden" id="subcategory_id" name="subcategory_id" value="<?= htmlspecialchars($selected_subcategory_id ?: '0'); ?>">
+                                    <small style="color: var(--gray);">Optional, narrows down the section (e.g. Skin Care)</small>
                                 </div>
                             </div>
                         </div>
@@ -615,7 +646,7 @@
                     <table class="table table-sm variation-values-table table-stack" id="variationTypesContainer">
                         <thead>
                             <tr>
-                                <th>Value</th><th>Default Price Adj.</th><th>Pcs / Unit</th><th>Default Status</th><th class="text-center">Smart Apply</th><th class="text-center">Remove</th>
+                                <th>Value</th><th>Pcs / Unit</th><th>Default Status</th><th class="text-center">Smart Apply</th><th class="text-center">Remove</th>
                             </tr>
                         </thead>
                     </table>
@@ -745,6 +776,7 @@
                             <div class="review-item"><div class="rev-lbl">SKU</div><div class="rev-val" id="rev_sku">—</div></div>
                             <div class="review-item"><div class="rev-lbl">Brand</div><div class="rev-val" id="rev_brand">—</div></div>
                             <div class="review-item"><div class="rev-lbl">Category</div><div class="rev-val" id="rev_category">—</div></div>
+                            <div class="review-item"><div class="rev-lbl">Subcategory</div><div class="rev-val" id="rev_subcategory">—</div></div>
                             <div class="review-item"><div class="rev-lbl">Cost Price</div><div class="rev-val" id="rev_cost">—</div></div>
                             <div class="review-item"><div class="rev-lbl">Selling Price</div><div class="rev-val" id="rev_price">—</div></div>
                             <div class="review-item"><div class="rev-lbl">Markup</div><div class="rev-val" id="rev_markup">—</div></div>
@@ -1209,6 +1241,10 @@ function populateReview() {
     const categoryLabel = document.getElementById('category_search').value.trim();
     document.getElementById('rev_category').textContent = (categoryIdField.value && categoryIdField.value !== '0' && categoryLabel) ? categoryLabel : '— None —';
 
+    const subcategoryIdFieldRev = document.getElementById('subcategory_id');
+    const subcategoryLabel = document.getElementById('subcategory_search').value.trim();
+    document.getElementById('rev_subcategory').textContent = (subcategoryIdFieldRev.value && subcategoryIdFieldRev.value !== '0' && subcategoryLabel) ? subcategoryLabel : '— None —';
+
     const cost = parseFloat(costInput.value) || 0;
     const sell = parseFloat(sellInput.value) || 0;
     document.getElementById('rev_cost').textContent = '₱' + cost.toFixed(2);
@@ -1255,10 +1291,15 @@ const BRAND_LIST = <?= json_encode(
     array_values(array_filter(array_column($brands, 'brand'))),
     JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT
 ); ?>;
-const CATEGORY_LIST = <?= json_encode(
-    array_map(fn($c) => ['id' => (int) $c['category_id'], 'label' => $c['category_name']], $categories),
+const ALL_CATEGORIES = <?= json_encode(
+    array_map(fn($c) => [
+        'id' => (int) $c['category_id'],
+        'label' => $c['category_name'],
+        'parent_id' => $c['parent_id'] !== NULL ? (int) $c['parent_id'] : NULL,
+    ], $categories),
     JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT
 ); ?>;
+const CATEGORY_LIST = ALL_CATEGORIES.filter(c => !c.parent_id).map(c => ({ id: c.id, label: c.label }));
 
 function initSmartSelect(opts) {
     const root = opts.root;
@@ -1319,6 +1360,11 @@ function initSmartSelect(opts) {
         input.value = labelOf(item);
         if (hidden) hidden.value = item.id;
         close();
+        if (opts.onSelect) opts.onSelect(item);
+    }
+
+    function setItems(newItems) {
+        items = newItems.slice();
     }
 
     function close() { dropdown.hidden = true; }
@@ -1338,14 +1384,12 @@ function initSmartSelect(opts) {
         fetch(opts.createUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: 'name=' + encodeURIComponent(name)
+            body: 'name=' + encodeURIComponent(name) + (opts.extraBody ? '&' + opts.extraBody() : '')
         })
         .then(r => r.json())
         .then(data => {
             if (data.success) {
-                const newItem = opts.entity === 'brand'
-                    ? data.brand.brand
-                    : { id: data.category.category_id, label: data.category.category_name };
+                const newItem = opts.parseCreated(data);
                 items.push(newItem);
                 items.sort((a, b) => labelOf(a).localeCompare(labelOf(b)));
                 select(newItem);
@@ -1373,7 +1417,7 @@ function initSmartSelect(opts) {
         if (matched) { select(matched); return; }
         createAndSelect(typed, (ok, message) => {
             if (ok) {
-                showSSToast((opts.entity === 'brand' ? 'Brand' : 'Category') + ' "' + typed + '" created and selected.', 'success');
+                showSSToast(opts.entityLabel + ' "' + typed + '" created and selected.', 'success');
             } else {
                 showSSToast(message || ('Could not auto-create that ' + opts.entity + ' — please pick it from the list.'), 'error');
             }
@@ -1406,7 +1450,10 @@ function initSmartSelect(opts) {
         }
     }
 
-    addBtn.addEventListener('click', () => openCreateModal(input.value.trim()));
+    addBtn.addEventListener('click', () => {
+        if (opts.canCreate && !opts.canCreate()) return;
+        openCreateModal(input.value.trim());
+    });
 
     function openCreateModal(prefill) {
         openSSModal({
@@ -1421,13 +1468,13 @@ function initSmartSelect(opts) {
                 }
                 createAndSelect(name, (ok, message) => {
                     done(ok, message);
-                    if (ok) showSSToast((opts.entity === 'brand' ? 'Brand' : 'Category') + ' created and selected.', 'success');
+                    if (ok) showSSToast(opts.entityLabel + ' created and selected.', 'success');
                 });
             }
         });
     }
 
-    return { render, close };
+    return { render, close, setItems };
 }
 
 /* ── Shared quick-create modal ───────────────────────────── */
@@ -1527,10 +1574,27 @@ initSmartSelect({
     hidden: null,
     items: BRAND_LIST,
     entity: 'brand',
+    entityLabel: 'Brand',
+    parseCreated: (data) => data.brand.brand,
     createUrl: '<?= site_url('admin/product/quick_create_brand'); ?>',
     modalTitle: 'Add New Brand',
     placeholder: 'e.g. Nivea'
 });
+
+const subcategorySearch = document.getElementById('subcategory_search');
+const subcategoryIdField = document.getElementById('subcategory_id');
+
+function refreshSubcategoryOptions(categoryId, resetSelection) {
+    const subs = ALL_CATEGORIES.filter(c => c.parent_id === categoryId).map(c => ({ id: c.id, label: c.label }));
+    subcategoryApi.setItems(subs);
+    if (resetSelection) {
+        subcategorySearch.value = '';
+        subcategoryIdField.value = '0';
+    }
+    const hasCategory = !!categoryId;
+    subcategorySearch.disabled = !hasCategory;
+    subcategorySearch.placeholder = hasCategory ? 'Select existing or type a subcategory' : 'Select a category first';
+}
 
 initSmartSelect({
     root: document.getElementById('categorySmartSelect'),
@@ -1538,10 +1602,38 @@ initSmartSelect({
     hidden: document.getElementById('category_id'),
     items: CATEGORY_LIST,
     entity: 'category',
+    entityLabel: 'Category',
+    parseCreated: (data) => ({ id: data.category.category_id, label: data.category.category_name }),
     createUrl: '<?= site_url('admin/product/quick_create_category'); ?>',
     modalTitle: 'Add New Category',
-    placeholder: 'e.g. Skincare'
+    placeholder: 'e.g. Skincare',
+    onSelect: (item) => refreshSubcategoryOptions(item.id, true)
 });
+
+const subcategoryApi = initSmartSelect({
+    root: document.getElementById('subcategorySmartSelect'),
+    input: subcategorySearch,
+    hidden: subcategoryIdField,
+    items: [],
+    entity: 'subcategory',
+    entityLabel: 'Subcategory',
+    parseCreated: (data) => ({ id: data.subcategory.category_id, label: data.subcategory.category_name }),
+    createUrl: '<?= site_url('admin/product/quick_create_subcategory'); ?>',
+    modalTitle: 'Add New Subcategory',
+    placeholder: 'e.g. Skin Care',
+    extraBody: () => 'parent_id=' + encodeURIComponent(document.getElementById('category_id').value || '0'),
+    canCreate: () => {
+        const catId = document.getElementById('category_id').value;
+        if (!catId || catId === '0') {
+            showSSToast('Please select a category first.', 'error');
+            return false;
+        }
+        return true;
+    }
+});
+
+// Start disabled — no category chosen yet on a fresh Add Product load.
+refreshSubcategoryOptions(parseInt(document.getElementById('category_id').value, 10) || null, false);
 
 /* ── Product Variations & Branch Stock ──────────────────────── */
 const VARIATION_TYPES = ['Color', 'Size', 'Shade', 'Volume', 'Material', 'Bundle', 'Scent', 'Hair Type', 'Skin Type', 'Pattern', 'Fabric', 'Weight'];
@@ -1672,7 +1764,6 @@ function addVariationValueRow(block, value) {
 
     row.innerHTML =
         '<td><input type="text" class="form-control form-control-sm variation-value-input" placeholder="Value (e.g. Red)" value="' + escHtml(value ? value.variation_value : '') + '"></td>' +
-        '<td><input type="number" step="0.01" class="form-control form-control-sm variation-default-price-input" placeholder="+/- Price" value="' + (value ? parseFloat(value.price_adjustment) : 0) + '"></td>' +
         '<td><input type="number" step="1" min="1" class="form-control form-control-sm variation-pieces-per-unit-input" title="How many individual pieces one unit of this value represents (e.g. 10 for &quot;1 Set (10 pcs)&quot;) — selling 1 unit deducts this many pieces from its stock. Leave at 1 if this value isn\'t a multi-piece bundle." value="' + (value && value.pieces_per_unit ? parseInt(value.pieces_per_unit, 10) : 1) + '"></td>' +
         '<td><select class="form-control form-control-sm variation-default-status-select">' +
             '<option value="active"' + (!value || value.status !== 'inactive' ? ' selected' : '') + '>Active</option>' +
@@ -1742,7 +1833,11 @@ function syncVariationsJson() {
             variations.push({
                 type: type,
                 value: value,
-                default_price_adjustment: parseFloat(row.querySelector('.variation-default-price-input').value) || 0,
+                // Values no longer carry their own default price adjustment
+                // (removed — redundant with the per-combination Price Adj.
+                // in the Generated Combinations table below); combos are
+                // simply generated starting at 0 and priced individually.
+                default_price_adjustment: 0,
                 pieces_per_unit: Math.max(1, parseInt(row.querySelector('.variation-pieces-per-unit-input').value, 10) || 1),
                 default_status: row.querySelector('.variation-default-status-select').value,
                 client_row_id: row.dataset.rowId,
@@ -1770,7 +1865,9 @@ function currentTypeValueLists() {
         const type = block.dataset.type;
         const values = Array.from(block.querySelectorAll('.variation-value-row')).map(row => ({
             value: row.querySelector('.variation-value-input').value.trim(),
-            price_adjustment: parseFloat(row.querySelector('.variation-default-price-input').value) || 0,
+            // No per-value default price anymore — combos start at 0 and
+            // get priced individually in the Generated Combinations table.
+            price_adjustment: 0,
             status: row.querySelector('.variation-default-status-select').value,
         })).filter(v => v.value);
         return { type: type, values: values };
@@ -1782,9 +1879,8 @@ function currentTypeValueLists() {
 // row (per-combination data, never derived from a default). price_adjustment
 // and status only carry over from the existing row if the admin has
 // explicitly edited that specific field in the Generated Combinations table
-// (or via bulk/Smart Apply) — otherwise they refresh to the current default
-// sum, so typing into a value's Default Price Adj. actually flows through
-// until the admin manually overrides a specific combination's price/status.
+// (or via bulk/Smart Apply) — otherwise every combo starts at 0 until the
+// admin sets its price/status directly there.
 function mergeCombination(key, base) {
     const existing = combinationRows[key];
     const merged = Object.assign({}, base, existing || {});

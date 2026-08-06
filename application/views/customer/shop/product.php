@@ -482,9 +482,10 @@
             <?php endif; ?>
         </div>
 
+        <?php $isPreOrder = ($purchasable ?? false) && $product['stock'] <= 0; ?>
         <div class="pdp-stock-row">
-            <span class="stock-indicator <?php echo $product['stock'] > 10 ? 'in-stock' : ($product['stock'] > 0 ? 'low-stock' : 'out-of-stock'); ?>">
-                <?php echo $product['stock'] > 0 ? $product['stock'] . ' available' : 'Out of stock'; ?>
+            <span class="stock-indicator <?php echo $product['stock'] > 10 ? 'in-stock' : ($product['stock'] > 0 ? 'low-stock' : ($isPreOrder ? 'low-stock' : 'out-of-stock')); ?>">
+                <?php echo $product['stock'] > 0 ? $product['stock'] . ' available' : ($isPreOrder ? 'Pre Order' : 'Out of stock'); ?>
             </span>
         </div>
 
@@ -602,8 +603,8 @@
             <?php endif; ?>
         <?php else: ?>
             <div class="alert alert-warning">
-                <i class="fas fa-exclamation-triangle"></i>
-                This product is currently out of stock
+                <i class="fas fa-clock"></i>
+                Pre Order: this product is temporarily out of stock. Check back soon for restock.
             </div>
         <?php endif; ?>
     </div>

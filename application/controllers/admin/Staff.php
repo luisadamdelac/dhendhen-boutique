@@ -7,6 +7,7 @@ class Staff extends Authenticated_Controller {
         $this->require_role('admin');
         $this->load->model(['Staff_model', 'Activity_log_model']);
         $this->load->library('form_validation');
+        require_once APPPATH . 'services/ImageService.php';
     }
 
     /**
@@ -152,7 +153,9 @@ class Staff extends Authenticated_Controller {
         ]);
 
         if ($this->upload->do_upload('photo')) {
-            $path = 'public/uploads/avatars/' . $this->upload->data('file_name');
+            $uploaded_name = $this->upload->data('file_name');
+            $file_name = ImageService::convertToWebp($upload_dir, $uploaded_name) ?? $uploaded_name;
+            $path = 'public/uploads/avatars/' . $file_name;
             $this->db->where('staff_id', $staff_id)->update(STAFF_TABLE, [
                 'profile_image' => $path,
                 'updated_at' => date('Y-m-d H:i:s'),

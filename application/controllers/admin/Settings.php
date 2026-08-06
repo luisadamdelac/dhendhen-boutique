@@ -6,6 +6,7 @@ class Settings extends Authenticated_Controller {
         parent::__construct();
         $this->require_role('admin');
         $this->load->model('Settings_model');
+        require_once APPPATH . 'services/ImageService.php';
     }
 
     /**
@@ -201,7 +202,8 @@ class Settings extends Authenticated_Controller {
                 }
 
                 $upload_data = $this->upload->data();
-                $settings['gcash_qr_code'] = 'uploads/settings/' . $upload_data['file_name'];
+                $file_name = ImageService::convertToWebp($upload_path, $upload_data['file_name']) ?? $upload_data['file_name'];
+                $settings['gcash_qr_code'] = 'uploads/settings/' . $file_name;
             }
 
             $this->Settings_model->update_multiple($settings);

@@ -12,6 +12,7 @@ class Refunds extends CI_Controller {
         if ($this->session->userdata('user_type') !== ROLE_CUSTOMER) {
             deny_role_access();
         }
+        require_once APPPATH . 'services/ImageService.php';
     }
 
     public function index() {
@@ -101,7 +102,8 @@ class Refunds extends CI_Controller {
         }
 
         $upload_data = $this->upload->data();
-        $image_path  = 'uploads/refunds/' . $upload_data['file_name'];
+        $file_name   = ImageService::convertToWebp($upload_path, $upload_data['file_name']) ?? $upload_data['file_name'];
+        $image_path  = 'uploads/refunds/' . $file_name;
 
         $this->db->insert(REFUND_REQUEST_TABLE, [
             'refund_number' => 'RF' . str_pad((string) random_int(0, 99999999), 8, '0', STR_PAD_LEFT),

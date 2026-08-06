@@ -749,6 +749,16 @@ body.sidebar-open .sidebar-backdrop {
     overflow: hidden;
 }
 
+/* The label/value/trend-badge wrapper (the icon's flex sibling) had no
+   min-width, so its default min-width:auto refused to shrink below its
+   widest line (e.g. "100.0% vs last 30 days") — on a narrower card that
+   pushed past the card's own edge and got sliced off by overflow:hidden
+   above, instead of the trend badge actually fitting/wrapping inside it. */
+.stat-card > div:last-child {
+    min-width: 0;
+    flex: 1;
+}
+
 .stat-card::before {
     content: '';
     position: absolute;
@@ -813,12 +823,8 @@ body.sidebar-open .sidebar-backdrop {
     margin-top: var(--spacing-sm);
     padding: var(--spacing-xs) var(--spacing-sm);
     border-radius: var(--radius-md);
-    /* Without this, longer labels (e.g. "100.0% vs last 30 days") wrap to a
-       second line inside the flex box, ballooning it into a tall block —
-       very different in size from the short single-line "No change" pill
-       right next to it on other cards. Now every card's badge stays a
-       compact single-line pill, wide instead of tall when text is long. */
-    white-space: nowrap;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 .stat-change.positive {

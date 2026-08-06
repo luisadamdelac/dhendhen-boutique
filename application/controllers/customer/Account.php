@@ -13,6 +13,7 @@ class Account extends CI_Controller {
             deny_role_access();
         }
         $this->load->model('Activity_log_model');
+        require_once APPPATH . 'services/ImageService.php';
     }
 
     public function index() {
@@ -155,7 +156,9 @@ class Account extends CI_Controller {
         ]);
 
         if ($this->upload->do_upload('photo')) {
-            $path = 'public/uploads/avatars/' . $this->upload->data('file_name');
+            $uploaded_name = $this->upload->data('file_name');
+            $file_name = ImageService::convertToWebp($upload_dir, $uploaded_name) ?? $uploaded_name;
+            $path = 'public/uploads/avatars/' . $file_name;
             $this->db->update(CUSTOMER_TABLE, [
                 'profile_image' => $path,
                 'updated_at' => date('Y-m-d H:i:s'),
