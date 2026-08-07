@@ -225,6 +225,39 @@
     .feature-title{ font-size:17px; font-weight:900; margin-bottom:8px; }
     .feature-desc{ font-size:14px; color:var(--muted); line-height:1.65; }
 
+    /* Products */
+    .products-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:20px; }
+    .product-card{
+      border-radius:var(--radius-lg);
+      overflow:hidden;
+      box-shadow: var(--shadow-soft);
+      transition: transform 0.18s ease, box-shadow 0.18s ease;
+      display:flex; flex-direction:column;
+    }
+    .product-card:hover{ transform: translateY(-4px); box-shadow: var(--shadow); }
+    .product-card-img{
+      width:100%; height:170px;
+      background:rgba(255,105,180,0.08);
+      display:flex; align-items:center; justify-content:center;
+      overflow:hidden;
+    }
+    .product-card-img img{ width:100%; height:100%; object-fit:cover; display:block; }
+    .product-card-img i{ font-size:34px; color:rgba(214,0,109,0.35); }
+    .product-card-body{ padding:16px; display:flex; flex-direction:column; gap:6px; flex:1; }
+    .product-card-name{
+      font-weight:800; font-size:14.5px;
+      display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;
+      overflow:hidden;
+    }
+    .product-card-price{ font-weight:900; color:var(--pink-dark); font-size:15px; margin-top:auto; }
+    .product-card-lock{ font-size:12px; color:var(--muted); font-weight:600; display:flex; align-items:center; gap:6px; }
+    .products-empty{ text-align:center; color:var(--muted); font-size:14px; padding:20px; }
+    .products-footer{ text-align:center; margin-top:32px; }
+
+    @media (max-width: 900px){
+      .products-grid{ grid-template-columns:repeat(2,1fr); }
+    }
+
     /* CTA band */
     .cta-band{
       border-radius:var(--radius-xl);
@@ -273,6 +306,7 @@
       </a>
 
       <nav class="nav-links">
+        <a href="#products">Products</a>
         <a href="#features">Features</a>
         <a href="#roles">For Everyone</a>
         <a href="#contact">Contact</a>
@@ -333,6 +367,46 @@
             <span class="mini-title">Customer</span>
             <span class="mini-sub">Shop products and track your orders</span>
           </span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="products">
+    <div class="container">
+      <div class="section-head">
+        <span class="section-eyebrow">Shop the Catalog</span>
+        <h2 class="section-title">Products customers are buying right now</h2>
+        <p class="section-desc">Browse a preview of what's in the shop &mdash; log in to view full details and buy.</p>
+      </div>
+
+      <?php if (!empty($featuredProducts)): ?>
+        <div class="products-grid">
+          <?php foreach ($featuredProducts as $product): ?>
+            <a href="<?php echo site_url('login'); ?>" class="product-card glass">
+              <div class="product-card-img">
+                <?php if (!empty($product['product_image'])): ?>
+                  <img src="<?php echo base_url($product['product_image']); ?>" alt="<?php echo htmlspecialchars($product['product_name']); ?>"
+                       onerror="this.onerror=null; this.parentElement.innerHTML='<i class=&quot;fas fa-image&quot;></i>';">
+                <?php else: ?>
+                  <i class="fas fa-image"></i>
+                <?php endif; ?>
+              </div>
+              <div class="product-card-body">
+                <div class="product-card-name"><?php echo htmlspecialchars($product['product_name']); ?></div>
+                <div class="product-card-price">&#8369;<?php echo number_format($product['price'], 2); ?></div>
+                <div class="product-card-lock"><i class="fas fa-lock"></i> Log in to shop</div>
+              </div>
+            </a>
+          <?php endforeach; ?>
+        </div>
+      <?php else: ?>
+        <div class="products-empty">New products are on the way &mdash; check back soon.</div>
+      <?php endif; ?>
+
+      <div class="products-footer">
+        <a href="<?php echo site_url('login'); ?>" class="btn btn-primary">
+          <i class="fas fa-shopping-bag"></i> Log In to Shop All Products
         </a>
       </div>
     </div>
