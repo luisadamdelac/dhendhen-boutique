@@ -86,7 +86,7 @@
 
                 <div class="alert alert-info">
                     <i class="fas fa-info-circle"></i>
-                    <span><strong>Note:</strong> A random one-time temporary password will be generated and shown here after you create the account. Share it securely — it can't be retrieved again afterward — and ask the new admin to change it on first login.</span>
+                    <span><strong>Note:</strong> A random one-time temporary password will be generated and shown here after you create the account. Share it securely (it can't be retrieved again afterward) and ask the new admin to change it on first login.</span>
                 </div>
 
                 <div style="display:flex;gap:10px;">

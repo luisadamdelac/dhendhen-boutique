@@ -9,6 +9,9 @@
 
 class Auth extends CI_Controller {
 
+    /** Max wrong guesses against a password-reset OTP before it's cancelled — see do_verify_otp(). */
+    const RESET_OTP_MAX_ATTEMPTS = 5;
+
     public function __construct() {
         parent::__construct();
         
@@ -344,20 +347,35 @@ class Auth extends CI_Controller {
             redirect('auth/verify_otp?email=' . urlencode($email));
         }
 
-        $reset_record = $this->db->where('email', $email)
-                                 ->where('otp_code', $otp_code)
-                                 ->where('is_used', 0)
-                                 ->where('expires_at >', date('Y-m-d H:i:s'))
-                                 ->order_by('reset_id', 'DESC')
-                                 ->get('password_reset_tbl')
-                                 ->row_array();
+        // The active (unused, unexpired) reset request for this email,
+        // whether or not the submitted code actually matches it — needed to
+        // track and lock out wrong guesses. Without this, the 6-digit code
+        // was brute-forceable with unlimited attempts for its whole 15-minute
+        // window; mirrors the same otp_attempts lockout already used for
+        // reseller withdrawal OTPs (Withdrawals::verify_withdrawal_otp()).
+        $active_request = $this->db->where('email', $email)
+                                   ->where('is_used', 0)
+                                   ->where('expires_at >', date('Y-m-d H:i:s'))
+                                   ->order_by('reset_id', 'DESC')
+                                   ->get('password_reset_tbl')
+                                   ->row_array();
 
-        if (!$reset_record) {
+        if ($active_request && (int) $active_request['otp_attempts'] >= self::RESET_OTP_MAX_ATTEMPTS) {
+            $this->db->where('reset_id', $active_request['reset_id'])->update('password_reset_tbl', ['is_used' => 1]);
+            $this->session->set_flashdata('error', 'Too many incorrect attempts. Please request a new verification code.');
+            redirect('auth/forgot_password');
+        }
+
+        if (!$active_request || !hash_equals($active_request['otp_code'], $otp_code)) {
+            if ($active_request) {
+                $this->db->where('reset_id', $active_request['reset_id'])
+                         ->update('password_reset_tbl', ['otp_attempts' => (int) $active_request['otp_attempts'] + 1]);
+            }
             $this->session->set_flashdata('error', 'Invalid or expired verification code.');
             redirect('auth/verify_otp?email=' . urlencode($email));
         }
 
-        redirect('auth/reset/' . $reset_record['token']);
+        redirect('auth/reset/' . $active_request['token']);
     }
 
     /**
@@ -449,6 +467,16 @@ class Auth extends CI_Controller {
             // Mark token as used
             $this->db->where('reset_id', $reset_record['reset_id'])
                      ->update('password_reset_tbl', array('is_used' => 1));
+
+            // Revoke every "remember me" token for this account — otherwise
+            // a stolen/leaked remember_token cookie on another device still
+            // passes ensure_logged_in() after this reset, defeating the
+            // whole point of resetting the password to lock a compromised
+            // account back down.
+            $this->db->where('user_account_id', $reset_record['user_account_id'])
+                     ->where('type', 'remember_me')
+                     ->where('revoked', 0)
+                     ->update('auth_tokens', array('revoked' => 1));
 
             $this->db->trans_complete();
 

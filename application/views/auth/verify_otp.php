@@ -190,7 +190,7 @@
         <div class="forgot-container">
             <div class="brand-header">
                 <div class="brand-logo-wrap">
-                    <img class="brand-logo-img" src="<?php echo base_url('public/uploads/avatars/c6e87fc1363436e5468a05c9c2a59b26.png'); ?>" alt="Dhendhen Beauty Products and Boutique">
+                    <img class="brand-logo-img" src="<?php echo base_url('public/uploads/avatars/c6e87fc1363436e5468a05c9c2a59b26.webp'); ?>" alt="Dhendhen Beauty Products and Boutique">
                 </div>
                 <div class="brand-name">DropSell</div>
             </div>

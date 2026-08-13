@@ -547,7 +547,7 @@ function copyShopUrl() {
                                                     <?php echo $daysLeft < 0 ? 'Expired' : $daysLeft . ' days left'; ?>
                                                 </span>
                                             <?php else: ?>
-                                                <span class="text-muted">—</span>
+                                                <span class="text-muted">-</span>
                                             <?php endif; ?>
                                         </td>
                                         <td data-label="Sold (via me)"><span class="badge badge-primary"><?php echo $sold; ?> sold</span></td>
@@ -671,7 +671,7 @@ function copyShopUrl() {
     </div>
     <div class="card-body">
         <?php if (empty($catalog)): ?>
-            <p style="text-align: center; color: var(--gray-500); padding: 2rem;">You've published everything currently available — check back later for new stock.</p>
+            <p style="text-align: center; color: var(--gray-500); padding: 2rem;">You've published everything currently available. Check back later for new stock.</p>
         <?php else: ?>
             <div class="catalog-scroll-wrap" style="display:flex;align-items:center;gap:10px;">
                 <button type="button" class="catalog-nav-btn" onclick="document.getElementById('catalogScroll').scrollBy({left:-200,behavior:'smooth'})"><i class="fas fa-chevron-left"></i></button>

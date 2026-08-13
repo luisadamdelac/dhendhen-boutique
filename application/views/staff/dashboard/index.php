@@ -9,7 +9,7 @@
             </svg>
             <div class="ds-hero-banner-content">
                 <h4 class="fw-bold mb-0" style="color:#1a1a2e;">Staff Dashboard</h4>
-                <small class="text-muted">Welcome back, <strong><?php echo htmlspecialchars($user_full_name ?? 'Staff'); ?></strong> — order and inventory summary.</small>
+                <small class="text-muted">Welcome back, <strong><?php echo htmlspecialchars($user_full_name ?? 'Staff'); ?></strong>: order and inventory summary.</small>
             </div>
         </div>
 

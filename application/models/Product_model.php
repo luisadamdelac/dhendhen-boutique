@@ -50,6 +50,9 @@ class Product_model extends CI_Model {
         if (!empty($filters['category_id'])) {
             $this->db->where('p.category_id', $filters['category_id']);
         }
+        if (!empty($filters['subcategory_id'])) {
+            $this->db->where('p.subcategory_id', $filters['subcategory_id']);
+        }
         if (!empty($filters['status'])) {
             $this->db->where('p.status', $filters['status']);
         }
@@ -341,6 +344,103 @@ class Product_model extends CI_Model {
     public function create_category($category_name) {
         $data = array('category_name' => $category_name);
         return $this->db->insert($this->categories_table, $data);
+    }
+
+    /**
+     * Record a customer's interest in a product no reseller has published
+     * yet. Silently no-ops on a repeat click (unique product_id+customer_id)
+     * instead of erroring — the customer is already on the list either way.
+     */
+    public function add_preorder($product_id, $customer_id) {
+        if ($this->has_preordered($product_id, $customer_id)) {
+            return TRUE;
+        }
+
+        return (bool) $this->db->insert(PRODUCT_PREORDERS_TABLE, [
+            'product_id'  => (int) $product_id,
+            'customer_id' => (int) $customer_id,
+            'created_at'  => date('Y-m-d H:i:s'),
+        ]);
+    }
+
+    public function has_preordered($product_id, $customer_id) {
+        return (bool) $this->db->where('product_id', (int) $product_id)
+            ->where('customer_id', (int) $customer_id)
+            ->count_all_results(PRODUCT_PREORDERS_TABLE);
+    }
+
+    /**
+     * Which of these product IDs has this customer already pre-ordered —
+     * one query for a whole shop-grid page instead of one per card.
+     */
+    public function preordered_product_ids($customer_id, array $product_ids) {
+        if (empty($product_ids)) {
+            return [];
+        }
+
+        $rows = $this->db->select('product_id')
+            ->where('customer_id', (int) $customer_id)
+            ->where_in('product_id', $product_ids)
+            ->get(PRODUCT_PREORDERS_TABLE)->result_array();
+
+        return array_map('intval', array_column($rows, 'product_id'));
+    }
+
+    /**
+     * Pre-order counts per product, for however many product IDs the caller
+     * is about to render (a reseller's catalog carousel, their published
+     * listings, or a customer's own preorder-state check) — one grouped
+     * query instead of one per product.
+     */
+    public function preorder_counts(array $product_ids) {
+        if (empty($product_ids)) {
+            return [];
+        }
+
+        $rows = $this->db->select('product_id, COUNT(*) as cnt')
+            ->where_in('product_id', $product_ids)
+            ->group_by('product_id')
+            ->get(PRODUCT_PREORDERS_TABLE)->result_array();
+
+        $counts = [];
+        foreach ($rows as $row) {
+            $counts[(int) $row['product_id']] = (int) $row['cnt'];
+        }
+        return $counts;
+    }
+
+    /**
+     * Pre-orders for one product that haven't yet been announced to a
+     * reseller — called right after a reseller publishes that product, so
+     * the same waiting customers are never announced twice on a republish.
+     */
+    public function unnotified_preorders($product_id) {
+        return $this->db->select('pp.*, c.first_name, c.last_name')
+            ->from(PRODUCT_PREORDERS_TABLE . ' pp')
+            ->join(CUSTOMER_TABLE . ' c', 'c.customer_id = pp.customer_id')
+            ->where('pp.product_id', (int) $product_id)
+            ->where('pp.reseller_notified_at IS NULL', NULL, FALSE)
+            ->order_by('pp.created_at', 'ASC')
+            ->get()->result_array();
+    }
+
+    public function mark_preorders_notified($product_id) {
+        return $this->db->where('product_id', (int) $product_id)
+            ->where('reseller_notified_at IS NULL', NULL, FALSE)
+            ->update(PRODUCT_PREORDERS_TABLE, ['reseller_notified_at' => date('Y-m-d H:i:s')]);
+    }
+
+    /**
+     * Every pre-order for a product, newest first — the "who's waiting"
+     * list shown under an already-published listing in Inventory.
+     */
+    public function preorders_for_product($product_id) {
+        return $this->db->select('pp.*, c.first_name, c.last_name')
+            ->from(PRODUCT_PREORDERS_TABLE . ' pp')
+            ->join(CUSTOMER_TABLE . ' c', 'c.customer_id = pp.customer_id')
+            ->where('pp.product_id', (int) $product_id)
+            ->order_by('pp.created_at', 'DESC')
+            ->get()->result_array();
     }
 }
 

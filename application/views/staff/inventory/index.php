@@ -144,7 +144,7 @@
                                                 <?php echo $daysLeft < 0 ? 'Expired' : $daysLeft . ' days left'; ?>
                                             </span>
                                         <?php else: ?>
-                                            <span class="text-muted">—</span>
+                                            <span class="text-muted">-</span>
                                         <?php endif; ?>
                                     </td>
                                     <td>
@@ -240,7 +240,7 @@ function openViewModal(btn) {
 function openEditStockModal(btn) {
     const p = JSON.parse(btn.dataset.product);
     document.getElementById('esProductId').value = p.id;
-    document.getElementById('esProductLabel').textContent = p.name + ' (' + p.sku + ') — ' + p.branch;
+    document.getElementById('esProductLabel').textContent = p.name + ' (' + p.sku + ') - ' + p.branch;
 
     const variantGroup = document.getElementById('esVariantGroup');
     const variantSelect = document.getElementById('esVariant');

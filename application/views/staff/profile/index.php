@@ -122,7 +122,7 @@ input[type="password"]::-webkit-clear-button {
     <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-4">
         <div>
             <h4 class="fw-bold mb-1" style="color:#1a1a2e;"><i class="fas fa-user-circle"></i> My Account</h4>
-            <small class="text-muted">Welcome back, <strong><?php echo htmlspecialchars($user_full_name ?? 'Staff'); ?></strong> — manage your profile and password.</small>
+            <small class="text-muted">Welcome back, <strong><?php echo htmlspecialchars($user_full_name ?? 'Staff'); ?></strong>. Manage your profile and password.</small>
         </div>
     </div>
 

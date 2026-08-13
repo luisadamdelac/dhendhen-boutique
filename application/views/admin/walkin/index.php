@@ -52,7 +52,7 @@
         </svg>
         <div class="ds-hero-banner-content">
             <h4 class="fw-bold mb-0" style="color:#1a1a2e;"><i class="fas fa-cash-register"></i> Walk-in Sale</h4>
-            <small class="text-muted">Record an in-store sale — pick a branch, add products, and stock is deducted immediately.</small>
+            <small class="text-muted">Record an in-store sale: pick a branch, add products, and stock is deducted immediately.</small>
         </div>
     </div>
 </div>
@@ -87,7 +87,7 @@
                 <h3 class="card-title"><i class="fas fa-shopping-basket"></i> Current Sale</h3>
             </div>
             <div class="card-body">
-                <div id="wkCartEmpty" class="wk-cart-empty">No items added yet — select a branch and search for a product above.</div>
+                <div id="wkCartEmpty" class="wk-cart-empty">No items added yet. Select a branch and search for a product above.</div>
                 <div class="table-responsive" id="wkCartTableWrap" style="display:none;">
                     <table class="wk-cart-table">
                         <thead>
@@ -143,7 +143,7 @@
                                 <span style="color:var(--primary-pink-dark);">₱<?php echo number_format($sale['total_amount'], 2); ?></span>
                             </div>
                             <div style="font-size:11.5px; color:var(--gray);">
-                                <?php echo htmlspecialchars($sale['branch_name'] ?? '—'); ?> &middot;
+                                <?php echo htmlspecialchars($sale['branch_name'] ?? '-'); ?> &middot;
                                 <?php echo date('M j, Y g:i A', strtotime($sale['created_at'])); ?><br>
                                 <?php echo ucfirst($sale['payment_method']); ?> &middot;
                                 <?php echo count($sale['items']); ?> item<?php echo count($sale['items']) === 1 ? '' : 's'; ?>

@@ -143,8 +143,10 @@ class CommissionService {
     /**
      * Reverse commission (order cancelled or refunded).
      * The schema only supports pending/released/withdrawn, so a reversed
-     * commission is removed outright rather than tagged with a status that
-     * doesn't exist; any already-credited balance is clawed back first.
+     * commission is removed outright (any already-credited balance clawed
+     * back first) rather than tagged with a status that doesn't exist —
+     * except when it's already 'withdrawn': see the guard below for why that
+     * case is left alone instead of deleted.
      */
     public static function reverseCommission($orderId, $reason = NULL) {
         $CI =& get_instance();
@@ -163,6 +165,26 @@ class CommissionService {
             if ($commission['status'] === 'released') {
                 self::debitWallet($commission['reseller_id'], $commission['amount'],
                                  'reversal', $orderId, $reason);
+            }
+
+            // A 'withdrawn' commission already left the store as a real
+            // GCash payout (see admin/Withdrawal.php::mark_processed()) —
+            // there's no wallet balance left to claw back, and deleting the
+            // row here would destroy the only record linking that payout to
+            // the commission it actually covered, silently understating the
+            // reseller's true paid-out history with no trace of the
+            // discrepancy. Leave the row in place and flag it for manual
+            // admin reconciliation instead of erasing it.
+            if ($commission['status'] === 'withdrawn') {
+                require_once APPPATH . 'services/NotificationService.php';
+                NotificationService::notifyAllAdmins(
+                    'Refund on an Already Paid-Out Commission',
+                    'Order #' . $orderId . ' was reversed (' . ($reason ?: 'refund/cancellation') . '), but its commission of ₱' . number_format($commission['amount'], 2) . ' was already withdrawn/paid out to the reseller. This needs manual reconciliation.',
+                    'system',
+                    $commission['commission_id']
+                );
+                log_message('error', 'Commission ' . $commission['commission_id'] . ' for order ' . $orderId . ' is already withdrawn — left in place for manual reconciliation, not deleted.');
+                return FALSE;
             }
 
             $CI->db->where('commission_id', $commission['commission_id'])->delete(COMMISSIONS_TABLE);

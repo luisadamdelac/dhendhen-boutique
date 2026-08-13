@@ -76,12 +76,12 @@
                                     </td>
                                     <td><?= (int) $log['attempts']; ?></td>
                                     <td><?= htmlspecialchars($log['created_at']); ?></td>
-                                    <td><?= htmlspecialchars($log['last_attempt'] ?? '—'); ?></td>
+                                    <td><?= htmlspecialchars($log['last_attempt'] ?? '-'); ?></td>
                                     <td>
                                         <?php if (!empty($log['error_message'])): ?>
                                             <?= htmlspecialchars(mb_strimwidth($log['error_message'], 0, 40, '…')); ?>
                                         <?php else: ?>
-                                            —
+                                            -
                                         <?php endif; ?>
                                     </td>
                                     <td class="text-center">
@@ -91,7 +91,7 @@
                                                 data-status="<?= htmlspecialchars(ucfirst($log['status'])); ?>"
                                                 data-attempts="<?= (int) $log['attempts']; ?>"
                                                 data-created="<?= htmlspecialchars($log['created_at']); ?>"
-                                                data-last-attempt="<?= htmlspecialchars($log['last_attempt'] ?? '—'); ?>"
+                                                data-last-attempt="<?= htmlspecialchars($log['last_attempt'] ?? '-'); ?>"
                                                 data-error="<?= htmlspecialchars($log['error_message'] ?? ''); ?>"
                                                 title="View full details">
                                             <i class="fas fa-eye"></i> View

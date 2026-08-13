@@ -21,20 +21,50 @@ class Shop extends CI_Controller {
             . 'WHERE rp.product_id = p.product_id AND rp.is_published = 1 AND r.status = \'active\') as buy_price';
     }
 
+    /**
+     * Category filter data for the shop's "Filter by Category" bar: top-level
+     * categories (parent_id NULL) as the primary row, each carrying its own
+     * subcategories — so the filter reads as primary category, then
+     * subcategory, instead of every category (parent and child alike) sitting
+     * flat in one alphabetical list.
+     */
+    private function _grouped_categories() {
+        $all = $this->db->select('*')->from(CATEGORY_TABLE)->order_by('category_name', 'ASC')->get()->result_array();
+
+        $children_by_parent = [];
+        foreach ($all as $cat) {
+            if (!empty($cat['parent_id'])) {
+                $children_by_parent[(int) $cat['parent_id']][] = $cat;
+            }
+        }
+
+        $primary = [];
+        foreach ($all as $cat) {
+            if (empty($cat['parent_id'])) {
+                $cat['subcategories'] = $children_by_parent[(int) $cat['category_id']] ?? [];
+                $primary[] = $cat;
+            }
+        }
+
+        return $primary;
+    }
+
     public function index() {
         $data['page_title'] = 'Shop';
         $data['searchQuery'] = $this->input->get('search', true);
         $data['currentCategory'] = $this->input->get('category', true);
-        $data['categories'] = $this->db->select('*')->from(CATEGORY_TABLE)->order_by('category_name', 'ASC')->get()->result_array();
+        $data['currentSubcategory'] = $this->input->get('subcategory', true);
+        $data['categories'] = $this->_grouped_categories();
 
         $limit = 20;
         $data['currentPage'] = max(1, (int) $this->input->get('page', true));
         $offset = ($data['currentPage'] - 1) * $limit;
 
         $filters = [
-            'status'      => 'available',
-            'search'      => $data['searchQuery'],
-            'category_id' => (!empty($data['currentCategory']) && $data['currentCategory'] !== 'all') ? $data['currentCategory'] : NULL,
+            'status'        => 'available',
+            'search'        => $data['searchQuery'],
+            'category_id'   => (!empty($data['currentCategory']) && $data['currentCategory'] !== 'all') ? $data['currentCategory'] : NULL,
+            'subcategory_id' => $data['currentSubcategory'] ?: NULL,
         ];
 
         $total = $this->Product_model->count_filtered($filters);
@@ -69,6 +99,14 @@ class Shop extends CI_Controller {
             }
         }
 
+        // Products this logged-in customer already pre-ordered — so an
+        // unpublished product's card shows "Preordered" instead of letting
+        // them queue up behind their own earlier click.
+        $preordered_ids = [];
+        if (($_SESSION['user_type'] ?? NULL) === 'customer' && !empty($_SESSION['user_id'])) {
+            $preordered_ids = $this->Product_model->preordered_product_ids($_SESSION['user_id'], $product_ids);
+        }
+
         foreach ($products as &$p) {
             $p['purchasable'] = $p['buy_price'] !== NULL;
             if ($p['purchasable']) {
@@ -77,6 +115,7 @@ class Shop extends CI_Controller {
             $p['has_variations'] = in_array($p['product_id'], $variation_product_ids);
             $p['avg_rating'] = isset($ratings_by_product[$p['product_id']]) ? (float) $ratings_by_product[$p['product_id']]['avg_rating'] : NULL;
             $p['review_count'] = isset($ratings_by_product[$p['product_id']]) ? (int) $ratings_by_product[$p['product_id']]['review_count'] : 0;
+            $p['already_preordered'] = in_array((int) $p['product_id'], $preordered_ids, TRUE);
         }
         unset($p);
 
@@ -86,6 +125,50 @@ class Shop extends CI_Controller {
         $this->load->view('customer/layouts/header', $data);
         $this->load->view('customer/shop/index', $data);
         $this->load->view('customer/layouts/footer', $data);
+    }
+
+    /**
+     * JSON: register the logged-in customer's interest in a product no
+     * reseller has published yet — the Shop grid's "Notify Me" button. No
+     * payment or order is created here, just a row in product_preorders_tbl;
+     * the customer is notified once a reseller actually publishes it (see
+     * reseller/Inventory::publish()).
+     */
+    public function preorder() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            echo json_encode(['success' => FALSE, 'message' => 'Invalid request.']);
+            return;
+        }
+
+        if (($_SESSION['user_type'] ?? NULL) !== 'customer' || empty($_SESSION['user_id'])) {
+            echo json_encode(['success' => FALSE, 'needs_login' => TRUE, 'message' => 'Log in to get notified when this product becomes available.']);
+            return;
+        }
+
+        $product_id = (int) $this->input->post('product_id', TRUE);
+        $product = $product_id ? $this->Product_model->get_by_id($product_id) : NULL;
+        if (!$product) {
+            echo json_encode(['success' => FALSE, 'message' => 'Product not found.']);
+            return;
+        }
+
+        // Already published — nothing to pre-order, this button shouldn't
+        // even be reachable in that state, but don't silently record a
+        // meaningless row if it's hit anyway (stale page, resubmit, etc).
+        $buy_price = $this->db->select_min('rp.commission_price', 'buy_price')
+            ->from(RESELLER_PRODUCTS_TABLE . ' rp')
+            ->join(RESELLER_TABLE . ' r', 'r.reseller_id = rp.reseller_id')
+            ->where('rp.product_id', $product_id)
+            ->where('rp.is_published', 1)
+            ->where('r.status', 'active')
+            ->get()->row_array()['buy_price'] ?? NULL;
+        if ($buy_price !== NULL) {
+            echo json_encode(['success' => FALSE, 'message' => 'This product is already available to buy.']);
+            return;
+        }
+
+        $this->Product_model->add_preorder($product_id, $_SESSION['user_id']);
+        echo json_encode(['success' => TRUE, 'message' => 'You\'ll be notified when this product becomes available.']);
     }
 
     /** JSON: active variations for a product, used by the shop grid's Add to Cart modal. */
@@ -340,6 +423,15 @@ class Shop extends CI_Controller {
             ->limit(4)
             ->get()->result_array();
 
+        // No reseller has published this yet — same "Notify Me" interest
+        // the Shop grid offers, so a customer who lands directly on this
+        // product's own page (shared link, search result, bookmark) isn't
+        // left at a dead end with only a static "not listed" notice.
+        $data['already_preordered'] = FALSE;
+        if (!$data['purchasable'] && ($_SESSION['user_type'] ?? NULL) === 'customer' && !empty($_SESSION['user_id'])) {
+            $data['already_preordered'] = $this->Product_model->has_preordered($id, $_SESSION['user_id']);
+        }
+
         $this->load->view('customer/layouts/header', $data);
         $this->load->view('customer/shop/product', $data);
         $this->load->view('customer/layouts/footer', $data);
@@ -364,7 +456,8 @@ class Shop extends CI_Controller {
         $data['reseller'] = $reseller;
         $data['searchQuery'] = $this->input->get('search', true);
         $data['currentCategory'] = $this->input->get('category', true);
-        $data['categories'] = $this->db->select('*')->from(CATEGORY_TABLE)->order_by('category_name', 'ASC')->get()->result_array();
+        $data['currentSubcategory'] = $this->input->get('subcategory', true);
+        $data['categories'] = $this->_grouped_categories();
 
         $limit = 20;
         $data['currentPage'] = max(1, (int) $this->input->get('page', true));
@@ -386,6 +479,9 @@ class Shop extends CI_Controller {
             }
             if (!empty($data['currentCategory']) && $data['currentCategory'] !== 'all') {
                 $this->db->where('p.category_id', $data['currentCategory']);
+            }
+            if (!empty($data['currentSubcategory'])) {
+                $this->db->where('p.subcategory_id', $data['currentSubcategory']);
             }
         };
 

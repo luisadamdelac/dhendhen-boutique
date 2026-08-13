@@ -54,9 +54,9 @@
             <h4 class="fw-bold mb-0" style="color:#1a1a2e;"><i class="fas fa-cash-register"></i> Walk-in Sale</h4>
             <small class="text-muted">
                 <?php if ($branch_name): ?>
-                    Record an in-store sale at <strong><?php echo htmlspecialchars($branch_name); ?></strong> — stock is deducted immediately.
+                    Record an in-store sale at <strong><?php echo htmlspecialchars($branch_name); ?></strong>. Stock is deducted immediately.
                 <?php else: ?>
-                    <span class="text-danger">Your staff account isn't assigned to a branch — contact an admin.</span>
+                    <span class="text-danger">Your staff account isn't assigned to a branch. Contact an admin.</span>
                 <?php endif; ?>
             </small>
         </div>
@@ -84,7 +84,7 @@
                 <h3 class="card-title"><i class="fas fa-shopping-basket"></i> Current Sale</h3>
             </div>
             <div class="card-body">
-                <div id="wkCartEmpty" class="wk-cart-empty">No items added yet — search for a product above.</div>
+                <div id="wkCartEmpty" class="wk-cart-empty">No items added yet. Search for a product above.</div>
                 <div class="table-responsive" id="wkCartTableWrap" style="display:none;">
                     <table class="wk-cart-table">
                         <thead>

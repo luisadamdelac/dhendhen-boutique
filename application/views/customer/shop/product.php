@@ -473,13 +473,7 @@
         </div>
 
         <div class="pdp-price-box">
-            <?php if (!empty($product['has_discount']) && !empty($product['discounted_price'])): ?>
-                <span class="pdp-price-original">₱<?php echo number_format($product['price'], 2); ?></span>
-                <span class="pdp-price-current" id="current-price-display" data-base-price="<?php echo (float) $product['discounted_price']; ?>">₱<?php echo number_format($product['discounted_price'], 2); ?></span>
-                <span class="pdp-discount-badge">-<?php echo round((1 - $product['discounted_price'] / $product['price']) * 100); ?>% OFF</span>
-            <?php else: ?>
-                <span class="pdp-price-current" id="current-price-display" data-base-price="<?php echo (float) $product['price']; ?>">₱<?php echo number_format($product['price'], 2); ?></span>
-            <?php endif; ?>
+            <span class="pdp-price-current" id="current-price-display" data-base-price="<?php echo (float) $product['price']; ?>">₱<?php echo number_format($product['price'], 2); ?></span>
         </div>
 
         <?php $isPreOrder = ($purchasable ?? false) && $product['stock'] <= 0; ?>
@@ -492,8 +486,15 @@
         <?php if (!($purchasable ?? false)): ?>
             <div class="alert alert-warning">
                 <i class="fas fa-exclamation-triangle"></i>
-                This product isn't currently listed by any reseller.
+                This product isn't currently listed by any reseller yet.
             </div>
+            <button type="button" class="btn btn-outline" id="pdpNotifyBtn"
+                data-product-id="<?php echo (int) $product['product_id']; ?>"
+                <?php echo !empty($already_preordered) ? 'disabled' : ''; ?>
+                onclick="submitPdpPreorder(this);">
+                <i class="fas fa-<?php echo !empty($already_preordered) ? 'check' : 'bell'; ?>"></i>
+                <?php echo !empty($already_preordered) ? "You'll Be Notified" : 'Notify Me'; ?>
+            </button>
         <?php elseif ($product['stock'] > 0): ?>
             <?php if ((($_SESSION['user_type'] ?? '') === 'customer')): ?>
             <form method="POST" action="<?php echo BASE_URL; ?>cart/add" id="buy-form">
@@ -547,7 +548,7 @@
                                             <?php if ($v['price_adjustment'] > 0): ?>
                                                 (+₱<?php echo number_format($v['price_adjustment'], 2); ?>)
                                             <?php endif; ?>
-                                            <?php if ($outOfStock): ?> — Out of stock<?php endif; ?>
+                                            <?php if ($outOfStock): ?> (Out of stock)<?php endif; ?>
                                         </button>
                                     <?php endforeach; ?>
                                 </div>
@@ -626,7 +627,7 @@
                     <?php echo $shopInfo['avg_rating'] !== NULL ? number_format($shopInfo['avg_rating'], 1) . ' (' . $shopInfo['review_count'] . ' review' . ($shopInfo['review_count'] != 1 ? 's' : '') . ')' : 'New seller'; ?>
                 </span>
                 <span><i class="fas fa-box-open"></i> <?php echo (int) $shopInfo['total_products']; ?> products</span>
-                <span><i class="fas fa-calendar-alt"></i> Joined <?php echo !empty($shopInfo['joined_at']) ? date('M Y', strtotime($shopInfo['joined_at'])) : '—'; ?></span>
+                <span><i class="fas fa-calendar-alt"></i> Joined <?php echo !empty($shopInfo['joined_at']) ? date('M Y', strtotime($shopInfo['joined_at'])) : '-'; ?></span>
             </div>
         </div>
 
@@ -761,6 +762,37 @@
 <?php endif; ?>
 
 <script>
+function submitPdpPreorder(btn) {
+    <?php if (($_SESSION['user_type'] ?? '') !== 'customer'): ?>
+        showGuestChoice();
+        return;
+    <?php endif; ?>
+
+    btn.disabled = true;
+    const productId = btn.dataset.productId;
+    fetch('<?php echo BASE_URL; ?>shop/preorder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'product_id=' + encodeURIComponent(productId)
+    })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                btn.innerHTML = '<i class="fas fa-check"></i> You\'ll Be Notified';
+            } else {
+                btn.disabled = false;
+                if (data.needs_login) { showGuestChoice(); return; }
+                if (typeof customAlert === 'function') customAlert(data.message || 'Something went wrong. Please try again.');
+                else alert(data.message || 'Something went wrong. Please try again.');
+            }
+        })
+        .catch(() => {
+            btn.disabled = false;
+            if (typeof customAlert === 'function') customAlert('Something went wrong. Please try again.');
+            else alert('Something went wrong. Please try again.');
+        });
+}
+
 const hasVariations = document.querySelector('.variation-selector') !== null;
 const combinationsMode = document.querySelector('.variation-selector[data-mode="combinations"]') !== null;
 const COMBINATIONS = <?php echo !empty($combinations) ? json_encode($combinations, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) : '[]'; ?>;

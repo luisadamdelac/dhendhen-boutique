@@ -66,7 +66,7 @@
                     <hr>
                     <div class="row g-2">
                         <div class="col-6"><small class="text-muted d-block">Completed Orders</small><span class="fw-semibold"><?= number_format((int) ($application['completed_orders'] ?? 0)); ?></span></div>
-                        <div class="col-6"><small class="text-muted d-block">Last Delivered</small><span class="fw-semibold"><?= !empty($application['last_delivered_at']) ? date('M d, Y', strtotime($application['last_delivered_at'])) : '—'; ?></span></div>
+                        <div class="col-6"><small class="text-muted d-block">Last Delivered</small><span class="fw-semibold"><?= !empty($application['last_delivered_at']) ? date('M d, Y', strtotime($application['last_delivered_at'])) : '-'; ?></span></div>
                     </div>
 
                     <hr>

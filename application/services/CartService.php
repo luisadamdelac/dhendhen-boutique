@@ -160,6 +160,18 @@ class CartService {
                 continue;
             }
 
+            // Floor invariant: a listing's commission_price may never sell
+            // below the product's own base price (same rule enforced at
+            // edit time in reseller/Inventory::update_price()). That check
+            // only ever ran once, when the reseller last touched their own
+            // price — if admin raises the base price afterward, nothing
+            // re-checks every already-published listing against it, so a
+            // now-underpriced listing could otherwise still complete a sale
+            // here below the intended floor.
+            if ((float) $row['commission_price'] < (float) $row['price']) {
+                continue;
+            }
+
             $variation = NULL;
             $variant = NULL;
             $priceAdjustment = 0;
@@ -218,7 +230,14 @@ class CartService {
                 'product_image'       => $row['product_image'] ?? '',
             ];
 
-            $validCart[$cartKey] = $entry;
+            // Written back with the stock-capped $qty, not the raw posted
+            // $entry['qty'] — otherwise a line that got capped down here
+            // (not dropped entirely, so the item-count-based persist check
+            // callers used to run never caught it) left the session cart
+            // permanently overstating what's actually purchasable, e.g. the
+            // header's cart badge staying stuck at a quantity higher than
+            // what checkout would actually let through.
+            $validCart[$cartKey] = array_merge($entry, ['qty' => $qty]);
         }
 
         return [$items, $subtotal, $validCart];

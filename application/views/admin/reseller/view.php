@@ -130,36 +130,36 @@
                         <div class="col col-6">
                             <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--secondary-lavender);">
                                 <span style="color: var(--gray);">Email</span>
-                                <strong><?= htmlspecialchars($reseller['email'] ?? '—'); ?></strong>
+                                <strong><?= htmlspecialchars($reseller['email'] ?? '-'); ?></strong>
                             </div>
                             <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--secondary-lavender);">
                                 <span style="color: var(--gray);">Contact Number</span>
-                                <strong><?= htmlspecialchars($reseller['contact_number'] ?? '—'); ?></strong>
+                                <strong><?= htmlspecialchars($reseller['contact_number'] ?? '-'); ?></strong>
                             </div>
                             <div style="display: flex; justify-content: space-between; padding: 10px 0;">
                                 <span style="color: var(--gray);">Business Name</span>
-                                <strong><?= htmlspecialchars($reseller['business_name'] ?? '—'); ?></strong>
+                                <strong><?= htmlspecialchars($reseller['business_name'] ?? '-'); ?></strong>
                             </div>
                         </div>
                         <div class="col col-6">
                             <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--secondary-lavender);">
                                 <span style="color: var(--gray);">Street</span>
-                                <strong><?= htmlspecialchars($reseller['street'] ?? '—'); ?></strong>
+                                <strong><?= htmlspecialchars($reseller['street'] ?? '-'); ?></strong>
                             </div>
                             <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--secondary-lavender);">
                                 <span style="color: var(--gray);">Barangay</span>
-                                <strong><?= htmlspecialchars($reseller['barangay'] ?? '—'); ?></strong>
+                                <strong><?= htmlspecialchars($reseller['barangay'] ?? '-'); ?></strong>
                             </div>
                             <div style="display: flex; justify-content: space-between; padding: 10px 0;">
                                 <span style="color: var(--gray);">City</span>
-                                <strong><?= htmlspecialchars($reseller['city'] ?? '—'); ?></strong>
+                                <strong><?= htmlspecialchars($reseller['city'] ?? '-'); ?></strong>
                             </div>
                         </div>
                     </div>
                     <div style="display: flex; justify-content: space-between; padding: 10px 0; border-top: 1px solid var(--secondary-lavender); margin-top: 4px;">
                         <span style="color: var(--gray);">Member Since</span>
                         <strong>
-                            <?= !empty($reseller['created_at']) ? date('F d, Y', strtotime($reseller['created_at'])) : '—'; ?>
+                            <?= !empty($reseller['created_at']) ? date('F d, Y', strtotime($reseller['created_at'])) : '-'; ?>
                         </strong>
                     </div>
                 </div>
@@ -205,7 +205,7 @@
                                     </span>
                                 </td>
                                 <td style="text-align: right; font-size: 11px; color: var(--gray);">
-                                    <?= !empty($order['created_at']) ? date('M d, Y', strtotime($order['created_at'])) : '—'; ?>
+                                    <?= !empty($order['created_at']) ? date('M d, Y', strtotime($order['created_at'])) : '-'; ?>
                                 </td>
                             </tr>
                             <?php endforeach; ?>

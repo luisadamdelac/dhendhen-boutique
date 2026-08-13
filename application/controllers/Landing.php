@@ -5,11 +5,17 @@ class Landing extends CI_Controller {
         $this->load->helper('url');
         $this->load->database();
         $this->load->model('Product_model');
+        $this->load->model('Settings_model');
     }
 
     public function index() {
         $data['page_title'] = 'Welcome';
         $data['featuredProducts'] = $this->_featured_products();
+        // Real, admin-configured business info (admin/Settings) — kept in
+        // sync automatically instead of duplicating it as static text here.
+        $data['contactEmail'] = $this->Settings_model->get('company_email');
+        $data['contactPhone'] = $this->Settings_model->get('company_phone');
+        $data['contactAddress'] = $this->Settings_model->get('company_address');
         $this->load->view('landing/landing_page', $data);
     }
 

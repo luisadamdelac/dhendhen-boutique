@@ -293,9 +293,9 @@
                                     </span><br>
                                     <?php endif; ?>
                                 <?php endforeach; ?>
-                            <?php else: ?><span class="text-muted">—</span><?php endif; ?>
+                            <?php else: ?><span class="text-muted">-</span><?php endif; ?>
                         </td>
-                        <td><span class="text-muted small"><?= htmlspecialchars($p['category_name'] ?? '—'); ?></span></td>
+                        <td><span class="text-muted small"><?= htmlspecialchars($p['category_name'] ?? '-'); ?></span></td>
                         <td class="text-end fw-semibold" style="font-size:13px;">₱<?= number_format($p['price'] ?? 0, 2); ?></td>
                         <td class="text-center">
                             <span class="stock-badge <?= $stock_cls; ?>"><?= number_format((int)$st); ?></span>
@@ -308,7 +308,7 @@
                                     <?= $daysLeft < 0 ? 'Expired' : $daysLeft . ' days left'; ?>
                                 </span>
                             <?php else: ?>
-                                <span class="text-muted">—</span>
+                                <span class="text-muted">-</span>
                             <?php endif; ?>
                         </td>
                         <td class="text-center">
@@ -419,7 +419,7 @@
                                 <?php endif; ?>
                                 <div class="ai-info">
                                     <strong><?= htmlspecialchars($p['product_name']); ?></strong>
-                                    <span>SKU: <?= htmlspecialchars($p['sku'] ?? '—'); ?></span>
+                                    <span>SKU: <?= htmlspecialchars($p['sku'] ?? '-'); ?></span>
                                 </div>
                                 <div class="ai-right">
                                     <?php if ($isExpiring): ?>
@@ -520,7 +520,7 @@
                                 <?= htmlspecialchars(trim(implode(', ', array_filter([$b['street'] ?? '', $b['barangay'] ?? '', $b['city'] ?? ''])))); ?>
                             </span>
                         </td>
-                        <td><span class="small"><?= htmlspecialchars($b['phone_number'] ?? '—'); ?></span></td>
+                        <td><span class="small"><?= htmlspecialchars($b['phone_number'] ?? '-'); ?></span></td>
                         <td class="text-center">
                             <span style="font-size:12px;font-weight:600;background:#eef0ff;color:#4361ee;padding:2px 10px;border-radius:20px;">
                                 <?= number_format((int)$b['total_products']); ?>
@@ -900,7 +900,7 @@ $(function () {
         language: {
             search: '_INPUT_',
             searchPlaceholder: 'Quick search…',
-            emptyTable: <?= json_encode('No products found' . (($search || $category || $branch || $status) ? ' — <a href="' . site_url('admin/inventory') . '">clear filters</a>' : '')); ?>
+            emptyTable: <?= json_encode('No products found' . (($search || $category || $branch || $status) ? ': <a href="' . site_url('admin/inventory') . '">clear filters</a>' : '')); ?>
         },
         // Re-apply the mobile stacked-card data-labels after every redraw
         // (pagination/sort/search), since DataTables only touches <tbody>

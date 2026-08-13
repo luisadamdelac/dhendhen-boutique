@@ -62,7 +62,7 @@ $current_page = 'settings';
                                 <div class="form-group">
                                     <label for="smtp_password">SMTP Password (Gmail App Password)</label>
                                     <input type="password" class="form-control" id="smtp_password" name="smtp_password"
-                                           placeholder="<?= !empty($settings['smtp_password']) ? '●●●●●●●● — leave blank to keep current' : 'Not set yet'; ?>">
+                                           placeholder="<?= !empty($settings['smtp_password']) ? '●●●●●●●● (leave blank to keep current)' : 'Not set yet'; ?>">
                                 </div>
                             </div>
                             <div class="col col-6">

@@ -78,7 +78,7 @@ table.dataTable thead th.sorting:hover { color: var(--primary-pink); cursor: poi
         <span class="section-title"><i class="fas fa-list me-2 text-primary"></i>Online Orders by Status</span>
         <hr>
     </div>
-    <p class="text-muted small mb-2" style="margin-top:-10px;">Walk-in (in-store) sales don't have a delivery status — see the "Walk-in Sales" figures above and the breakdown in Monthly Sales below.</p>
+    <p class="text-muted small mb-2" style="margin-top:-10px;">Walk-in (in-store) sales don't have a delivery status. See the "Walk-in Sales" figures above and the breakdown in Monthly Sales below.</p>
     <div class="card border-0 shadow-sm mb-3" style="border-radius:12px;overflow:hidden;">
         <div class="card-body">
             <div class="table-responsive">

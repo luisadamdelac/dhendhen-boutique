@@ -22,6 +22,8 @@ $current_page = 'refund';
                     <p style="margin-bottom: 6px;"><strong>Customer:</strong> <?= htmlspecialchars(trim(($refund['customer_first_name'] ?? '') . ' ' . ($refund['customer_last_name'] ?? '')) ?: '-'); ?></p>
                     <p style="margin-bottom: 6px;"><strong>Email:</strong> <?= htmlspecialchars($refund['email'] ?? '-'); ?></p>
                     <p style="margin-bottom: 6px;"><strong>Reason:</strong> <?= htmlspecialchars($refund['reason'] ?? '-'); ?></p>
+                    <p style="margin-bottom: 6px;"><strong>Customer GCash Number:</strong> <?= htmlspecialchars($refund['gcash_number'] ?? '-'); ?></p>
+                    <p style="margin-bottom: 6px;"><strong>Customer GCash Name:</strong> <?= htmlspecialchars($refund['gcash_name'] ?? '-'); ?></p>
                     <?php if (!empty($refund['images'])): ?>
                         <p style="margin-bottom: 6px;"><strong>Evidence:</strong></p>
                         <a href="<?= BASE_URL . htmlspecialchars($refund['images']); ?>" target="_blank">
@@ -61,10 +63,14 @@ $current_page = 'refund';
                 <hr style="margin: 20px 0; border: none; border-top: 1px solid var(--border);">
                 <div class="card" style="box-shadow:none; border:1px solid var(--border);">
                     <div style="padding:15px;">
-                        <p style="margin:0 0 12px; font-weight:600;">Mark as Refunded</p>
+                        <p style="margin:0 0 4px; font-weight:600;">Mark as Refunded</p>
+                        <p style="margin:0 0 12px; font-size:13px; color:var(--gray);">
+                            Send to <strong><?= htmlspecialchars($refund['gcash_number'] ?? '-'); ?></strong>
+                            (<?= htmlspecialchars($refund['gcash_name'] ?? '-'); ?>)
+                        </p>
                         <label style="display:flex; align-items:center; gap:8px; margin-bottom:12px; cursor:pointer;">
                             <input type="checkbox" id="itemReceivedCheck" style="width:16px;height:16px;">
-                            Item received back in good condition — restocks the item once confirmed
+                            Item received back in good condition (restocks the item once confirmed)
                         </label>
                         <div class="row" style="align-items: center;">
                             <div class="col col-6">
@@ -85,7 +91,7 @@ $current_page = 'refund';
             <?php elseif (($refund['status'] ?? '') === 'completed'): ?>
                 <hr style="margin: 20px 0; border: none; border-top: 1px solid var(--border);">
                 <div style="background:#d4edda; color:#155724; border-radius:var(--radius-lg); padding:15px;">
-                    <p style="margin:0 0 4px;"><i class="fas fa-check-circle"></i> <strong>Refunded</strong> — item received back and payment sent.</p>
+                    <p style="margin:0 0 4px;"><i class="fas fa-check-circle"></i> <strong>Refunded</strong>: item received back and payment sent.</p>
                     <p style="margin:0; font-size:13px;">GCash Reference: <strong><?= htmlspecialchars($refund['payment_reference'] ?? '-'); ?></strong>
                         <?php if (!empty($refund['completed_at'])): ?>
                             &middot; Paid on <?= date('F j, Y g:i A', strtotime($refund['completed_at'])); ?>

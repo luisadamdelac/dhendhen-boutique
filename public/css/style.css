@@ -1192,6 +1192,50 @@ img {
     border-color: transparent;
 }
 
+/* Subcategories of the currently selected primary category — smaller pills
+   on their own row underneath, so the filter reads as primary category
+   first, then subcategory, instead of every category sitting flat together. */
+.subcategory-filter {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px dashed var(--gray-200);
+}
+
+.subcategory-filter-label {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--gray-500);
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.subcategory-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    background: var(--white);
+    border: 1.5px solid var(--gray-200);
+    border-radius: var(--radius-full);
+    color: var(--gray-600);
+    text-decoration: none;
+    transition: var(--transition-base);
+    font-size: 12.5px;
+    font-weight: 600;
+}
+
+.subcategory-btn:hover,
+.subcategory-btn.active {
+    background: var(--primary);
+    color: var(--white);
+    border-color: transparent;
+}
+
 /* ============================================
    TRUST BAR
    ============================================ */

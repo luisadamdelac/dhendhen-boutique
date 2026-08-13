@@ -74,6 +74,24 @@ class Account extends CI_Controller {
         $user_account_id = $this->session->userdata('user_account_id');
         $customer_id = $this->session->userdata('user_id');
 
+        // user_account_tbl has no UNIQUE constraint on email — without this
+        // check, changing your email here to match another account's makes
+        // login/password-reset-by-email resolve to whichever row MySQL
+        // happens to return first, silently confusing/colliding the two
+        // accounts. Registration already guards against this; this endpoint
+        // didn't.
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $this->session->set_flashdata('error', 'Please enter a valid email address.');
+            redirect('account');
+        }
+        $existing = $this->db->where('email', $email)
+            ->where('user_account_id !=', $user_account_id)
+            ->get(USER_ACCOUNT_TABLE)->row();
+        if ($existing) {
+            $this->session->set_flashdata('error', 'That email is already used by another account.');
+            redirect('account');
+        }
+
         $this->db->update(USER_ACCOUNT_TABLE, [
             'email' => $email,
             'updated_at' => date('Y-m-d H:i:s'),

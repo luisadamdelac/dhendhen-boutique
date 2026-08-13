@@ -72,6 +72,8 @@ class Refunds extends CI_Controller {
 
         $this->load->library('form_validation');
         $this->form_validation->set_rules('reason', 'Reason', 'required|trim|max_length[500]');
+        $this->form_validation->set_rules('gcash_number', 'GCash Number', 'required|trim|max_length[20]');
+        $this->form_validation->set_rules('gcash_name', 'GCash Account Name', 'required|trim|max_length[100]');
 
         if ($this->form_validation->run() === FALSE) {
             $this->session->set_flashdata('error', validation_errors(' ', ' '));
@@ -111,6 +113,8 @@ class Refunds extends CI_Controller {
             'customer_id' => $customer_id,
             'reseller_id' => $order['reseller_id'],
             'reason' => $this->input->post('reason', TRUE),
+            'gcash_number' => $this->input->post('gcash_number', TRUE),
+            'gcash_name' => $this->input->post('gcash_name', TRUE),
             'images' => $image_path,
             'amount' => $order['total_amount'],
             'status' => 'pending',

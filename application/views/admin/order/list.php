@@ -345,23 +345,23 @@
                         <div class="row g-3 mb-3">
                             <div class="col-6">
                                 <label class="text-muted mb-1" style="font-size:12px;">Payment Method</label>
-                                <div class="fw-semibold" id="paymentInfoMethod">—</div>
+                                <div class="fw-semibold" id="paymentInfoMethod">-</div>
                             </div>
                             <div class="col-6" id="paymentInfoReferenceWrap">
                                 <label class="text-muted mb-1" style="font-size:12px;">Reference Number</label>
-                                <div class="fw-semibold" id="paymentInfoReference">—</div>
+                                <div class="fw-semibold" id="paymentInfoReference">-</div>
                             </div>
                             <div class="col-6">
                                 <label class="text-muted mb-1" style="font-size:12px;">Amount</label>
-                                <div class="fw-semibold" id="paymentInfoAmount">—</div>
+                                <div class="fw-semibold" id="paymentInfoAmount">-</div>
                             </div>
                             <div class="col-6">
                                 <label class="text-muted mb-1" style="font-size:12px;">Payment Date</label>
-                                <div class="fw-semibold" id="paymentInfoDate">—</div>
+                                <div class="fw-semibold" id="paymentInfoDate">-</div>
                             </div>
                             <div class="col-12">
                                 <label class="text-muted mb-1" style="font-size:12px;">Current Status</label>
-                                <div class="fw-semibold" id="paymentInfoCurrentStatus">—</div>
+                                <div class="fw-semibold" id="paymentInfoCurrentStatus">-</div>
                             </div>
                             <div class="col-12" id="paymentInfoReceiptWrap" style="display:none;">
                                 <label class="text-muted mb-1" style="font-size:12px;">Receipt</label>
@@ -382,7 +382,7 @@
                                 <option value="refunded" id="paymentStatusOptRefunded">Refunded</option>
                             </select>
                             <small class="text-muted" id="paymentStatusLockedHint" style="display:none;">
-                                Already Completed — use the Refund flow to reverse this payment instead.
+                                Already Completed. Use the Refund flow to reverse this payment instead.
                             </small>
                         </div>
                         <div class="form-group" id="rejectionReasonWrap" style="display:none;">
@@ -437,15 +437,15 @@ function openPaymentModal(btn) {
     const info = JSON.parse(btn.dataset.paymentInfo);
     paymentModalOrderId = info.orderId;
 
-    document.getElementById('paymentInfoMethod').textContent = info.method || '—';
-    document.getElementById('paymentInfoReference').textContent = info.reference || '—';
+    document.getElementById('paymentInfoMethod').textContent = info.method || '-';
+    document.getElementById('paymentInfoReference').textContent = info.reference || '-';
     // Cash payments have no reference number — hide the field entirely
     // instead of showing a meaningless "—" placeholder.
     document.getElementById('paymentInfoReferenceWrap').style.display =
         (info.method || '').toLowerCase() === 'cash' ? 'none' : '';
     document.getElementById('paymentInfoAmount').textContent = info.amount
         ? ('₱' + Number(info.amount).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }))
-        : '—';
+        : '-';
     document.getElementById('paymentInfoDate').textContent = info.paidAt
         ? new Date(info.paidAt).toLocaleString('en-PH')
         : 'Not yet paid';
@@ -501,7 +501,7 @@ document.getElementById('paymentForm').addEventListener('submit', function(e) {
 
     if (newStatus === 'completed') {
         customConfirm(
-            'Once approved, this cannot be undone — it unlocks the order for staff to process.',
+            'Once approved, this cannot be undone. It unlocks the order for staff to process.',
             function() { submitPaymentUpdate(newStatus, rejectionReason); },
             { title: 'Mark this payment as Completed?', okText: 'Mark Completed' }
         );
@@ -575,22 +575,22 @@ function renderDetails(type, data) {
     }
     if (type === 'commission') {
         if (!data) return '<p class="text-muted mb-0">No commission record found for this order.</p>';
-        const name = ((data.first_name || '') + ' ' + (data.last_name || '')).trim() || '—';
+        const name = ((data.first_name || '') + ' ' + (data.last_name || '')).trim() || '-';
         return row('Reseller', name) +
                row('Amount', '₱' + parseFloat(data.amount).toFixed(2)) +
                row('Status', data.status.charAt(0).toUpperCase() + data.status.slice(1)) +
-               row('Released At', data.released_at || '—');
+               row('Released At', data.released_at || '-');
     }
     if (type === 'refund') {
         if (!data) return '<p class="text-muted mb-0">No refund request found for this order.</p>';
-        return row('Refund #', data.refund_number || '—') +
+        return row('Refund #', data.refund_number || '-') +
                row('Amount', '₱' + parseFloat(data.amount).toFixed(2)) +
                row('Status', data.status.charAt(0).toUpperCase() + data.status.slice(1)) +
-               row('Reason', data.reason || '—') +
-               row('Admin Remarks', data.admin_remarks || '—');
+               row('Reason', data.reason || '-') +
+               row('Admin Remarks', data.admin_remarks || '-');
     }
     if (type === 'cancellation') {
-        return row('Cancelled At', data.cancelled_at || '—') +
+        return row('Cancelled At', data.cancelled_at || '-') +
                row('Commission', data.commission_reversed ? 'Reversed (no commission credited)' : 'Not applicable');
     }
     return '<p class="text-muted mb-0">No details available.</p>';

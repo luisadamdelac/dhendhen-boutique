@@ -4,7 +4,7 @@
 <div class="container-fluid py-4 fade-in">
     <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-4">
         <div>
-            <h4 class="fw-bold mb-1" style="color:#1a1a2e;"><i class="fas fa-user-shield"></i> Edit Admin — <?php echo htmlspecialchars(trim($admin['first_name'] . ' ' . $admin['last_name'])); ?></h4>
+            <h4 class="fw-bold mb-1" style="color:#1a1a2e;"><i class="fas fa-user-shield"></i> Edit Admin: <?php echo htmlspecialchars(trim($admin['first_name'] . ' ' . $admin['last_name'])); ?></h4>
             <small class="text-muted">Update administrator account details.</small>
         </div>
         <div class="d-flex gap-2 flex-wrap">

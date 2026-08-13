@@ -53,7 +53,7 @@
                         <option value="">Select a delivered order</option>
                         <?php foreach ($eligible_orders as $order): ?>
                             <option value="<?php echo $order['order_id']; ?>">
-                                #<?php echo htmlspecialchars($order['order_number']); ?> — ₱<?php echo number_format($order['total_amount'], 2); ?>
+                                #<?php echo htmlspecialchars($order['order_number']); ?>: ₱<?php echo number_format($order['total_amount'], 2); ?>
                             </option>
                         <?php endforeach; ?>
                     </select>
@@ -61,6 +61,14 @@
                 <div class="field" style="flex: 2;">
                     <label>Reason</label>
                     <textarea name="reason" rows="2" maxlength="500" required placeholder="Why are you requesting a refund?"></textarea>
+                </div>
+                <div class="field">
+                    <label>GCash Number <span style="color:var(--gray); font-weight:400;">(where we'll send your refund)</span></label>
+                    <input type="text" name="gcash_number" maxlength="20" required placeholder="09XXXXXXXXX" style="padding:10px 12px; border:2px solid #ddd; border-radius:8px; font-size:14px; font-family:inherit;">
+                </div>
+                <div class="field">
+                    <label>GCash Account Name</label>
+                    <input type="text" name="gcash_name" maxlength="100" required placeholder="Name on the GCash account" style="padding:10px 12px; border:2px solid #ddd; border-radius:8px; font-size:14px; font-family:inherit;">
                 </div>
                 <div class="field">
                     <label>Evidence <span style="color:var(--gray); font-weight:400;">(photo required)</span></label>
@@ -83,7 +91,7 @@
                     <p>
                         <i class="fas fa-shopping-bag"></i> Order #<?php echo htmlspecialchars($refund['order_number'] ?? 'N/A'); ?>
                         &nbsp;|&nbsp;
-                        <i class="fas fa-calendar"></i> <?php echo date('M d, Y', strtotime($refund['created_at'])); ?>
+                        <i class="fas fa-calendar"></i> <?php echo date('M d, Y g:i A', strtotime($refund['created_at'])); ?>
                     </p>
                     <p style="margin-top: 5px;">
                         <strong>Reason:</strong> <?php echo htmlspecialchars($refund['reason']); ?>

@@ -19,7 +19,7 @@
             <p class="legal-updated">Last updated: July 2026</p>
 
             <h4>1. Acceptance of Terms</h4>
-            <p>By creating an account or using DropSell in any capacity — as a Customer, Reseller, Staff, or Administrator — you agree to be bound by these Terms of Service. If you do not agree, please do not register or use the platform.</p>
+            <p>By creating an account or using DropSell in any capacity (as a Customer, Reseller, Staff, or Administrator), you agree to be bound by these Terms of Service. If you do not agree, please do not register or use the platform.</p>
 
             <h4>2. Account Registration &amp; Eligibility</h4>
             <p>You must provide accurate, current, and complete information when registering. You are responsible for safeguarding your password and for all activity that occurs under your account. Reseller applications are subject to review and approval by DropSell administrators before login access is granted.</p>
@@ -71,13 +71,13 @@
             <p class="legal-updated">Last updated: July 2026</p>
 
             <h4>1. Information We Collect</h4>
-            <p>When you register or use DropSell, we collect information such as your name, email address, contact number, delivery address (province, municipality, barangay, street), and — for Resellers — your business name and GCash payout details. We also record order history, cart activity, and account activity logs (e.g. logins, status changes).</p>
+            <p>When you register or use DropSell, we collect information such as your name, email address, contact number, delivery address (province, municipality, barangay, street), and (for Resellers) your business name and GCash payout details. We also record order history, cart activity, and account activity logs (e.g. logins, status changes).</p>
 
             <h4>2. How We Use Your Information</h4>
             <p>We use your information to create and manage your account, process orders and payments, attribute sales to the correct Reseller, calculate and credit commissions, deliver order and refund status notifications, and improve the platform's products and services.</p>
 
             <h4>3. Payment Information</h4>
-            <p>DropSell does not store GCash account passwords or PINs. We only retain the GCash reference number, sender number, and account name you provide to verify a payment, and — for Reseller payouts — the GCash number and account name used for withdrawals.</p>
+            <p>DropSell does not store GCash account passwords or PINs. We only retain the GCash reference number, sender number, and account name you provide to verify a payment, and (for Reseller payouts) the GCash number and account name used for withdrawals.</p>
 
             <h4>4. Information Sharing</h4>
             <p>Your order details (name, delivery address, and contact number) are shared with the Reseller and Staff involved in fulfilling that specific order. We do not sell your personal information to third parties.</p>

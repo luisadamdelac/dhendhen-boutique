@@ -148,6 +148,7 @@ if (!function_exists('define_db_table_constants')) {
             'PRODUCT_REVIEWS_TABLE'=> 'product_reviews',
             'RESELLER_PRODUCTS_TABLE'=> 'reseller_products',
             'RESELLER_APPLICATION_TABLE'=> 'reseller_application_tbl',
+            'PRODUCT_PREORDERS_TABLE'=> 'product_preorders_tbl',
 
             'ORDER_TABLE'         => 'order_tbl',
             'ORDER_DETAILS_TABLE'=> 'order_details',

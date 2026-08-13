@@ -68,13 +68,13 @@
                                 <td>
                                     <?php
                                         $created = $row['created_at'] ?? '';
-                                        echo $created ? date('M d, Y h:i A', strtotime($created)) : '—';
+                                        echo $created ? date('M d, Y h:i A', strtotime($created)) : '-';
                                     ?>
                                 </td>
-                                <td><?php echo htmlspecialchars(ucfirst($row['transaction_type'] ?? '—')); ?></td>
+                                <td><?php echo htmlspecialchars(ucfirst($row['transaction_type'] ?? '-')); ?></td>
                                 <td><?php echo ((int) ($row['quantity_changed'] ?? 0)) > 0 ? '+' : ''; echo (int) ($row['quantity_changed'] ?? 0); ?></td>
-                                <td><?php echo htmlspecialchars((string) ($row['previous_quantity'] ?? '—')); ?></td>
-                                <td><?php echo htmlspecialchars((string) ($row['new_quantity'] ?? '—')); ?></td>
+                                <td><?php echo htmlspecialchars((string) ($row['previous_quantity'] ?? '-')); ?></td>
+                                <td><?php echo htmlspecialchars((string) ($row['new_quantity'] ?? '-')); ?></td>
                             </tr>
                         <?php endforeach; ?>
                     </tbody>

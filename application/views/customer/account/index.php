@@ -414,7 +414,7 @@
                     <div style="width:<?php echo $pct; ?>%; height:100%; background:<?php echo $is_eligible ? '#16a34a' : '#f59e0b'; ?>; transition:width .3s ease;"></div>
                 </div>
                 <p style="font-size:0.8rem; color:var(--gray-600); margin-bottom:1.25rem;">
-                    ₱<?php echo number_format($best_single_order ?? 0, 2); ?> of ₱<?php echo number_format($minimum_spend ?? 0, 2); ?> in a single delivered order — purchases across multiple orders don't add up
+                    ₱<?php echo number_format($best_single_order ?? 0, 2); ?> of ₱<?php echo number_format($minimum_spend ?? 0, 2); ?> in a single delivered order. Purchases across multiple orders don't add up
                 </p>
 
                 <form method="POST" action="<?php echo BASE_URL; ?>account/apply_reseller">

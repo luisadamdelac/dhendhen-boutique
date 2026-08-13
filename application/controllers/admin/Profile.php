@@ -101,8 +101,22 @@ class Profile extends Authenticated_Controller {
             'updated_at' => date('Y-m-d H:i:s'),
         ]);
 
+        $new_email = $this->input->post('email', TRUE);
+
+        // user_account_tbl has no UNIQUE constraint on email — without this
+        // check, an admin changing their email to match another account's
+        // makes login/password-reset-by-email resolve to whichever row
+        // MySQL happens to return first, silently colliding the two accounts.
+        $existing = $this->db->where('email', $new_email)
+            ->where('user_account_id !=', $admin['user_account_id'])
+            ->get(USER_ACCOUNT_TABLE)->row();
+        if ($existing) {
+            $this->session->set_flashdata('error', 'That email is already used by another account.');
+            redirect('admin/profile');
+        }
+
         $this->db->where('user_account_id', $admin['user_account_id'])->update(USER_ACCOUNT_TABLE, [
-            'email' => $this->input->post('email', TRUE),
+            'email' => $new_email,
             'updated_at' => date('Y-m-d H:i:s'),
         ]);
 
@@ -113,7 +127,7 @@ class Profile extends Authenticated_Controller {
             'middle_name' => $middle_name ?: '',
             'last_name' => $last_name,
             'full_name' => $full_name,
-            'email' => $this->input->post('email', TRUE),
+            'email' => $new_email,
         ]);
         $this->session->set_flashdata('success', 'Profile updated successfully');
         redirect('admin/profile');

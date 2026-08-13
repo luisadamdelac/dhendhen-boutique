@@ -67,6 +67,23 @@ class Inventory extends Authenticated_Controller {
 
         $data['stats'] = $this->_get_inventory_stats($data['myListings'], $published_ids, $data['soldByProduct']);
 
+        // How many customers are waiting on each product — shown on the
+        // catalog carousel (still unpublished) so demand isn't invisible
+        // before a reseller decides to carry it, and on My Mini-Shop rows
+        // (already published) as a "who's waiting" reference.
+        $catalog_ids = array_column($data['catalog'], 'product_id');
+        $data['preorderCounts'] = $this->product_model->preorder_counts(array_merge($catalog_ids, $published_ids));
+
+        // Full "who's waiting" list, but only for published listings that
+        // actually have at least one pre-order — most won't, so this stays
+        // a handful of extra queries at most instead of one per listing.
+        $data['preorderDetails'] = [];
+        foreach ($published_ids as $pid) {
+            if (($data['preorderCounts'][$pid] ?? 0) > 0) {
+                $data['preorderDetails'][$pid] = $this->product_model->preorders_for_product($pid);
+            }
+        }
+
         $this->load->view('reseller/layouts/header', $data);
         $this->load->view('reseller/inventory/index', $data);
         $this->load->view('reseller/layouts/footer', $data);
@@ -110,7 +127,23 @@ class Inventory extends Authenticated_Controller {
         }
 
         $this->log_activity('product_published', 'product', $product_id, $product['product_name']);
-        $this->session->set_flashdata('success', 'Product published to your mini-shop');
+
+        // Customers who clicked "Notify Me" on this before any reseller
+        // carried it — tell each of them it's live now, and flag the total
+        // to this reseller too so the waiting demand isn't invisible.
+        $message = 'Product published to your mini-shop';
+        $waitingPreorders = $this->product_model->unnotified_preorders($product_id);
+        if (!empty($waitingPreorders)) {
+            require_once APPPATH . 'services/NotificationService.php';
+            foreach ($waitingPreorders as $preorder) {
+                NotificationService::productAvailable((int) $preorder['customer_id'], $product_id, $product['product_name']);
+            }
+            NotificationService::productPreordered($this->user_id, $product_id, $product['product_name'], count($waitingPreorders));
+            $this->product_model->mark_preorders_notified($product_id);
+            $message .= '. ' . count($waitingPreorders) . ' customer' . (count($waitingPreorders) === 1 ? '' : 's') . ' had pre-ordered it — check your notifications.';
+        }
+
+        $this->session->set_flashdata('success', $message);
         redirect('reseller/inventory');
     }
 

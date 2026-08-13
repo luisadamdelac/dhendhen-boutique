@@ -82,7 +82,7 @@ $current_page = 'reseller';
                                     <?php endif; ?>
                                 </td>
                                 <td class="text-center"><?= number_format((int) ($application['completed_orders'] ?? 0)); ?></td>
-                                <td style="font-size:12px;color:#8a94ad;"><?= !empty($application['last_delivered_at']) ? date('M d, Y', strtotime($application['last_delivered_at'])) : '—'; ?></td>
+                                <td style="font-size:12px;color:#8a94ad;"><?= !empty($application['last_delivered_at']) ? date('M d, Y', strtotime($application['last_delivered_at'])) : '-'; ?></td>
                                 <td class="text-center">
                                     <span class="badge-status badge-<?= $aStatus; ?>"><?= ucfirst($aStatus); ?></span>
                                 </td>

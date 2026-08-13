@@ -306,6 +306,17 @@ class Reseller extends Authenticated_Controller {
             return;
         }
 
+        // Unlike its sibling reject_registration() (below), this had no
+        // status guard — an already-approved application (which already
+        // created a live reseller_tbl row via approve_application() above)
+        // could be rejected too, flipping it to 'rejected' and emailing the
+        // reseller a rejection notice while their active account stayed
+        // untouched: a contradictory, confusing state.
+        if ($application['status'] !== 'pending') {
+            echo json_encode(['success' => FALSE, 'message' => 'This application has already been reviewed']);
+            return;
+        }
+
         $admin_remarks = $this->input->post('admin_remarks') ?? '';
         $this->ResellerApplication_model->reject($application_id, $this->user_id, $admin_remarks);
         $this->Activity_log_model->log_activity(get_user_id(), 'admin', 'reject_reseller_app', 'Rejected reseller application: ' . $application_id, get_client_ip());

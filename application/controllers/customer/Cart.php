@@ -20,7 +20,12 @@ class Cart extends CI_Controller {
         $cart = $this->session->userdata('cart') ?: [];
         [$data['cartItems'], $data['subtotal'], $validCart] = CartService::getCartItems($cart);
 
-        if (count($validCart) !== count($cart)) {
+        // Always persist, not just when a whole line disappeared — a
+        // per-line quantity capped down to available stock (same key,
+        // smaller qty) left the item COUNT unchanged, so the old
+        // count-based check never caught it and the header cart badge
+        // stayed stuck overstating what's actually purchasable.
+        if ($validCart != $cart) {
             $this->session->set_userdata('cart', $validCart);
         }
 
@@ -78,6 +83,18 @@ class Cart extends CI_Controller {
             'qty'          => $existing_qty + $quantity,
             'reseller_id'  => (int) $listing['reseller_id'],
         ];
+
+        // Cap against real available stock immediately, through the same
+        // logic checkout uses — without this, the session (and the header
+        // cart badge) could hold a quantity higher than what's actually
+        // purchasable until the cart/checkout page happened to be visited
+        // and silently re-capped it.
+        [, , $cappedCart] = CartService::getCartItems($cart);
+        if (!isset($cappedCart[$cart_key])) {
+            $this->_respond(FALSE, 'Sorry, this item is currently out of stock.');
+            return;
+        }
+        $cart = $cappedCart;
         $this->session->set_userdata('cart', $cart);
 
         $this->_respond(TRUE, 'Product added to cart', ['cart_count' => array_sum(array_column($cart, 'qty'))]);
@@ -93,6 +110,10 @@ class Cart extends CI_Controller {
         } elseif (isset($cart[$cart_key])) {
             $cart[$cart_key]['qty'] = $quantity;
         }
+
+        // Cap against real available stock immediately — see the matching
+        // note in add() above.
+        [, , $cart] = CartService::getCartItems($cart);
 
         $this->session->set_userdata('cart', $cart);
         redirect('cart');

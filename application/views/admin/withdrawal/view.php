@@ -76,7 +76,7 @@ $current_page = 'withdrawal';
                     <?php if (!$isScheduleReached): ?>
                         <p style="color: var(--gray); margin-bottom: 14px;">
                             <i class="fas fa-clock"></i> Scheduled for processing on
-                            <strong><?= date('F j, Y', strtotime($scheduledDate)); ?></strong> — cannot be marked completed before then.
+                            <strong><?= date('F j, Y', strtotime($scheduledDate)); ?></strong>, cannot be marked completed before then.
                         </p>
                     <?php endif; ?>
                     <div class="row" style="align-items: center;">

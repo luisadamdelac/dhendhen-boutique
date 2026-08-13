@@ -93,7 +93,7 @@ $is_admin_only = !$is_staff_view && !$is_reseller_view;
                 <?php if ($is_admin_only): ?>
                 <div class="dashboard-header-actions">
                     <span class="date-badge"><i class="fas fa-calendar"></i> <?php echo date('F j, Y'); ?></span>
-                    <a href="<?php echo site_url('admin/reports/export/sales/pdf'); ?>" class="btn-export">
+                    <a href="<?php echo site_url('admin/reports/export/sales/pdf'); ?>" class="btn-export" target="_blank">
                         <i class="fas fa-download"></i> Export Report
                     </a>
                 </div>

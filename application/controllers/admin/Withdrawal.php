@@ -72,6 +72,11 @@ class Withdrawal extends Authenticated_Controller {
             return;
         }
 
+        if ($withdrawal['status'] !== 'pending') {
+            echo json_encode(['success' => FALSE, 'message' => 'This withdrawal has already been reviewed']);
+            return;
+        }
+
         if ((int) $withdrawal['otp_verified'] !== 1) {
             echo json_encode(['success' => FALSE, 'message' => 'This withdrawal cannot be approved until the reseller verifies their OTP']);
             return;
@@ -104,6 +109,18 @@ class Withdrawal extends Authenticated_Controller {
         $withdrawal = $this->db->select('*')->from(WITHDRAWAL_TABLE)->where('withdrawal_id', $withdrawal_id)->get()->row_array();
         if (!$withdrawal) {
             echo json_encode(['success' => FALSE, 'message' => 'Withdrawal request not found']);
+            return;
+        }
+
+        // Reject is only ever offered in the UI while still 'pending' (see
+        // admin/withdrawal/view.php) — an 'approved' request only offers Mark
+        // as Completed from here on, and 'rejected'/'completed' are already
+        // final. Without this guard, a resubmitted/replayed reject on an
+        // already-rejected or already-completed request calls
+        // releaseWithdrawalHold() again below and double-credits real money
+        // back to the reseller's balance for funds already returned or paid out.
+        if ($withdrawal['status'] !== 'pending') {
+            echo json_encode(['success' => FALSE, 'message' => 'This withdrawal has already been reviewed']);
             return;
         }
 
@@ -150,6 +167,16 @@ class Withdrawal extends Authenticated_Controller {
         $withdrawal = $this->db->select('*')->from(WITHDRAWAL_TABLE)->where('withdrawal_id', $withdrawal_id)->get()->row_array();
         if (!$withdrawal) {
             echo json_encode(['success' => FALSE, 'message' => 'Withdrawal request not found']);
+            return;
+        }
+
+        // Must be approved (and not already completed) before it can be paid
+        // out — without this guard, replaying this request on an
+        // already-completed withdrawal re-inflates total_withdrawn, re-tags
+        // more commission rows as 'withdrawn' (possibly ones unrelated to
+        // this payout), and overwrites the original GCash reference.
+        if ($withdrawal['status'] !== 'approved') {
+            echo json_encode(['success' => FALSE, 'message' => 'This withdrawal must be approved before it can be marked as processed']);
             return;
         }
 

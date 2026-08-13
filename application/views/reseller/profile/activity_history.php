@@ -90,7 +90,7 @@
                 </div>
                 <div>
                     <h4 class="fw-bold mb-1" style="color:#1a1a2e;">Activity History</h4>
-                    <small class="text-muted">A record of your own actions — listing changes, withdrawals, and profile edits.</small>
+                    <small class="text-muted">A record of your own actions: listing changes, withdrawals, and profile edits.</small>
                 </div>
             </div>
         </div>
@@ -176,7 +176,7 @@
                                         <span class="al-action-label"><?= htmlspecialchars($actionLabel); ?></span>
                                     </div>
                                 </td>
-                                <td><?= htmlspecialchars($log['details'] ?? '—'); ?></td>
+                                <td><?= htmlspecialchars($log['details'] ?? '-'); ?></td>
                                 <td class="text-end pe-4"><i class="fas fa-chevron-right al-chevron"></i></td>
                             </tr>
                         <?php endforeach; ?>

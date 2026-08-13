@@ -1,7 +1,7 @@
 <div class="container-fluid py-4 fade-in">
     <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-4">
         <div>
-            <h4 class="fw-bold mb-1" style="color:#1a1a2e;"><i class="fas fa-user-edit"></i> Edit Staff — <?php echo htmlspecialchars(trim($staff['first_name'] . ' ' . $staff['last_name'])); ?></h4>
+            <h4 class="fw-bold mb-1" style="color:#1a1a2e;"><i class="fas fa-user-edit"></i> Edit Staff: <?php echo htmlspecialchars(trim($staff['first_name'] . ' ' . $staff['last_name'])); ?></h4>
             <small class="text-muted">Update staff account details and branch assignment.</small>
         </div>
         <div class="d-flex gap-2 flex-wrap">

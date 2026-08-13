@@ -230,7 +230,7 @@ $showingTo = min($totalFiltered, $currentPage * $perPage);
                                         <?php endif; ?>
                                         <div>
                                             <div class="customer-name"><?php echo htmlspecialchars($order['customer_name'] ?: 'Customer'); ?></div>
-                                            <div class="customer-phone"><?php echo htmlspecialchars($order['contact_number'] ?? '—'); ?></div>
+                                            <div class="customer-phone"><?php echo htmlspecialchars($order['contact_number'] ?? '-'); ?></div>
                                         </div>
                                     </div>
                                 </td>
@@ -256,7 +256,7 @@ $showingTo = min($totalFiltered, $currentPage * $perPage);
                                     <?php if ($order['commission_amount'] !== NULL): ?>
                                         ₱<?php echo number_format($order['commission_amount'], 2); ?>
                                     <?php else: ?>
-                                        <span class="text-muted">—</span>
+                                        <span class="text-muted">-</span>
                                     <?php endif; ?>
                                 </td>
                                 <td>
@@ -265,7 +265,7 @@ $showingTo = min($totalFiltered, $currentPage * $perPage);
                                             <?php echo $paymentOptions[$paymentKey] ?? ucfirst($paymentKey); ?>
                                         </span>
                                     <?php else: ?>
-                                        <span class="text-muted">—</span>
+                                        <span class="text-muted">-</span>
                                     <?php endif; ?>
                                 </td>
                                 <td>

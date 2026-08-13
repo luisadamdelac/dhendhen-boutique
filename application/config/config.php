@@ -23,7 +23,12 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 | a PHP script and you can easily do that on your own.
 |
 */
-$config['base_url'] = 'http://localhost/DropSell/';
+// Auto-detected from the current request (see BASE_URL in constants.php,
+// which loads before this file runs) so image/CSS/JS URLs resolve
+// correctly on whatever host actually served the page — localhost during
+// local dev, a LAN IP on another device, or the live production domain —
+// instead of every visitor's browser being pointed at "localhost".
+$config['base_url'] = BASE_URL;
 
 /*
 |--------------------------------------------------------------------------

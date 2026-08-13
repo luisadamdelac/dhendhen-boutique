@@ -1,7 +1,8 @@
 <?php
 /**
- * Forgot Password View — light fuchsia-pink brand theme, matching the
- * Dhendhen Beauty logo card used on login.php.
+ * Forgot Password View — same wine/pink palette as login.php (deep pink
+ * #d6006d/#b8005c accents, hot-pink #ff69b4 interactive details, soft pink
+ * page backdrop, white card).
  * File: application/views/auth/forgot_password.php
  */
 ?>
@@ -19,18 +20,17 @@
 
     <style>
         :root {
-            --ds-pink: #FF4FA2;
-            --ds-pink-light: #FF8CC5;
-            --ds-pink-dark: #E0439A;
-            --ds-fuchsia-bg: #F8A8CE;
-            --ds-gradient: linear-gradient(135deg, var(--ds-pink-light) 0%, var(--ds-pink) 55%, var(--ds-pink-dark) 100%);
+            --ds-pink: #d6006d;
+            --ds-pink-light: #ff69b4;
+            --ds-pink-dark: #b8005c;
+            --ds-gradient: linear-gradient(135deg, #d6006d 0%, #b8005c 100%);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             font-family: 'Poppins', sans-serif;
-            background: linear-gradient(135deg, #FFFFFF 0%, #FFE5F0 45%, #FFB8DD 75%, #FF9BCB 100%);
+            background: radial-gradient(circle at 50% 35%, #fdeef5 0%, #fbd9ea 55%, #f7c6de 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -43,9 +43,9 @@
         .forgot-container {
             position: relative;
             overflow: hidden;
-            background: var(--ds-fuchsia-bg);
+            background: #fff;
             border-radius: 24px;
-            box-shadow: 0 24px 60px rgba(224, 67, 154, 0.18);
+            box-shadow: 0 25px 70px rgba(214, 0, 109, 0.18);
             padding: 44px 40px 38px;
             animation: slideUp 0.5s ease-out;
         }
@@ -60,7 +60,7 @@
             content: "";
             position: absolute; right: -60px; bottom: -70px; width: 220px; height: 220px;
             border-radius: 50%;
-            background: radial-gradient(circle, rgba(255,79,162,.16) 0%, rgba(255,79,162,0) 70%);
+            background: radial-gradient(circle, rgba(255,105,180,.16) 0%, rgba(255,105,180,0) 70%);
             z-index: 0;
             pointer-events: none;
         }
@@ -74,7 +74,7 @@
             border-radius: 50%;
             overflow: hidden;
             border: 3px solid #fff;
-            box-shadow: 0 10px 26px rgba(224, 67, 154, 0.28);
+            box-shadow: 0 10px 26px rgba(214, 0, 109, 0.18);
         }
         .brand-logo-img { display: block; width: 100%; height: 100%; object-fit: cover; }
 
@@ -104,7 +104,7 @@
             justify-content: center;
             color: #fff;
             font-size: 22px;
-            box-shadow: 0 10px 24px rgba(255, 79, 162, 0.35);
+            box-shadow: 0 10px 24px rgba(255, 105, 180, 0.35);
         }
 
         .forgot-container h2 {
@@ -163,7 +163,7 @@
         .form-group input:focus {
             outline: none;
             border-color: var(--ds-pink);
-            box-shadow: 0 0 0 3px rgba(255, 79, 162, 0.14);
+            box-shadow: 0 0 0 3px rgba(255, 105, 180, 0.14);
         }
 
         .btn-submit {
@@ -183,7 +183,7 @@
             justify-content: center;
             gap: 8px;
         }
-        .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(255, 79, 162, 0.35); }
+        .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(255, 105, 180, 0.35); }
         .btn-submit:active { transform: translateY(0); }
 
         .or-divider {
@@ -232,7 +232,7 @@
         <div class="forgot-container">
             <div class="brand-header">
                 <div class="brand-logo-wrap">
-                    <img class="brand-logo-img" src="<?php echo base_url('public/uploads/avatars/c6e87fc1363436e5468a05c9c2a59b26.png'); ?>" alt="Dhendhen Beauty Products and Boutique">
+                    <img class="brand-logo-img" src="<?php echo base_url('public/uploads/avatars/c6e87fc1363436e5468a05c9c2a59b26.webp'); ?>" alt="Dhendhen Beauty Products and Boutique">
                 </div>
             </div>
 
@@ -243,7 +243,7 @@
             </div>
 
             <h2>Forgot <span class="accent">Password?</span></h2>
-            <p class="subtitle">No worries — enter your email address and we'll send you a verification code to reset it.</p>
+            <p class="subtitle">No worries. Enter your email address and we'll send you a verification code to reset it.</p>
 
             <?php if (!empty($error)): ?>
                 <div class="alert alert-danger">

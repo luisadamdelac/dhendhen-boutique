@@ -290,7 +290,7 @@ $current_image_path = !empty($primary_image['image_path']) ? $primary_image['ima
                             <div id="zonePlaceholder" style="<?= $current_image_path ? 'display:none;' : ''; ?>">
                                 <div class="zone-icon"><i class="fas fa-cloud-upload-alt"></i></div>
                                 <div class="zone-label"><strong>Click to upload</strong> or drag & drop</div>
-                                <div class="zone-hint">JPG, PNG, WebP — max 5 MB</div>
+                                <div class="zone-hint">JPG, PNG, WebP (max 5 MB)</div>
                             </div>
                             <div id="imagePreviewWrap" style="<?= $current_image_path ? 'display:block;' : ''; ?>">
                                 <img id="imagePreview" src="<?= $current_image_path ? htmlspecialchars(base_url($current_image_path)) : '#'; ?>" alt="Preview">
@@ -522,10 +522,10 @@ $current_image_path = !empty($primary_image['image_path']) ? $primary_image['ima
                         </div>
                         <div style="background:#f0f4ff;border:1px solid #c7d2fe;border-radius:10px;padding:8px 14px;margin-bottom:16px;font-size:.82rem;color:var(--text);display:flex;gap:8px;align-items:center;">
                             <i class="fas fa-circle-info" style="color:var(--primary-pink);"></i>
-                            <div>Numbers below are the <strong>current stock</strong> remaining per branch. Editing only adjusts the difference — existing stock history is preserved.</div>
+                            <div>Numbers below are the <strong>current stock</strong> remaining per branch. Editing only adjusts the difference. Existing stock history is preserved.</div>
                         </div>
 
-                        <p class="text-muted" style="margin-top:0;font-size:.85rem;">Add at least one Variation Type (e.g. Shade, Finish, Size — up to 5), give it a Value, then generate the combination(s) below to enter stock per branch.</p>
+                        <p class="text-muted" style="margin-top:0;font-size:.85rem;">Add at least one Variation Type (e.g. Shade, Finish, Size; up to 5), give it a Value, then generate the combination(s) below to enter stock per branch.</p>
 
                         <div class="table-responsive">
                             <table class="table table-sm variation-values-table table-stack" id="variationTypesContainer">
@@ -597,7 +597,7 @@ $current_image_path = !empty($primary_image['image_path']) ? $primary_image['ima
                                     <div class="stat-val" id="branchesStockedDisplay">0</div>
                                 </div>
                             </div>
-                            <small style="color: var(--gray); display:block; margin-top:8px;">Changing a branch quantity creates a stock adjustment batch for that branch (FIFO) — only the difference is applied, existing history is preserved.</small>
+                            <small style="color: var(--gray); display:block; margin-top:8px;">Changing a branch quantity creates a stock adjustment batch for that branch (FIFO). Only the difference is applied, existing history is preserved.</small>
                         </div>
 
                         <input type="hidden" name="variations_json" id="variationsJson" value="">
@@ -616,7 +616,7 @@ $current_image_path = !empty($primary_image['image_path']) ? $primary_image['ima
                             <label for="description">Product Description</label>
                             <textarea class="form-control" id="description" name="description"
                                 rows="5" maxlength="1000"
-                                placeholder="Describe the product — ingredients, usage, benefits…"><?= htmlspecialchars(set_value('description', $product['description'] ?? '')); ?></textarea>
+                                placeholder="Describe the product: ingredients, usage, benefits…"><?= htmlspecialchars(set_value('description', $product['description'] ?? '')); ?></textarea>
                             <div style="text-align:right;">
                                 <span class="char-counter"><span id="descCount">0</span>/1000</span>
                             </div>
@@ -626,7 +626,7 @@ $current_image_path = !empty($primary_image['image_path']) ? $primary_image['ima
                                     <li>Mention key ingredients or materials.</li>
                                     <li>Explain how to use the product.</li>
                                     <li>Highlight the main benefits for the customer.</li>
-                                    <li>Keep it clear and concise — up to 1000 characters.</li>
+                                    <li>Keep it clear and concise (up to 1000 characters).</li>
                                 </ul>
                             </div>
                         </div>
@@ -976,7 +976,7 @@ function initSmartSelect(opts) {
             if (ok) {
                 showSSToast(opts.entityLabel + ' "' + typed + '" created and selected.', 'success');
             } else {
-                showSSToast(message || ('Could not auto-create that ' + opts.entity + ' — please pick it from the list.'), 'error');
+                showSSToast(message || ('Could not auto-create that ' + opts.entity + '. Please pick it from the list.'), 'error');
             }
         });
     });
@@ -1200,6 +1200,10 @@ const VARIATION_BRANCHES = <?= json_encode(array_map(fn($b) => [
     'id' => (int) $b['branch_id'],
     'label' => explode(' ', trim($b['branch_name']))[0] . ' Stock',
 ], $branches)); ?>;
+// Real per-branch stock for this product's base (no-variation) batches —
+// seeds the "Base Product (No Variations)" row below with actual numbers
+// instead of zeros; see initExistingVariations().
+const BASE_STOCK = <?= json_encode($base_stock ?? [], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
 // Soft ceiling only — guards against runaway combination counts (an N-axis
 // cartesian product grows multiplicatively), not an artificial "2 types"
 // design limit. Raise it further if a real catalog ever needs more.
@@ -1264,7 +1268,7 @@ addVariationTypeBtn.addEventListener('click', () => {
     if (!available.length) {
         const empty = document.createElement('div');
         empty.className = 'smart-select-empty';
-        empty.textContent = 'All preset types added — type a custom name above.';
+        empty.textContent = 'All preset types added. Type a custom name above.';
         variationTypeDropdown.appendChild(empty);
     } else {
         available.forEach(type => {
@@ -1326,7 +1330,7 @@ function addVariationValueRow(block, value) {
 
     row.innerHTML =
         '<td><input type="text" class="form-control form-control-sm variation-value-input" placeholder="Value (e.g. Red)" value="' + escHtml(value ? value.variation_value : '') + '"></td>' +
-        '<td><input type="number" step="1" min="1" class="form-control form-control-sm variation-pieces-per-unit-input" title="How many individual pieces one unit of this value represents (e.g. 10 for &quot;1 Set (10 pcs)&quot;) — selling 1 unit deducts this many pieces from its stock. Leave at 1 if this value isn\'t a multi-piece bundle." value="' + (value && value.pieces_per_unit ? parseInt(value.pieces_per_unit, 10) : 1) + '"></td>' +
+        '<td><input type="number" step="1" min="1" class="form-control form-control-sm variation-pieces-per-unit-input" title="How many individual pieces one unit of this value represents (e.g. 10 for &quot;1 Set (10 pcs)&quot;). Selling 1 unit deducts this many pieces from its stock. Leave at 1 if this value isn\'t a multi-piece bundle." value="' + (value && value.pieces_per_unit ? parseInt(value.pieces_per_unit, 10) : 1) + '"></td>' +
         '<td><select class="form-control form-control-sm variation-default-status-select">' +
             '<option value="active"' + (!value || value.status !== 'inactive' ? ' selected' : '') + '>Active</option>' +
             '<option value="inactive"' + (value && value.status === 'inactive' ? ' selected' : '') + '>Inactive</option>' +
@@ -1628,7 +1632,7 @@ function openApplyModal(opts) {
     let title, bodyHtml;
 
     if (isSmart) {
-        title = 'Smart Apply — ' + opts.value;
+        title = 'Smart Apply: ' + opts.value;
         bodyHtml =
             '<p class="text-muted" style="font-size:.85rem;">Applies to every combination containing "' + escHtml(opts.value) + '" without affecting other values.</p>' +
             '<div class="form-group"><label>Price Adjustment (leave blank for no change)</label><input type="number" step="0.01" class="form-control form-control-sm" id="applyModalPrice"></div>' +
@@ -1773,7 +1777,7 @@ function openCombinationImageModal(tr, key, label) {
             '<small style="color:var(--gray);display:block;margin-top:10px;">Only used for the &ldquo;' + escHtml(label) + '&rdquo; combination.</small>' +
         '</div>';
 
-    showModal('Combination Image — ' + label, bodyHtml, () => {}, 'Done', true);
+    showModal('Combination Image: ' + label, bodyHtml, () => {}, 'Done', true);
 
     document.getElementById('variationImageModalChooseBtn').addEventListener('click', () => imageInput.click());
 
@@ -1807,6 +1811,19 @@ function openCombinationImageModal(tr, key, label) {
         if (!byType[v.variation_type]) byType[v.variation_type] = [];
         byType[v.variation_type].push(v);
     });
+
+    // Seed the zero-axis "Base Product (No Variations)" row with this
+    // product's real base stock — generateCombinations() below always
+    // produces that row (cartesianAxes([]) yields one empty combo), but
+    // with no existing entry at key '' it would default branch_stock to
+    // all zeros, hiding a simple (no-variation) product's actual stock.
+    // Dropped automatically by generateCombinations() if the product turns
+    // out to have real variation types instead.
+    combinationRows[''] = {
+        axes: [], sku: '', barcode: '', price_adjustment: 0, status: 'active',
+        branch_stock: BASE_STOCK, row_key: 'base_no_variant',
+        price_manually_set: false, status_manually_set: false,
+    };
 
     suppressCombinationRegen = true;
     Object.keys(byType).forEach(type => addVariationTypeBlock(type, byType[type]));

@@ -427,7 +427,7 @@
                         </div>
                         <?php else: ?>
                         <div style="background:#fff3cd; border-radius:8px; padding:10px 14px; margin-bottom:15px; font-size:12px; color:#856404; text-align:center;">
-                            <i class="fas fa-info-circle"></i> No GCash QR code has been set up yet — send payment manually to the number below.
+                            <i class="fas fa-info-circle"></i> No GCash QR code has been set up yet. Send payment manually to the number below.
                         </div>
                         <?php endif; ?>
 
@@ -918,9 +918,9 @@
         };
 
         if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(number).then(done).catch(() => showCheckoutNotice('Could not copy automatically — please copy the number manually.'));
+            navigator.clipboard.writeText(number).then(done).catch(() => showCheckoutNotice('Could not copy automatically. Please copy the number manually.'));
         } else {
-            showCheckoutNotice('Could not copy automatically — please copy the number manually.');
+            showCheckoutNotice('Could not copy automatically. Please copy the number manually.');
         }
     }
 
@@ -960,8 +960,16 @@
             // isn't installed, so this works whether or not the app is
             // already on the phone. See:
             // https://developer.chrome.com/docs/multidevice/android/intents/
+            //
+            // The intent:// authority (host) must not be left empty — every
+            // documented example (Chrome's own docs included) puts a token
+            // there, and a bare "intent://#Intent;...;end" fails to resolve
+            // to the installed app on a number of real Android/Chrome builds,
+            // falling straight through to browser_fallback_url even when
+            // GCash *is* installed. Using the scheme itself as that token
+            // keeps the intent well-formed either way.
             const fallback = encodeURIComponent('https://play.google.com/store/apps/details?id=com.globe.gcash.android');
-            window.location.href = 'intent://#Intent;scheme=gcash;package=com.globe.gcash.android;S.browser_fallback_url=' + fallback + ';end';
+            window.location.href = 'intent://gcash#Intent;scheme=gcash;package=com.globe.gcash.android;S.browser_fallback_url=' + fallback + ';end';
         } else {
             window.location.href = 'gcash://';
         }
@@ -975,10 +983,10 @@
                     // Android's intent:// does, so send the user to install
                     // the app ourselves instead of leaving the tap looking
                     // like it did nothing.
-                    showCheckoutNotice("GCash isn't installed — opening the App Store so you can install it.");
+                    showCheckoutNotice("GCash isn't installed. Opening the App Store so you can install it.");
                     window.location.href = 'https://apps.apple.com/ph/app/gcash/id520020791';
                 } else {
-                    showCheckoutNotice("Couldn't open the GCash app automatically — make sure it's installed, or scan the QR code / use the number above instead.");
+                    showCheckoutNotice("Couldn't open the GCash app automatically. Make sure it's installed, or scan the QR code / use the number above instead.");
                 }
             }
         }, 1800);

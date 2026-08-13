@@ -43,7 +43,7 @@
     <header class="header">
         <div class="header-content">
             <a href="<?php echo BASE_URL; ?>shop" class="logo">
-                <span class="logo-badge"><img src="<?php echo base_url('public/uploads/avatars/c6e87fc1363436e5468a05c9c2a59b26.png'); ?>" alt="<?php echo SITE_NAME; ?>"></span>
+                <span class="logo-badge"><img src="<?php echo base_url('public/uploads/avatars/c6e87fc1363436e5468a05c9c2a59b26.webp'); ?>" alt="<?php echo SITE_NAME; ?>"></span>
                 <?php echo SITE_NAME; ?>
             </a>
 
@@ -67,6 +67,17 @@
                     <a href="<?php echo BASE_URL; ?>account" class="header-btn">
                         <img src="<?php echo $headerAvatarSrc; ?>" alt="" style="width:26px;height:26px;border-radius:50%;object-fit:cover;flex-shrink:0;">
                         <span><?php echo $_SESSION['full_name'] ?? $_SESSION['email'] ?? 'Account'; ?></span>
+                    </a>
+                    <?php
+                        $CI = &get_instance();
+                        $CI->load->model('Notification_model');
+                        $headerUnreadNotifCount = $CI->Notification_model->get_unread_count($_SESSION['user_id'], 'customer');
+                    ?>
+                    <a href="<?php echo BASE_URL; ?>notifications" class="header-btn" title="Notifications">
+                        <i class="fas fa-bell"></i>
+                        <?php if ($headerUnreadNotifCount > 0): ?>
+                            <span class="cart-badge"><?php echo $headerUnreadNotifCount; ?></span>
+                        <?php endif; ?>
                     </a>
                     <a href="<?php echo BASE_URL; ?>cart" class="header-btn">
                         <i class="fas fa-shopping-cart"></i>

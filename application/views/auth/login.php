@@ -536,7 +536,7 @@
             <div class="login-left">
                 <div class="brand-section">
                     <div class="brand-logo-wrap">
-                        <img class="brand-logo-img" src="<?php echo base_url('public/uploads/avatars/c6e87fc1363436e5468a05c9c2a59b26.png'); ?>" alt="Dhendhen Beauty Products and Boutique">
+                        <img class="brand-logo-img" src="<?php echo base_url('public/uploads/avatars/c6e87fc1363436e5468a05c9c2a59b26.webp'); ?>" alt="Dhendhen Beauty Products and Boutique">
                     </div>
                     <h1 class="brand-name">DropSell</h1>
                     <p class="brand-title">Dropshipping Management System</p>

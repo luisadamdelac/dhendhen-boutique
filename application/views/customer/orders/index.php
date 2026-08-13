@@ -492,6 +492,34 @@ $showingTo = min($totalFiltered, $currentPage * $perPage);
             font-size: 13px;
         }
     }
+
+    /* The "Order Details" cell (thumbnail + order # + View Details link)
+       is wider than the space table-stack's generic space-between row
+       leaves next to its "ORDER DETAILS" label, so on mobile it overflowed
+       past the card edge instead of wrapping (thumbnail/link clipped).
+       Stack the label above it and let it use the full row width instead. */
+    @media (max-width: 768px) {
+        .orders-table.table-stack td:first-child {
+            flex-direction: column;
+            align-items: flex-start;
+            text-align: left;
+            gap: 6px;
+        }
+        .orders-table.table-stack td:first-child .order-details-cell {
+            min-width: 0;
+            width: 100%;
+        }
+        .orders-table.table-stack td:first-child .order-details-cell > div {
+            min-width: 0;
+        }
+        .order-number,
+        .order-view-link {
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+    }
 </style>
 
 <div class="orders-page-header">
@@ -609,7 +637,7 @@ $showingTo = min($totalFiltered, $currentPage * $perPage);
                                         </button>
                                     <?php endif; ?>
                                 <?php else: ?>
-                                    <span class="text-muted">—</span>
+                                    <span class="text-muted">-</span>
                                 <?php endif; ?>
                             </td>
                         </tr>

@@ -6,7 +6,7 @@
         <div class="footer-content">
             <div class="footer-section">
                 <h4>
-                    <span class="footer-logo-badge"><img src="<?php echo base_url('public/uploads/avatars/c6e87fc1363436e5468a05c9c2a59b26.png'); ?>" alt="<?php echo SITE_NAME; ?>"></span> <?php echo SITE_NAME; ?>
+                    <span class="footer-logo-badge"><img src="<?php echo base_url('public/uploads/avatars/c6e87fc1363436e5468a05c9c2a59b26.webp'); ?>" alt="<?php echo SITE_NAME; ?>"></span> <?php echo SITE_NAME; ?>
                 </h4>
                 <p>
                     Your trusted online beauty products and boutique shop.

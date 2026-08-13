@@ -79,6 +79,8 @@ $route['cart/(:any)'] = 'customer/Cart/$1';
 $route['checkout'] = 'customer/Checkout/index';
 $route['checkout/resubmit_payment/(:num)'] = 'customer/Checkout/resubmit_payment/$1';
 $route['checkout/(:any)'] = 'customer/Checkout/$1';
+$route['notifications'] = 'customer/Notifications';
+$route['notifications/(:any)'] = 'customer/Notifications/$1';
 
 // Authentication Routes
 $route['login'] = 'auth/login';

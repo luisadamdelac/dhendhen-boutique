@@ -136,7 +136,7 @@
                                     </div>
                                 </div>
                             </td>
-                            <td><?= htmlspecialchars($staff['contact_number'] ?? '—'); ?></td>
+                            <td><?= htmlspecialchars($staff['contact_number'] ?? '-'); ?></td>
                             <td>
                                 <?php if (!empty($staff['branch_name'])): ?>
                                     <div style="font-size:13px;color:#1a1a2e;"><?= htmlspecialchars($staff['branch_name']); ?></div>
@@ -144,7 +144,7 @@
                                         <div style="font-size:11px;color:#8a94ad;"><?= htmlspecialchars($staff['branch_city']); ?></div>
                                     <?php endif; ?>
                                 <?php else: ?>
-                                    <span class="text-muted">—</span>
+                                    <span class="text-muted">-</span>
                                 <?php endif; ?>
                             </td>
                             <td>

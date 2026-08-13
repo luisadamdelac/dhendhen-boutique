@@ -25,7 +25,7 @@
                     <p class="hero-subtitle">
                         One platform for Admins, Staff, Resellers, and Customers. DropSell brings inventory,
                         orders, commissions, and multi-branch management together in a single, easy-to-use
-                        dashboard — so every role on your team knows exactly what to do next.
+                        dashboard, so every role on your team knows exactly what to do next.
                     </p>
 
                     <div class="hero-actions">

@@ -218,6 +218,11 @@ class Orders extends CI_Controller {
         require_once APPPATH . 'services/StockService.php';
         require_once APPPATH . 'services/CommissionService.php';
 
+        // Wrapped so a failure partway through (stock restore, commission
+        // reversal) can't leave the order flipped to 'cancelled' while its
+        // stock/commission consequences never actually landed.
+        $this->db->trans_start();
+
         $items = $this->db->where('order_id', $id)->get(ORDER_DETAILS_TABLE)->result_array();
         foreach ($items as $item) {
             if (!empty($item['variant_id'])) {
@@ -239,6 +244,13 @@ class Orders extends CI_Controller {
             'order_status' => 'cancelled',
             'updated_at' => date('Y-m-d H:i:s'),
         ]);
+
+        $this->db->trans_complete();
+
+        if ($this->db->trans_status() === FALSE) {
+            $this->session->set_flashdata('error', 'Failed to cancel order. Please try again.');
+            redirect('customer/orders/view/' . $id);
+        }
 
         $this->session->set_flashdata('success', 'Order cancelled successfully');
         redirect('customer/orders/view/' . $id);

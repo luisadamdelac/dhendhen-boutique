@@ -3,7 +3,7 @@ class Dashboard extends Authenticated_Controller {
     public function __construct() {
         parent::__construct();
         $this->require_role(ROLE_RESELLER);
-        $this->load->model(['order_model', 'commission_model', 'activity_log_model', 'Notification_model']);
+        $this->load->model(['order_model', 'commission_model', 'activity_log_model', 'Notification_model', 'reseller_model']);
     }
 
     public function index() {
@@ -117,11 +117,19 @@ class Dashboard extends Authenticated_Controller {
             return (float) ($row->amount ?? 0);
         };
 
+        // 'paid' sourced from reseller_tbl.total_withdrawn, same as
+        // Commissions::index() — not re-derived by summing commission rows
+        // tagged 'withdrawn' here, since Withdrawal::mark_processed() tags
+        // them one at a time up to the payout amount and any drift there
+        // (partial rows, rounding) previously made this stat silently
+        // disagree with the Commissions page for the same reseller.
+        $reseller = $this->reseller_model->get_by_id($reseller_id);
+
         return [
             'total_earned' => $this->commission_model->get_total_earned($reseller_id),
             'pending' => $sumByStatus('pending'),
             'approved' => $sumByStatus('released'),
-            'paid' => $sumByStatus('withdrawn'),
+            'paid' => (float) ($reseller['total_withdrawn'] ?? 0),
         ];
     }
 

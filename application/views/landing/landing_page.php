@@ -38,6 +38,11 @@
 
     *{ box-sizing:border-box; margin:0; padding:0; }
     html,body{ height:100%; }
+    html{ scroll-behavior:smooth; }
+    /* Anchor targets otherwise land flush with the viewport top, right under
+       the sticky navbar — this reserves space so the section's own heading
+       clears it instead of hiding behind the bar. */
+    #products, #features, #roles, #contact{ scroll-margin-top:90px; }
 
     body{
       font-family:'Poppins',sans-serif;
@@ -273,6 +278,23 @@
     .cta-band .btn-ghost{ background:rgba(255,255,255,0.2); border-color:rgba(255,255,255,0.4); color:white; }
     .cta-band .btn-primary{ background:white; color:var(--pink-dark); }
 
+    /* Contact */
+    .contact-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:20px; max-width:900px; margin:0 auto; }
+    .contact-card{
+      padding:24px;
+      border-radius:var(--radius-lg);
+      box-shadow: var(--shadow-soft);
+      text-align:center;
+    }
+    .contact-card .feature-icon{ margin:0 auto 14px; }
+    .contact-card-label{ font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:0.4px; color:var(--muted); margin-bottom:6px; }
+    .contact-card-value{ font-size:14.5px; font-weight:700; word-break:break-word; }
+    .contact-card-value a{ color:inherit; }
+
+    @media (max-width: 900px){
+      .contact-grid{ grid-template-columns:1fr; }
+    }
+
     /* Footer */
     .footer{
       padding:30px 0;
@@ -326,7 +348,7 @@
         <p class="hero-sub">One platform for Admins, Staff, Resellers, and Customers.</p>
         <p class="hero-desc">
           DropSell brings inventory, orders, commissions, and multi-branch management
-          together in a single, easy-to-use dashboard — so every role on your team
+          together in a single, easy-to-use dashboard, so every role on your team
           knows exactly what to do next.
         </p>
         <div class="hero-actions">
@@ -457,7 +479,43 @@
     </div>
   </section>
 
-  <footer class="footer" id="contact">
+  <?php if (!empty($contactEmail) || !empty($contactPhone) || !empty($contactAddress)): ?>
+  <section class="section" id="contact">
+    <div class="container">
+      <div class="section-head">
+        <span class="section-eyebrow">Get in Touch</span>
+        <h2 class="section-title">Contact Us</h2>
+        <p class="section-desc">Have a question? Reach out through any of these.</p>
+      </div>
+
+      <div class="contact-grid">
+        <?php if (!empty($contactEmail)): ?>
+        <div class="contact-card glass">
+          <div class="feature-icon"><i class="fas fa-envelope"></i></div>
+          <div class="contact-card-label">Email</div>
+          <div class="contact-card-value"><a href="mailto:<?php echo htmlspecialchars($contactEmail); ?>"><?php echo htmlspecialchars($contactEmail); ?></a></div>
+        </div>
+        <?php endif; ?>
+        <?php if (!empty($contactPhone)): ?>
+        <div class="contact-card glass">
+          <div class="feature-icon"><i class="fas fa-phone"></i></div>
+          <div class="contact-card-label">Phone</div>
+          <div class="contact-card-value"><a href="tel:<?php echo htmlspecialchars($contactPhone); ?>"><?php echo htmlspecialchars($contactPhone); ?></a></div>
+        </div>
+        <?php endif; ?>
+        <?php if (!empty($contactAddress)): ?>
+        <div class="contact-card glass">
+          <div class="feature-icon"><i class="fas fa-location-dot"></i></div>
+          <div class="contact-card-label">Address</div>
+          <div class="contact-card-value"><?php echo htmlspecialchars($contactAddress); ?></div>
+        </div>
+        <?php endif; ?>
+      </div>
+    </div>
+  </section>
+  <?php endif; ?>
+
+  <footer class="footer">
     <div class="container">
       &copy; <?php echo date('Y'); ?> <a href="<?php echo site_url('landing'); ?>">DropSell</a>. All rights reserved.
     </div>

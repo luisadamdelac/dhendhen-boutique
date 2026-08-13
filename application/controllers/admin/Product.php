@@ -978,6 +978,17 @@ class Product extends Authenticated_Controller {
             }
         }
 
+        // Wrapped so a later validation failure (e.g. "still has stock,
+        // reduce first" from _save_variant_combinations()) can't leave
+        // earlier steps in this same save (product fields, base stock,
+        // variation values) already committed while the admin sees a plain
+        // error and assumes nothing was saved. trans_rollback() is called
+        // explicitly in the catch below rather than trans_complete(), since
+        // these are application-level validation exceptions, not failed SQL
+        // queries — trans_complete() alone wouldn't detect them as a failure
+        // and would commit the partial writes anyway.
+        $this->db->trans_start();
+
         $this->Product_model->update($product_id, $product_data);
 
         // Base stock + variation values + generated combinations — Product
@@ -987,7 +998,16 @@ class Product extends Authenticated_Controller {
             $valueIdMap = $this->_save_variation_values($product_id);
             $this->_save_variant_combinations($product_id, $valueIdMap);
         } catch (Exception $e) {
+            $this->db->trans_rollback();
             $this->session->set_flashdata('error', $e->getMessage());
+            redirect("admin/product/edit/{$product_id}");
+            return;
+        }
+
+        $this->db->trans_complete();
+
+        if ($this->db->trans_status() === FALSE) {
+            $this->session->set_flashdata('error', 'Database error — product could not be saved. Please try again.');
             redirect("admin/product/edit/{$product_id}");
             return;
         }

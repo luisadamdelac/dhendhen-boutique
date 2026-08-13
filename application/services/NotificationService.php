@@ -246,6 +246,30 @@ class NotificationService {
     }
 
     /**
+     * Tell a reseller that customers were already waiting on a product they
+     * just published, so the demand isn't invisible to them.
+     */
+    public static function productPreordered($resellerId, $productId, $productName, $preorderCount) {
+        NotificationService::create('reseller', $resellerId,
+            'Customers Were Waiting',
+            $preorderCount . ' customer' . ($preorderCount === 1 ? '' : 's') . ' pre-ordered "' . $productName . '" before you published it. Check your listing for details.',
+            'system', $productId);
+    }
+
+    /**
+     * Tells one customer who clicked "Notify Me" (product_preorders_tbl) that
+     * the product they were waiting on is now published and buyable — the
+     * counterpart to productPreordered() above, which only ever told the
+     * reseller demand existed, never the waiting customers themselves.
+     */
+    public static function productAvailable($customerId, $productId, $productName) {
+        NotificationService::create('customer', $customerId,
+            'Now Available!',
+            '"' . $productName . '" is now available to buy. Head to the shop to check it out.',
+            'system', $productId);
+    }
+
+    /**
      * Get unread count for user
      */
     public static function getUnreadCount($userType, $userId) {

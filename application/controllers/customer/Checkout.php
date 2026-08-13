@@ -28,7 +28,9 @@ class Checkout extends CI_Controller {
         $cart = $this->session->userdata('cart') ?: [];
         [$cartItems, $subtotal, $validCart] = CartService::getCartItems($cart);
 
-        if (count($validCart) !== count($cart)) {
+        // Always persist, not just when a whole line disappeared — see the
+        // matching note in customer/Cart.php::index().
+        if ($validCart != $cart) {
             $this->session->set_userdata('cart', $validCart);
         }
 

@@ -56,7 +56,7 @@ $current_page = 'reseller';
                                 <td class="ps-3 fw-semibold">
                                     <?= htmlspecialchars(trim($r['first_name'] . ' ' . ($r['middle_name'] ? $r['middle_name'] . ' ' : '') . $r['last_name'])); ?>
                                 </td>
-                                <td><?= htmlspecialchars($r['business_name'] ?? '—'); ?></td>
+                                <td><?= htmlspecialchars($r['business_name'] ?? '-'); ?></td>
                                 <td><?= htmlspecialchars($r['email']); ?></td>
                                 <td><?= htmlspecialchars($r['contact_number']); ?></td>
                                 <td>
@@ -70,7 +70,7 @@ $current_page = 'reseller';
                                     </span>
                                 </td>
                                 <td>
-                                    <span style="font-size:12px;color:#8a94ad;"><?= !empty($r['admin_remarks']) ? htmlspecialchars($r['admin_remarks']) : '—'; ?></span>
+                                    <span style="font-size:12px;color:#8a94ad;"><?= !empty($r['admin_remarks']) ? htmlspecialchars($r['admin_remarks']) : '-'; ?></span>
                                 </td>
                                 <td class="text-center pe-3">
                                     <?php if ($r['status'] === 'pending'): ?>
@@ -99,7 +99,7 @@ $current_page = 'reseller';
                                             </button>
                                         </div>
                                     <?php else: ?>
-                                        <span class="text-muted small">—</span>
+                                        <span class="text-muted small">-</span>
                                     <?php endif; ?>
                                 </td>
                             </tr>

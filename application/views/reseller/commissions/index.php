@@ -121,7 +121,7 @@
                                     </span>
                                 </td>
                                 <td><?php echo date('M d, Y', strtotime($c['created_at'])); ?></td>
-                                <td><?php echo !empty($c['released_at']) ? date('M d, Y', strtotime($c['released_at'])) : '—'; ?></td>
+                                <td><?php echo !empty($c['released_at']) ? date('M d, Y', strtotime($c['released_at'])) : '-'; ?></td>
                             </tr>
                         <?php endforeach; ?>
                     </tbody>

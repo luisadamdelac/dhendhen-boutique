@@ -8,7 +8,7 @@
         </svg>
         <div class="ds-hero-banner-content">
             <h4 class="fw-bold mb-0" style="color:#1a1a2e;">Order Management</h4>
-            <small class="text-muted">Welcome back, <strong><?php echo htmlspecialchars($user_full_name ?? 'Staff'); ?></strong> — review and fulfill customer orders.</small>
+            <small class="text-muted">Welcome back, <strong><?php echo htmlspecialchars($user_full_name ?? 'Staff'); ?></strong>. Review and fulfill customer orders.</small>
         </div>
     </div>
 
@@ -50,7 +50,7 @@
                                                 </span>
                                             <?php else: ?>
                                                 <span class="badge bg-secondary" style="font-size:.75rem;white-space:normal;">
-                                                    <i class="fas fa-check"></i> <?php echo ucfirst(str_replace('_', ' ', $order['order_status'])); ?> — no further action needed
+                                                    <i class="fas fa-check"></i> <?php echo ucfirst(str_replace('_', ' ', $order['order_status'])); ?> (no further action needed)
                                                 </span>
                                             <?php endif; ?>
                                         </td>

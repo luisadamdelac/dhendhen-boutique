@@ -119,7 +119,7 @@
                         $wStatus = $w['status'] ?? 'pending';
                         $wBadge  = ['pending' => 'warning', 'approved' => 'success', 'rejected' => 'danger', 'completed' => 'info'][$wStatus] ?? 'info';
                         $wNum    = $w['withdrawal_number'] ?? ('#' . $w['withdrawal_id']);
-                        $rName   = htmlspecialchars(trim(($w['first_name'] ?? '') . ' ' . ($w['last_name'] ?? '')) ?: '—');
+                        $rName   = htmlspecialchars(trim(($w['first_name'] ?? '') . ' ' . ($w['last_name'] ?? '')) ?: '-');
                         $method  = $w['payment_method'] ?? $w['method'] ?? 'gcash';
                         $methodColors = ['gcash' => '#007DFF', 'bank_transfer' => '#ff9800', 'cod' => '#4caf50'];
                         $methodIcons  = ['gcash' => 'fa-mobile-alt', 'bank_transfer' => 'fa-university', 'cod' => 'fa-money-bill-wave'];
@@ -146,7 +146,7 @@
                             <span class="badge-status badge-<?= $wStatus; ?>"><?= ucfirst($wStatus); ?></span>
                         </td>
                         <td style="font-size: 12px; color: var(--gray);">
-                            <?= !empty($w['created_at']) ? date('M d, Y', strtotime($w['created_at'])) : '—'; ?>
+                            <?= !empty($w['created_at']) ? date('M d, Y', strtotime($w['created_at'])) : '-'; ?>
                         </td>
                         <td class="text-center pe-3">
                             <a href="<?= site_url('admin/withdrawal/view/' . $w['withdrawal_id']); ?>"

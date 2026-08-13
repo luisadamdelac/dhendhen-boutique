@@ -63,8 +63,8 @@
                                 </td>
                                 <td><?= (int) $log['user_id']; ?></td>
                                 <td><?= htmlspecialchars($log['action']); ?></td>
-                                <td><?= htmlspecialchars($log['details'] ?? '—'); ?></td>
-                                <td><?= htmlspecialchars($log['ip_address'] ?? '—'); ?></td>
+                                <td><?= htmlspecialchars($log['details'] ?? '-'); ?></td>
+                                <td><?= htmlspecialchars($log['ip_address'] ?? '-'); ?></td>
                             </tr>
                         <?php endforeach; ?>
                     </tbody>

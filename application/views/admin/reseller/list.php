@@ -115,7 +115,7 @@
                     <?php foreach ($resellers as $r): ?>
                     <?php
                         $rStatus  = $r['status'] ?? 'active';
-                        $fullName = htmlspecialchars(trim(($r['first_name'] ?? '') . ' ' . ($r['last_name'] ?? ''))) ?: '—';
+                        $fullName = htmlspecialchars(trim(($r['first_name'] ?? '') . ' ' . ($r['last_name'] ?? ''))) ?: '-';
                         $initials = strtoupper(substr($r['first_name'] ?? 'R', 0, 1) . substr($r['last_name'] ?? '', 0, 1));
                     ?>
                     <tr data-status="<?= htmlspecialchars($rStatus); ?>">
@@ -139,7 +139,7 @@
                             </div>
                         </td>
                         <td>
-                            <div style="font-size:13px;"><?= htmlspecialchars($r['email'] ?? '—'); ?></div>
+                            <div style="font-size:13px;"><?= htmlspecialchars($r['email'] ?? '-'); ?></div>
                             <?php if (!empty($r['contact_number'])): ?>
                                 <div style="font-size:11px;color:#8a94ad;"><?= htmlspecialchars($r['contact_number']); ?></div>
                             <?php endif; ?>

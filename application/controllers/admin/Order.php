@@ -287,9 +287,20 @@ class Order extends Authenticated_Controller {
         }
 
         $old_status = $order['order_status'];
-        $this->db->update(ORDER_TABLE, ['order_status' => $new_status, 'updated_at' => date('Y-m-d H:i:s')], ['order_id' => $order_id]);
 
+        // Wrapped so a failure partway through the side effects (stock
+        // restore, commission release/reversal, payment status flip) can't
+        // leave order_status changed while the rest of that transition's
+        // consequences never actually landed.
+        $this->db->trans_start();
+        $this->db->update(ORDER_TABLE, ['order_status' => $new_status, 'updated_at' => date('Y-m-d H:i:s')], ['order_id' => $order_id]);
         apply_order_status_side_effects($order, $old_status, $new_status);
+        $this->db->trans_complete();
+
+        if ($this->db->trans_status() === FALSE) {
+            echo json_encode(['success' => FALSE, 'message' => 'Failed to update order status. Please try again.']);
+            return;
+        }
 
         $this->Activity_log_model->log_activity(get_user_id(), 'admin', 'update_order_status', "Updated order $order_id status to $new_status", get_client_ip());
         echo json_encode(['success' => TRUE, 'message' => 'Order status updated successfully']);

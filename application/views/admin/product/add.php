@@ -388,7 +388,7 @@
                             <div id="zonePlaceholder">
                                 <div class="zone-icon"><i class="fas fa-cloud-upload-alt"></i></div>
                                 <div class="zone-label"><strong>Click to upload</strong> or drag & drop</div>
-                                <div class="zone-hint">JPG, PNG, WebP — max 5 MB</div>
+                                <div class="zone-hint">JPG, PNG, WebP (max 5 MB)</div>
                             </div>
                             <div id="imagePreviewWrap">
                                 <img id="imagePreview" src="#" alt="Preview">
@@ -640,13 +640,13 @@
                     <hr>
                 </div>
 
-                <p class="text-muted" style="margin-top:-6px;font-size:.85rem;">Add at least one Variation Type (e.g. Shade, Finish, Size — up to 5), give it a Value, then generate the combination(s) below to enter stock per branch.</p>
+                <p class="text-muted" style="margin-top:-6px;font-size:.85rem;">Add at least one Variation Type (e.g. Shade, Finish, Size; up to 5), give it a Value, then generate the combination(s) below to enter stock per branch.</p>
 
                 <div class="table-responsive">
                     <table class="table table-sm variation-values-table table-stack" id="variationTypesContainer">
                         <thead>
                             <tr>
-                                <th>Value</th><th>Pcs / Unit</th><th>Default Status</th><th class="text-center">Smart Apply</th><th class="text-center">Remove</th>
+                                <th>Value</th><th>Pcs / Unit</th><th class="text-center">Smart Apply</th><th class="text-center">Remove</th>
                             </tr>
                         </thead>
                     </table>
@@ -721,7 +721,7 @@
                     <label for="description">Product Description</label>
                     <textarea class="form-control" id="description" name="description"
                         rows="5" maxlength="1000"
-                        placeholder="Describe the product — ingredients, usage, benefits…"><?= htmlspecialchars(set_value('description')); ?></textarea>
+                        placeholder="Describe the product: ingredients, usage, benefits…"><?= htmlspecialchars(set_value('description')); ?></textarea>
                     <div style="text-align:right;">
                         <span class="char-counter"><span id="descCount">0</span>/1000</span>
                     </div>
@@ -731,7 +731,7 @@
                             <li>Mention key ingredients or materials.</li>
                             <li>Explain how to use the product.</li>
                             <li>Highlight the main benefits for the customer.</li>
-                            <li>Keep it clear and concise — up to 1000 characters.</li>
+                            <li>Keep it clear and concise (up to 1000 characters).</li>
                         </ul>
                     </div>
                 </div>
@@ -759,7 +759,7 @@
                     <span class="section-title"><i class="fas fa-clipboard-check me-2"></i>Product Summary</span>
                     <hr>
                 </div>
-                <p class="text-muted" style="margin-top:-6px;">Live summary of the details you've entered above — check everything before creating the product.</p>
+                <p class="text-muted" style="margin-top:-6px;">Live summary of the details you've entered above. Check everything before creating the product.</p>
                 <div class="row">
                     <div class="col col-4">
                         <div class="review-image-wrap">
@@ -767,22 +767,22 @@
                         </div>
                         <div class="review-item" style="margin-top:14px;border-bottom:none;">
                             <div class="rev-lbl">Status</div>
-                            <div class="rev-val" id="rev_status">—</div>
+                            <div class="rev-val" id="rev_status">-</div>
                         </div>
                     </div>
                     <div class="col col-8">
                         <div class="review-grid">
-                            <div class="review-item"><div class="rev-lbl">Product Name</div><div class="rev-val" id="rev_name">—</div></div>
-                            <div class="review-item"><div class="rev-lbl">SKU</div><div class="rev-val" id="rev_sku">—</div></div>
-                            <div class="review-item"><div class="rev-lbl">Brand</div><div class="rev-val" id="rev_brand">—</div></div>
-                            <div class="review-item"><div class="rev-lbl">Category</div><div class="rev-val" id="rev_category">—</div></div>
-                            <div class="review-item"><div class="rev-lbl">Subcategory</div><div class="rev-val" id="rev_subcategory">—</div></div>
-                            <div class="review-item"><div class="rev-lbl">Cost Price</div><div class="rev-val" id="rev_cost">—</div></div>
-                            <div class="review-item"><div class="rev-lbl">Selling Price</div><div class="rev-val" id="rev_price">—</div></div>
-                            <div class="review-item"><div class="rev-lbl">Markup</div><div class="rev-val" id="rev_markup">—</div></div>
-                            <div class="review-item"><div class="rev-lbl">Total Stock</div><div class="rev-val" id="rev_total_stock">—</div></div>
-                            <div class="review-item"><div class="rev-lbl">Minimum Stock Alert</div><div class="rev-val" id="rev_min_stock">—</div></div>
-                            <div class="review-item"><div class="rev-lbl">Expiry Date</div><div class="rev-val" id="rev_expiry">—</div></div>
+                            <div class="review-item"><div class="rev-lbl">Product Name</div><div class="rev-val" id="rev_name">-</div></div>
+                            <div class="review-item"><div class="rev-lbl">SKU</div><div class="rev-val" id="rev_sku">-</div></div>
+                            <div class="review-item"><div class="rev-lbl">Brand</div><div class="rev-val" id="rev_brand">-</div></div>
+                            <div class="review-item"><div class="rev-lbl">Category</div><div class="rev-val" id="rev_category">-</div></div>
+                            <div class="review-item"><div class="rev-lbl">Subcategory</div><div class="rev-val" id="rev_subcategory">-</div></div>
+                            <div class="review-item"><div class="rev-lbl">Cost Price</div><div class="rev-val" id="rev_cost">-</div></div>
+                            <div class="review-item"><div class="rev-lbl">Selling Price</div><div class="rev-val" id="rev_price">-</div></div>
+                            <div class="review-item"><div class="rev-lbl">Markup</div><div class="rev-val" id="rev_markup">-</div></div>
+                            <div class="review-item"><div class="rev-lbl">Total Stock</div><div class="rev-val" id="rev_total_stock">-</div></div>
+                            <div class="review-item"><div class="rev-lbl">Minimum Stock Alert</div><div class="rev-val" id="rev_min_stock">-</div></div>
+                            <div class="review-item"><div class="rev-lbl">Expiry Date</div><div class="rev-val" id="rev_expiry">-</div></div>
                         </div>
                     </div>
                     <div class="col col-12">
@@ -794,7 +794,7 @@
                     <div class="col col-12">
                         <div class="review-item" style="border-bottom:none;">
                             <div class="rev-lbl">Description</div>
-                            <div class="rev-val" id="rev_description" style="font-weight:400;">—</div>
+                            <div class="rev-val" id="rev_description" style="font-weight:400;">-</div>
                         </div>
                     </div>
                 </div>
@@ -1119,7 +1119,7 @@ function validateStep2(showErrors) {
     } else if (showErrors) {
         if (!isNaN(cost) && cost > 0) {
             const markupPct = (((sell - cost) / cost) * 100).toFixed(1);
-            showFieldOk('price', 'Looks good — ' + markupPct + '% markup over cost.');
+            showFieldOk('price', 'Looks good: ' + markupPct + '% markup over cost.');
         } else {
             showFieldOk('price');
         }
@@ -1159,7 +1159,7 @@ function validateStep3(showErrors) {
     if (!hasStock) {
         ok = false;
         if (showErrors && variationError) {
-            variationError.innerHTML = '<i class="fas fa-exclamation-circle"></i> Stock is required — click "Enter Branch Stock" above and enter a quantity for at least one branch.';
+            variationError.innerHTML = '<i class="fas fa-exclamation-circle"></i> Stock is required. Click "Enter Branch Stock" above and enter a quantity for at least one branch.';
             variationError.style.display = 'block';
         }
     } else if (showErrors && variationError) {
@@ -1225,32 +1225,32 @@ function prevStep() {
 function populateReview() {
     document.getElementById('rev_image').src = (previewImg.src && !previewImg.src.endsWith('#')) ? previewImg.src : '';
 
-    document.getElementById('rev_name').textContent = nameInput.value.trim() || '—';
+    document.getElementById('rev_name').textContent = nameInput.value.trim() || '-';
 
     const statusChecked = document.querySelector('input[name="status"]:checked');
     document.getElementById('rev_status').textContent = statusChecked
         ? (statusChecked.value === 'available' ? 'Available' : 'Not Available')
-        : '—';
+        : '-';
 
     document.getElementById('rev_sku').textContent = document.getElementById('sku').value;
 
     const brand = document.getElementById('brand').value.trim();
-    document.getElementById('rev_brand').textContent = brand || '— None —';
+    document.getElementById('rev_brand').textContent = brand || '(None)';
 
     const categoryIdField = document.getElementById('category_id');
     const categoryLabel = document.getElementById('category_search').value.trim();
-    document.getElementById('rev_category').textContent = (categoryIdField.value && categoryIdField.value !== '0' && categoryLabel) ? categoryLabel : '— None —';
+    document.getElementById('rev_category').textContent = (categoryIdField.value && categoryIdField.value !== '0' && categoryLabel) ? categoryLabel : '(None)';
 
     const subcategoryIdFieldRev = document.getElementById('subcategory_id');
     const subcategoryLabel = document.getElementById('subcategory_search').value.trim();
-    document.getElementById('rev_subcategory').textContent = (subcategoryIdFieldRev.value && subcategoryIdFieldRev.value !== '0' && subcategoryLabel) ? subcategoryLabel : '— None —';
+    document.getElementById('rev_subcategory').textContent = (subcategoryIdFieldRev.value && subcategoryIdFieldRev.value !== '0' && subcategoryLabel) ? subcategoryLabel : '(None)';
 
     const cost = parseFloat(costInput.value) || 0;
     const sell = parseFloat(sellInput.value) || 0;
     document.getElementById('rev_cost').textContent = '₱' + cost.toFixed(2);
     document.getElementById('rev_price').textContent = '₱' + sell.toFixed(2);
     const markup = sell - cost;
-    const marginTxt = (cost > 0 && sell > 0) ? (((markup / sell) * 100).toFixed(1) + '% margin') : '—';
+    const marginTxt = (cost > 0 && sell > 0) ? (((markup / sell) * 100).toFixed(1) + '% margin') : '-';
     document.getElementById('rev_markup').textContent = '₱' + markup.toFixed(2) + ' (' + marginTxt + ')';
 
     const revBranches = document.getElementById('rev_branches');
@@ -1268,7 +1268,7 @@ function populateReview() {
     });
 
     document.getElementById('rev_total_stock').textContent = totalStockDisplay.textContent + ' unit(s)';
-    document.getElementById('rev_min_stock').textContent = minStockInput.value || '—';
+    document.getElementById('rev_min_stock').textContent = minStockInput.value || '-';
     document.getElementById('rev_expiry').textContent = document.getElementById('expiry_date').value || 'No expiry';
     document.getElementById('rev_description').textContent = descInput.value.trim() || 'No description provided.';
 }
@@ -1419,7 +1419,7 @@ function initSmartSelect(opts) {
             if (ok) {
                 showSSToast(opts.entityLabel + ' "' + typed + '" created and selected.', 'success');
             } else {
-                showSSToast(message || ('Could not auto-create that ' + opts.entity + ' — please pick it from the list.'), 'error');
+                showSSToast(message || ('Could not auto-create that ' + opts.entity + '. Please pick it from the list.'), 'error');
             }
         });
     });
@@ -1702,7 +1702,7 @@ addVariationTypeBtn.addEventListener('click', () => {
     if (!available.length) {
         const empty = document.createElement('div');
         empty.className = 'smart-select-empty';
-        empty.textContent = 'All preset types added — type a custom name above.';
+        empty.textContent = 'All preset types added. Type a custom name above.';
         variationTypeDropdown.appendChild(empty);
     } else {
         available.forEach(type => {
@@ -1737,7 +1737,7 @@ function addVariationTypeBlock(type, values) {
 
     block.innerHTML =
         '<tr class="variation-type-group-row">' +
-            '<td colspan="6">' +
+            '<td colspan="5">' +
                 '<span class="variation-type-label"><i class="fas fa-tag me-1"></i>' + escHtml(type) + '</span>' +
                 '<button type="button" class="btn btn-sm btn-outline-secondary add-variation-value-btn"><i class="fas fa-plus"></i> Add ' + escHtml(type) + ' Value</button>' +
                 '<button type="button" class="remove-type-btn"><i class="fas fa-trash"></i> Remove Type</button>' +
@@ -1764,11 +1764,7 @@ function addVariationValueRow(block, value) {
 
     row.innerHTML =
         '<td><input type="text" class="form-control form-control-sm variation-value-input" placeholder="Value (e.g. Red)" value="' + escHtml(value ? value.variation_value : '') + '"></td>' +
-        '<td><input type="number" step="1" min="1" class="form-control form-control-sm variation-pieces-per-unit-input" title="How many individual pieces one unit of this value represents (e.g. 10 for &quot;1 Set (10 pcs)&quot;) — selling 1 unit deducts this many pieces from its stock. Leave at 1 if this value isn\'t a multi-piece bundle." value="' + (value && value.pieces_per_unit ? parseInt(value.pieces_per_unit, 10) : 1) + '"></td>' +
-        '<td><select class="form-control form-control-sm variation-default-status-select">' +
-            '<option value="active"' + (!value || value.status !== 'inactive' ? ' selected' : '') + '>Active</option>' +
-            '<option value="inactive"' + (value && value.status === 'inactive' ? ' selected' : '') + '>Inactive</option>' +
-        '</select></td>' +
+        '<td><input type="number" step="1" min="1" class="form-control form-control-sm variation-pieces-per-unit-input" title="How many individual pieces one unit of this value represents (e.g. 10 for &quot;1 Set (10 pcs)&quot;). Selling 1 unit deducts this many pieces from its stock. Leave at 1 if this value isn\'t a multi-piece bundle." value="' + (value && value.pieces_per_unit ? parseInt(value.pieces_per_unit, 10) : 1) + '"></td>' +
         '<td class="text-center"><button type="button" class="btn btn-sm btn-outline-primary smart-apply-btn" title="Apply Stock/Price/Status to every combination with this value"><i class="fas fa-bolt"></i></button></td>' +
         '<td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger remove-value-btn" title="Remove"><i class="fas fa-trash"></i></button></td>';
 
@@ -1839,7 +1835,9 @@ function syncVariationsJson() {
                 // simply generated starting at 0 and priced individually.
                 default_price_adjustment: 0,
                 pieces_per_unit: Math.max(1, parseInt(row.querySelector('.variation-pieces-per-unit-input').value, 10) || 1),
-                default_status: row.querySelector('.variation-default-status-select').value,
+                // Values always start active — inactivating one is an Edit
+                // Product action, not an Add Product concern.
+                default_status: 'active',
                 client_row_id: row.dataset.rowId,
             });
         });
@@ -1868,7 +1866,7 @@ function currentTypeValueLists() {
             // No per-value default price anymore — combos start at 0 and
             // get priced individually in the Generated Combinations table.
             price_adjustment: 0,
-            status: row.querySelector('.variation-default-status-select').value,
+            status: 'active',
         })).filter(v => v.value);
         return { type: type, values: values };
     }).filter(t => t.values.length);
@@ -1934,7 +1932,7 @@ function generateCombinations() {
 function renderCombinationsTable() {
     const keys = Object.keys(combinationRows);
     combinationsCountLabel.textContent = keys.length
-        ? keys.length + ' combination(s) generated — click to view/edit'
+        ? keys.length + ' combination(s) generated, click to view/edit'
         : '';
     if (!keys.length) {
         combinationsBody.innerHTML = '';
@@ -2087,7 +2085,7 @@ function openApplyModal(opts) {
     let title, bodyHtml;
 
     if (isSmart) {
-        title = 'Smart Apply — ' + opts.value;
+        title = 'Smart Apply: ' + opts.value;
         bodyHtml =
             '<p class="text-muted" style="font-size:.85rem;">Applies to every combination containing "' + escHtml(opts.value) + '" without affecting other values.</p>' +
             '<div class="form-group"><label>Price Adjustment (leave blank for no change)</label><input type="number" step="0.01" class="form-control form-control-sm" id="applyModalPrice"></div>' +
@@ -2232,7 +2230,7 @@ function openCombinationImageModal(tr, key, label) {
             '<small style="color:var(--gray);display:block;margin-top:10px;">Only used for the &ldquo;' + escHtml(label) + '&rdquo; combination.</small>' +
         '</div>';
 
-    showModal('Combination Image — ' + label, bodyHtml, () => {}, 'Done', true);
+    showModal('Combination Image: ' + label, bodyHtml, () => {}, 'Done', true);
 
     document.getElementById('variationImageModalChooseBtn').addEventListener('click', () => imageInput.click());
 

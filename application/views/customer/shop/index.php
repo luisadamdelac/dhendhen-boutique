@@ -517,8 +517,9 @@
         <a href="<?php echo BASE_URL; ?>shop" class="category-btn <?php echo !isset($_GET['category']) ? 'active' : ''; ?>">
             <i class="fas fa-th-large"></i> All Products
         </a>
-        <?php foreach ($categories as $category): ?>
-            <?php
+        <?php
+            $activeParent = NULL;
+            foreach ($categories as $category):
                 // Cosmetic-only icon guess from the category name — purely
                 // decorative, falls back to a generic tag for anything else.
                 $catNameLower = strtolower($category['category_name']);
@@ -541,13 +542,32 @@
                 } else {
                     $catIcon = 'fa-tag';
                 }
-            ?>
+                $isActiveParent = isset($_GET['category']) && $_GET['category'] == $category['category_id'];
+                if ($isActiveParent) {
+                    $activeParent = $category;
+                }
+        ?>
             <a href="<?php echo BASE_URL; ?>shop?category=<?php echo $category['category_id']; ?>"
-               class="category-btn <?php echo (isset($_GET['category']) && $_GET['category'] == $category['category_id']) ? 'active' : ''; ?>">
+               class="category-btn <?php echo $isActiveParent ? 'active' : ''; ?>">
                 <i class="fas <?php echo $catIcon; ?>"></i> <?php echo htmlspecialchars($category['category_name']); ?>
             </a>
         <?php endforeach; ?>
     </div>
+    <?php if ($activeParent && !empty($activeParent['subcategories'])): ?>
+        <div class="subcategory-filter">
+            <span class="subcategory-filter-label"><i class="fas fa-angle-right"></i> Subcategory:</span>
+            <a href="<?php echo BASE_URL; ?>shop?category=<?php echo $activeParent['category_id']; ?>"
+               class="subcategory-btn <?php echo !isset($_GET['subcategory']) ? 'active' : ''; ?>">
+                All <?php echo htmlspecialchars($activeParent['category_name']); ?>
+            </a>
+            <?php foreach ($activeParent['subcategories'] as $subcategory): ?>
+                <a href="<?php echo BASE_URL; ?>shop?category=<?php echo $activeParent['category_id']; ?>&subcategory=<?php echo $subcategory['category_id']; ?>"
+                   class="subcategory-btn <?php echo (isset($_GET['subcategory']) && $_GET['subcategory'] == $subcategory['category_id']) ? 'active' : ''; ?>">
+                    <?php echo htmlspecialchars($subcategory['category_name']); ?>
+                </a>
+            <?php endforeach; ?>
+        </div>
+    <?php endif; ?>
 </div>
 
 <?php if ($searchQuery): ?>
@@ -620,14 +640,7 @@
                     </div>
                     <?php endif; ?>
                     <div class="product-price-row">
-                        <?php if (!empty($product['has_discount']) && !empty($product['discounted_price'])): ?>
-                        <div class="product-price">
-                            <span class="original-price">₱<?php echo number_format($product['price'], 2); ?></span>
-                            ₱<?php echo number_format($product['discounted_price'], 2); ?>
-                        </div>
-                        <?php else: ?>
                         <div class="product-price">₱<?php echo number_format($product['price'], 2); ?></div>
-                        <?php endif; ?>
                         <?php $soldCount = (int) ($product['total_sold'] ?? 0); ?>
                         <span class="product-sold">Sold <?php echo $soldCount >= 1000 ? number_format($soldCount / 1000, 1) . 'k' : $soldCount; ?></span>
                     </div>
@@ -667,15 +680,26 @@
                             'hasVariations' => !empty($product['has_variations']),
                         ]), ENT_QUOTES);
                     ?>
+                    <?php $alreadyPreordered = !empty($product['already_preordered']); ?>
                     <div class="product-actions-row" style="display: flex; flex-direction: column; gap: 8px; margin-top: 8px;">
                         <button class="btn btn-sm w-100" style="background: var(--gradient-hover, var(--primary-pink)); white-space: nowrap;" <?php echo $canBuy ? '' : 'disabled'; ?>
                             onclick="event.stopPropagation(); <?php echo $canBuy ? 'openAddToCartModal(' . $atcPayload . ", 'buy')" : ''; ?>">
                             <i class="fas fa-bolt"></i> Buy Now
                         </button>
-                        <button class="btn btn-outline btn-sm w-100" style="white-space: nowrap;" <?php echo $canBuy ? '' : ('disabled title="' . ($isPreOrder ? 'Currently out of stock — check back soon' : 'Not currently available from a reseller') . '"'); ?>
-                            onclick="event.stopPropagation(); <?php echo $canBuy ? 'openAddToCartModal(' . $atcPayload . ", 'cart')" : ''; ?>">
-                            <i class="fas fa-cart-plus"></i> <?php echo $canBuy ? 'Add to Cart' : ($isPreOrder ? 'Pre Order' : 'Unavailable'); ?>
-                        </button>
+                        <?php if (!$isPublished): ?>
+                            <button class="btn btn-outline btn-sm w-100" style="white-space: nowrap;"
+                                data-product-id="<?php echo (int) $product['product_id']; ?>"
+                                <?php echo $alreadyPreordered ? 'disabled' : ''; ?>
+                                title="<?php echo $alreadyPreordered ? "You'll be notified when this becomes available" : 'Not currently available from a reseller yet. Click to get notified when it is'; ?>"
+                                onclick="event.stopPropagation(); submitPreorder(this);">
+                                <i class="fas fa-<?php echo $alreadyPreordered ? 'check' : 'bell'; ?>"></i> <?php echo $alreadyPreordered ? "You'll Be Notified" : 'Notify Me'; ?>
+                            </button>
+                        <?php else: ?>
+                            <button class="btn btn-outline btn-sm w-100" style="white-space: nowrap;" <?php echo $canBuy ? '' : 'disabled title="Currently out of stock. Check back soon"'; ?>
+                                onclick="event.stopPropagation(); <?php echo $canBuy ? 'openAddToCartModal(' . $atcPayload . ", 'cart')" : ''; ?>">
+                                <i class="fas fa-cart-plus"></i> <?php echo $canBuy ? 'Add to Cart' : 'Pre Order'; ?>
+                            </button>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>
@@ -685,7 +709,7 @@
     <?php if ($totalPages > 1): ?>
         <div class="pagination">
             <?php if ($currentPage > 1): ?>
-                <a href="?page=<?php echo $currentPage - 1; ?><?php echo $searchQuery ? '&search=' . urlencode($searchQuery) : ''; ?><?php echo $currentCategory ? '&category=' . $currentCategory : ''; ?>" class="page-btn">
+                <a href="?page=<?php echo $currentPage - 1; ?><?php echo $searchQuery ? '&search=' . urlencode($searchQuery) : ''; ?><?php echo $currentCategory ? '&category=' . $currentCategory : ''; ?><?php echo $currentSubcategory ? '&subcategory=' . $currentSubcategory : ''; ?>" class="page-btn">
                     <i class="fas fa-chevron-left"></i> Previous
                 </a>
             <?php endif; ?>
@@ -694,14 +718,14 @@
                 <?php if ($i === $currentPage): ?>
                     <span class="page-btn active"><?php echo $i; ?></span>
                 <?php else: ?>
-                    <a href="?page=<?php echo $i; ?><?php echo $searchQuery ? '&search=' . urlencode($searchQuery) : ''; ?><?php echo $currentCategory ? '&category=' . $currentCategory : ''; ?>" class="page-btn">
+                    <a href="?page=<?php echo $i; ?><?php echo $searchQuery ? '&search=' . urlencode($searchQuery) : ''; ?><?php echo $currentCategory ? '&category=' . $currentCategory : ''; ?><?php echo $currentSubcategory ? '&subcategory=' . $currentSubcategory : ''; ?>" class="page-btn">
                         <?php echo $i; ?>
                     </a>
                 <?php endif; ?>
             <?php endfor; ?>
             
             <?php if ($currentPage < $totalPages): ?>
-                <a href="?page=<?php echo $currentPage + 1; ?><?php echo $searchQuery ? '&search=' . urlencode($searchQuery) : ''; ?><?php echo $currentCategory ? '&category=' . $currentCategory : ''; ?>" class="page-btn">
+                <a href="?page=<?php echo $currentPage + 1; ?><?php echo $searchQuery ? '&search=' . urlencode($searchQuery) : ''; ?><?php echo $currentCategory ? '&category=' . $currentCategory : ''; ?><?php echo $currentSubcategory ? '&subcategory=' . $currentSubcategory : ''; ?>" class="page-btn">
                     Next <i class="fas fa-chevron-right"></i>
                 </a>
             <?php endif; ?>
@@ -784,6 +808,38 @@
 
 <script>
 let atcState = { id: null, mode: 'cart', hasVariations: false, basePrice: 0, variations: [], combinations: [], selectedVariationId: null, selectedVariantId: null, selectedAxisValues: {}, qty: 1, stock: 0 };
+
+function submitPreorder(btn) {
+    <?php if (($_SESSION['user_type'] ?? '') !== 'customer'): ?>
+        showGuestChoice();
+        return;
+    <?php endif; ?>
+
+    btn.disabled = true;
+    const productId = btn.dataset.productId;
+    fetch('<?php echo BASE_URL; ?>shop/preorder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'product_id=' + encodeURIComponent(productId)
+    })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                btn.innerHTML = '<i class="fas fa-check"></i> You\'ll Be Notified';
+                btn.title = "You'll be notified when this becomes available";
+            } else {
+                btn.disabled = false;
+                if (data.needs_login) { showGuestChoice(); return; }
+                if (typeof customAlert === 'function') customAlert(data.message || 'Something went wrong. Please try again.');
+                else alert(data.message || 'Something went wrong. Please try again.');
+            }
+        })
+        .catch(() => {
+            btn.disabled = false;
+            if (typeof customAlert === 'function') customAlert('Something went wrong. Please try again.');
+            else alert('Something went wrong. Please try again.');
+        });
+}
 
 function openAddToCartModal(product, mode) {
     <?php if (($_SESSION['user_type'] ?? '') !== 'customer'): ?>

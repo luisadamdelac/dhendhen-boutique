@@ -276,6 +276,9 @@ class StockService {
         ]);
 
         self::_syncProductTotal($productId);
+        if ($variationId !== NULL) {
+            self::_syncVariationTotal($variationId);
+        }
         if ($variantId !== NULL) {
             self::_syncVariantTotal($variantId);
         }
